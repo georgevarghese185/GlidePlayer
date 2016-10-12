@@ -1,15 +1,19 @@
 package teefourteen.distroplayer;
 
-import android.app.Activity;
+import android.Manifest;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.ContextCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import java.util.ArrayList;
+import teefourteen.distroplayer.music.*;
 
 
 ///**
@@ -19,6 +23,7 @@ import android.widget.ListView;
 // * to handle interaction events.
 // */
 public class LibraryFragment extends Fragment {
+    ArrayList<Song> songLibrary;
 
     //private OnFragmentInteractionListener mListener;
 
@@ -31,27 +36,11 @@ public class LibraryFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-
-
         View view = inflater.inflate(R.layout.fragment_library, container, false);
 
-        ListView listView1 = (ListView) view.findViewById(R.id.listView);
-
-        String[] items = { "Milk", "Butter", "Yogurt", "Toothpaste", "Ice Cream",
-                "Milk", "Butter", "Yogurt", "Toothpaste", "Ice Cream",
-                "Milk", "Butter", "Yogurt", "Toothpaste", "Ice Cream",
-                "Milk", "Butter", "Yogurt", "Toothpaste", "Ice Cream",
-                "Milk", "Butter", "Yogurt", "Toothpaste", "Ice Cream",
-                "Milk", "Butter", "Yogurt", "Toothpaste", "Ice Cream"};
-
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(getContext(),
-                android.R.layout.simple_list_item_1, items);
-
-        listView1.setAdapter(adapter);
-
+        updateLibrary();
+        updateTrackList((ListView) view.findViewById(R.id.trackList));
         return view;
-
-
     }
 
     // TODO: Rename method, update argument and hook method into UI event
@@ -81,6 +70,25 @@ public class LibraryFragment extends Fragment {
     public void onDetach() {
         super.onDetach();
 //        mListener = null;
+    }
+
+    public void updateLibrary() {
+        if(ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.READ_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED)
+            return;
+
+        songLibrary = Song.getSongArrayList(getContext().getContentResolver());
+    }
+
+    public void updateTrackList(ListView trackList) {
+        ArrayList<String> songList = new ArrayList<>();
+        for(Song song : songLibrary) {
+            songList.add(song.getTitle());
+        }
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(getContext(),
+                android.R.layout.simple_list_item_1, songList);
+        trackList.setAdapter(adapter);
     }
 
     /**

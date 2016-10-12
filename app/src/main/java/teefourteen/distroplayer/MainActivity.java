@@ -1,7 +1,11 @@
 package teefourteen.distroplayer;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -16,6 +20,7 @@ public class MainActivity extends AppCompatActivity
     private LibraryFragment libraryFragment;
     private String libraryTag="LIBRARY";
     private FragmentSwitcher mainFragment;
+    final private int REQUEST_READ_EXTERNAL_STORAGE = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,7 +41,7 @@ public class MainActivity extends AppCompatActivity
 
         mainFragment = new FragmentSwitcher(getSupportFragmentManager(), R.id.main_container);
         libraryFragment = new LibraryFragment();
-
+        checkPermissions();
         mainFragment.switchTo(libraryFragment,libraryTag);
     }
 
@@ -95,5 +100,24 @@ public class MainActivity extends AppCompatActivity
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    private boolean checkPermissions() {
+        if(ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                    REQUEST_READ_EXTERNAL_STORAGE);
+            return false;
+        }
+        else
+            return true;
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String permissions[],
+                                           int[] grantResults) {
+        if(requestCode==REQUEST_READ_EXTERNAL_STORAGE && grantResults.length>0
+                && grantResults[0]==PackageManager.PERMISSION_GRANTED)
+            libraryFragment.updateLibrary();
     }
 }
