@@ -10,10 +10,12 @@ import android.support.v4.content.ContextCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
+import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.Toast;
 import java.util.ArrayList;
 import teefourteen.distroplayer.music.*;
+import teefourteen.distroplayer.music.adapters.TrackAdapter;
 
 
 ///**
@@ -81,14 +83,19 @@ public class LibraryFragment extends Fragment {
     }
 
     public void updateTrackList(ListView trackList) {
-        ArrayList<String> songList = new ArrayList<>();
-        for(Song song : songLibrary) {
-            songList.add(song.getTitle());
-        }
+        TrackAdapter trackAdapter = new TrackAdapter(getContext(),R.layout.track, songLibrary);
+        trackList.setAdapter(trackAdapter);
 
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(getContext(),
-                android.R.layout.simple_list_item_1, songList);
-        trackList.setAdapter(adapter);
+        trackList.setOnItemClickListener(
+                new AdapterView.OnItemClickListener() {
+                    @Override
+                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                        Song song = (Song) parent.getItemAtPosition(position);
+
+                        Toast.makeText(getContext(), "Playing " + song.getTitle(), Toast.LENGTH_SHORT).show();
+                    }
+                }
+        );
     }
 
     /**

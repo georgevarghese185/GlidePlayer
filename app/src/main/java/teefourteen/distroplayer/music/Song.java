@@ -4,7 +4,6 @@ import android.content.ContentResolver;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.MediaStore;
-
 import java.util.ArrayList;
 
 /**
@@ -79,6 +78,9 @@ public class Song {
                 long albumId = musicCursor.getLong(musicCursor.getColumnIndex(MediaStore.Audio.AudioColumns.ALBUM_ID));
                 String artist = musicCursor.getString(musicCursor.getColumnIndex(MediaStore.Audio.AudioColumns.ARTIST));
                 long artistId = musicCursor.getLong(musicCursor.getColumnIndex(MediaStore.Audio.AudioColumns.ARTIST_ID));
+
+                if(album.equals("<unknown>")) album = "Unknown Album";
+                if(artist.equals("<unknown>")) artist = "Unknown Artist";
 
                 songList.add(new Song(songId, filePath, title, album, albumId, artist, artistId));
             }while (musicCursor.moveToNext());

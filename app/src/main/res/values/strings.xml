@@ -8,4 +8,8 @@
 
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="albumArt_description">Default album art</string>
+    <string name="track_artist">Unknown Artist</string>
+    <string name="track_title">Song Title</string>
+    <string name="track_album">Unknown Album</string>
 </resources>

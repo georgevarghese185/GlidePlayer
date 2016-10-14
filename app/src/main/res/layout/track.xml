@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal" android:layout_width="match_parent"
+    android:layout_height="80dp"
+    android:background="#c7c7c7"
+    android:clickable="false">
+
+    <ImageView
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:id="@+id/albumArt"
+        android:contentDescription="@string/albumArt_description"
+        android:layout_margin="5dp"
+        android:layout_gravity="center_vertical"
+        android:src="@mipmap/record"
+        android:clickable="false" />
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/track_artist"
+            android:id="@+id/trackArtist"
+            android:gravity="center_vertical"
+            android:textColor="#343434"
+            android:ellipsize="end"
+            android:maxLines="1"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/track_title"
+            android:id="@+id/trackTitle"
+            android:gravity="center_vertical"
+            android:textColor="#000000"
+            android:textSize="18sp"
+            android:ellipsize="end"
+            android:maxLines="1"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/track_album"
+            android:id="@+id/trackAlbum"
+            android:gravity="center_vertical"
+            android:textColor="#343434"
+            android:ellipsize="end"
+            android:maxLines="1"/>
+    </LinearLayout>
+</LinearLayout>
