@@ -82,7 +82,9 @@ public class LibraryFragment extends Fragment {
         songLibrary = Song.getSongArrayList(getContext().getContentResolver());
     }
 
-    public void updateTrackList(ListView trackList) {
+    public boolean updateTrackList(ListView trackList) {
+        if(songLibrary==null)
+            return false;
         TrackAdapter trackAdapter = new TrackAdapter(getContext(),R.layout.track, songLibrary);
         trackList.setAdapter(trackAdapter);
 
@@ -96,6 +98,7 @@ public class LibraryFragment extends Fragment {
                     }
                 }
         );
+        return true;
     }
 
     /**
