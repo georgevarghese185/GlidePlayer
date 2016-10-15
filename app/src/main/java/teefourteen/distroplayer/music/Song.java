@@ -3,13 +3,15 @@ package teefourteen.distroplayer.music;
 import android.content.ContentResolver;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.provider.MediaStore;
 import java.util.ArrayList;
 
 /**
  * Created by george on 12/10/16.
  */
-public class Song {
+public class Song implements Parcelable{
     private long songId;
     private String filePath;
     private String title;
@@ -93,4 +95,45 @@ public class Song {
 
         return songList;
     }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+//    private long songId;
+//    private String filePath;
+//    private String title;
+//    private String album;
+//    private long albumId;
+//    private String artist;
+//    private long artistId;
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeLong(songId);
+        dest.writeString(filePath);
+        dest.writeString(title);
+        dest.writeString(album);
+        dest.writeLong(albumId);
+        dest.writeString(artist);
+        dest.writeLong(artistId);
+    }
+
+    static public Parcelable.Creator CREATOR = new Parcelable.Creator<Song>() {
+        @Override
+        public Song createFromParcel(Parcel source) {
+            long songId = source.readLong();
+            String filePath = source.readString();
+            String title = source.readString();
+            String album = source.readString();
+            long albumId = source.readLong();
+            String artist = source.readString();
+            long artistId = source.readLong();
+            return new Song(songId, filePath, title, album, albumId, artist, artistId);
+        }
+
+        @Override
+        public Song[] newArray(int size) {
+            return new Song[size];
+        }
+    };
 }

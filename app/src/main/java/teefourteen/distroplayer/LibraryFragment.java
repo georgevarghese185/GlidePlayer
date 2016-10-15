@@ -2,9 +2,12 @@ package teefourteen.distroplayer;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 import android.view.LayoutInflater;
@@ -14,6 +17,8 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Toast;
 import java.util.ArrayList;
+
+import teefourteen.distroplayer.activities.PlayerActivity;
 import teefourteen.distroplayer.music.*;
 import teefourteen.distroplayer.music.adapters.TrackAdapter;
 
@@ -26,7 +31,7 @@ import teefourteen.distroplayer.music.adapters.TrackAdapter;
 // */
 public class LibraryFragment extends Fragment {
     ArrayList<Song> songLibrary;
-
+    public static final String EXTRA_PLAY_QUEUE = "play_queue";
     //private OnFragmentInteractionListener mListener;
 
     public LibraryFragment() {
@@ -93,8 +98,10 @@ public class LibraryFragment extends Fragment {
                     @Override
                     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                         Song song = (Song) parent.getItemAtPosition(position);
-
-                        Toast.makeText(getContext(), "Playing " + song.getTitle(), Toast.LENGTH_SHORT).show();
+                        Intent intent = new Intent(getActivity(), PlayerActivity.class);
+                        intent.putExtra(EXTRA_PLAY_QUEUE, new PlayQueue(song));
+                        startActivity(intent);
+                        //Toast.makeText(getContext(), "Playing " + song.getTitle(), Toast.LENGTH_SHORT).show();
                     }
                 }
         );
