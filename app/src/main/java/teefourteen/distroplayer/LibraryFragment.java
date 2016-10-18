@@ -6,8 +6,6 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Parcel;
-import android.os.Parcelable;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 import android.view.LayoutInflater;
@@ -15,7 +13,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
-import android.widget.Toast;
 import java.util.ArrayList;
 
 import teefourteen.distroplayer.activities.PlayerActivity;
@@ -101,7 +98,6 @@ public class LibraryFragment extends Fragment {
                         Intent intent = new Intent(getActivity(), PlayerActivity.class);
                         intent.putExtra(EXTRA_PLAY_QUEUE, new PlayQueue(song));
                         startActivity(intent);
-                        //Toast.makeText(getContext(), "Playing " + song.getTitle(), Toast.LENGTH_SHORT).show();
                     }
                 }
         );

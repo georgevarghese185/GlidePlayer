@@ -59,7 +59,8 @@
         android:id="@+id/button"
         android:layout_marginBottom="49dp"
         android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true" />
+        android:layout_centerHorizontal="true"
+        android:onClick="play" />
 
     <Button
         style="?android:attr/buttonStyleSmall"
@@ -69,7 +70,7 @@
         android:id="@+id/button2"
         android:layout_alignTop="@+id/button"
         android:layout_toLeftOf="@+id/textView4"
-        android:layout_toStartOf="@+id/textView4" />
+        android:layout_toStartOf="@+id/textView4"/>
 
     <Button
         style="?android:attr/buttonStyleSmall"
