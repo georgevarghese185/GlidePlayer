@@ -9,7 +9,7 @@
     <ImageView
         android:layout_width="300dp"
         android:layout_height="300dp"
-        android:id="@+id/imageView2"
+        android:id="@+id/playerAlbumArt"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="10dp"
@@ -21,42 +21,31 @@
         android:ellipsize="end"
         android:maxLines="1"
         android:text="Song Title"
-        android:id="@+id/textView2"
+        android:id="@+id/playerTrackTitle"
         android:layout_marginTop="51dp"
         android:textSize="22sp"
         android:textColor="#ffffff"
         android:textAlignment="center"
-        android:layout_below="@+id/imageView2"
+        android:layout_below="@+id/playerAlbumArt"
         android:layout_centerHorizontal="true" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Unknown Artist"
-        android:id="@+id/textView3"
-        android:layout_below="@+id/imageView2"
+        android:id="@+id/playerTrackArtist"
+        android:layout_below="@+id/playerAlbumArt"
         android:layout_centerHorizontal="true"
         android:textSize="18sp"
         android:textColor="#e5e5e5"
         android:layout_marginTop="20dp" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Unknown Album"
-        android:id="@+id/textView4"
-        android:layout_below="@+id/textView2"
-        android:layout_centerHorizontal="true"
-        android:textSize="15sp"
-        android:textColor="#8d8d8d"
-        android:layout_marginTop="5dp" />
 
     <Button
         style="?android:attr/buttonStyleSmall"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Play"
-        android:id="@+id/button"
+        android:id="@+id/playerPlayButton"
         android:layout_marginBottom="49dp"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
@@ -67,30 +56,41 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="&lt;"
-        android:id="@+id/button2"
-        android:layout_alignTop="@+id/button"
-        android:layout_toLeftOf="@+id/textView4"
-        android:layout_toStartOf="@+id/textView4"/>
+        android:id="@+id/playerPrevButton"
+        android:layout_alignTop="@+id/playerPlayButton"
+        android:layout_toLeftOf="@+id/playerTrackAlbum"
+        android:layout_toStartOf="@+id/playerTrackAlbum"/>
 
     <Button
         style="?android:attr/buttonStyleSmall"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text=">"
-        android:id="@+id/button3"
-        android:layout_alignTop="@+id/button"
-        android:layout_toRightOf="@+id/textView4"
-        android:layout_toEndOf="@+id/textView4" />
+        android:id="@+id/playerNextButton"
+        android:layout_alignTop="@+id/playerPlayButton"
+        android:layout_toRightOf="@+id/playerTrackAlbum"
+        android:layout_toEndOf="@+id/playerTrackAlbum" />
 
     <Button
         style="?android:attr/buttonStyleSmall"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Q"
-        android:id="@+id/button4"
-        android:layout_alignTop="@+id/imageView2"
+        android:id="@+id/playerQueueButton"
+        android:layout_alignTop="@+id/playerAlbumArt"
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true"
         android:layout_marginRight="10dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Unknown Album"
+        android:id="@+id/playerTrackAlbum"
+        android:textSize="15sp"
+        android:textColor="#8d8d8d"
+        android:layout_marginTop="21dp"
+        android:layout_below="@+id/playerTrackTitle"
+        android:layout_centerHorizontal="true" />
 
 </RelativeLayout>

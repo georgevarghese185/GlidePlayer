@@ -38,6 +38,13 @@ public class MusicPlayer {
         player.pause();
     }
 
+    public void reset() {
+        if(prepared) {
+            player.reset();
+            prepared = false;
+        }
+    }
+
     private void prepareSong(Song song) throws IOException {
         player = new MediaPlayer();
         player.setAudioStreamType(AudioManager.STREAM_MUSIC);

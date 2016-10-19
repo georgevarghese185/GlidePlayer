@@ -13,8 +13,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
-
-import teefourteen.distroplayer.music.MusicService;
+import teefourteen.distroplayer.music.PlayQueue;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -22,6 +21,7 @@ public class MainActivity extends AppCompatActivity
     private LibraryFragment libraryFragment;
     private String libraryTag="LIBRARY";
     private FragmentSwitcher mainFragment;
+    public static PlayQueue playQueue = null;
     final private int REQUEST_READ_EXTERNAL_STORAGE = 1;
 
     @Override
