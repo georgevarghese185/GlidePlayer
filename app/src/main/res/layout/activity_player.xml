@@ -59,7 +59,8 @@
         android:id="@+id/playerPrevButton"
         android:layout_alignTop="@+id/playerPlayButton"
         android:layout_toLeftOf="@+id/playerTrackAlbum"
-        android:layout_toStartOf="@+id/playerTrackAlbum"/>
+        android:layout_toStartOf="@+id/playerTrackAlbum"
+        android:onClick="prev"/>
 
     <Button
         style="?android:attr/buttonStyleSmall"
@@ -69,7 +70,8 @@
         android:id="@+id/playerNextButton"
         android:layout_alignTop="@+id/playerPlayButton"
         android:layout_toRightOf="@+id/playerTrackAlbum"
-        android:layout_toEndOf="@+id/playerTrackAlbum" />
+        android:layout_toEndOf="@+id/playerTrackAlbum"
+        android:onClick="next"/>
 
     <Button
         style="?android:attr/buttonStyleSmall"

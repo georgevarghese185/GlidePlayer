@@ -7,6 +7,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
+
 import teefourteen.distroplayer.LibraryFragment;
 import teefourteen.distroplayer.R;
 import teefourteen.distroplayer.music.MusicService;
@@ -22,7 +24,7 @@ public class PlayerActivity extends AppCompatActivity {
         public void handleMessage(Message msg) {
             switch (msg.arg1) {
                 case MusicService.SONG_STARTED:
-                    songStarted();
+                    showPause();
             }
         }
     }
@@ -71,6 +73,24 @@ public class PlayerActivity extends AppCompatActivity {
         intent.putExtra(MusicService.EXTRA_SONG_COMMAND, MusicService.Command.PAUSE);
         startService(intent);
 
+        showPlay();
+    }
+
+    public void next(View view) {
+        showPlay();
+        Intent intent = new Intent(this, MusicService.class);
+        intent.putExtra(MusicService.EXTRA_SONG_COMMAND, MusicService.Command.PLAY_NEXT);
+        startService(intent);
+    }
+
+    public void prev(View view) {
+        showPlay();
+        Intent intent = new Intent(this, MusicService.class);
+        intent.putExtra(MusicService.EXTRA_SONG_COMMAND, MusicService.Command.PLAY_PREV);
+        startService(intent);
+    }
+
+    private void showPlay() {
         Button playButton = (Button) findViewById(R.id.playerPlayButton);
         playButton.setText("PLAY");
         playButton.setOnClickListener(new View.OnClickListener() {
@@ -81,7 +101,7 @@ public class PlayerActivity extends AppCompatActivity {
         });
     }
 
-    private void songStarted() {
+    private void showPause() {
         Button playButton = (Button) findViewById(R.id.playerPlayButton);
         playButton.setText("PAUSE");
 
@@ -91,5 +111,18 @@ public class PlayerActivity extends AppCompatActivity {
                 pause(v);
             }
         });
+
+        TextView textView = (TextView)findViewById(R.id.playerTrackTitle);
+        textView.setText(playQueue.getCurrentPlaying().getTitle());
+        textView = (TextView) findViewById(R.id.playerTrackAlbum);
+        textView.setText(playQueue.getCurrentPlaying().getAlbum());
+        textView = (TextView) findViewById(R.id.playerTrackArtist);
+        textView.setText(playQueue.getCurrentPlaying().getArtist());
     }
+
+
+
+
+
+
 }

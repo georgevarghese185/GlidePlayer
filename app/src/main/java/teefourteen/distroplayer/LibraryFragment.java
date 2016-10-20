@@ -96,7 +96,16 @@ public class LibraryFragment extends Fragment {
                     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                         Song song = (Song) parent.getItemAtPosition(position);
                         Intent intent = new Intent(getActivity(), PlayerActivity.class);
-                        intent.putExtra(EXTRA_PLAY_QUEUE, new PlayQueue(song));
+
+                        //Temporary multi-item queue playback testing
+                        ArrayList<Song> albumList = new ArrayList<Song>();
+                        for(Song s : songLibrary) {
+                            if (s.getAlbumId()==song.getAlbumId())
+                                albumList.add(s);
+                        }
+                        //end of temporary code
+                        
+                        intent.putExtra(EXTRA_PLAY_QUEUE, new PlayQueue(albumList, 0));
                         startActivity(intent);
                     }
                 }

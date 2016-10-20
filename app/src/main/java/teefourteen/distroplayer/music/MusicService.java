@@ -44,15 +44,17 @@ public class MusicService extends Service {
         }
 
         public void playNext() {
-            //PUT CODE FOR CHECKING IF THREAD IS ALREADY RUNNING AND PLAYING
-
+            //TODO: PUT CODE FOR CHECKING IF THREAD IS ALREADY RUNNING AND PLAYING
+            player.reset();
             player.playSong(playQueue.next());
+            notifySongStarted();
         }
 
         public void playPrev() {
             //PUT CODE FOR CHECKING IF THREAD IS ALREADY RUNNING AND PLAYING
-
+            player.reset();
             player.playSong(playQueue.prev());
+            notifySongStarted();
         }
 
         public void pause() {

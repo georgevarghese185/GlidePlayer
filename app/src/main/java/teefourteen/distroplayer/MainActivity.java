@@ -108,6 +108,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
+    //TODO: fix the multiple permission dialogs and crashing issue on API23
     public void onRequestPermissionsResult(int requestCode, String permissions[],
                                            int[] grantResults) {
         if(requestCode==REQUEST_READ_EXTERNAL_STORAGE && grantResults.length>0
