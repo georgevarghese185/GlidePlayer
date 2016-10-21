@@ -25,14 +25,14 @@ import teefourteen.glideplayer.music.adapters.TrackAdapter;
 ///**
 // * A simple {@link Fragment} subclass.
 // * Activities that contain this fragment must implement the
-// * {@link LibraryFragment.OnFragmentInteractionListener} interface
+// * {@link SongsFragment.OnFragmentInteractionListener} interface
 // * to handle interaction events.
 // */
-public class LibraryFragment extends Fragment {
+public class SongsFragment extends Fragment {
     ArrayList<Song> songLibrary;
     //private OnFragmentInteractionListener mListener;
 
-    public LibraryFragment() {
+    public SongsFragment() {
         // Required empty public constructor
     }
 
@@ -41,7 +41,7 @@ public class LibraryFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        View view = inflater.inflate(R.layout.fragment_library, container, false);
+        View view = inflater.inflate(R.layout.fragment_songs, container, false);
 
         updateLibrary();
         updateTrackList((ListView) view.findViewById(R.id.trackList));

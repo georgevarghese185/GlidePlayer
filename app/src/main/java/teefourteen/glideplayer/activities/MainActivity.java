@@ -15,7 +15,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 import teefourteen.glideplayer.FragmentSwitcher;
-import teefourteen.glideplayer.fragments.LibraryFragment;
+import teefourteen.glideplayer.fragments.SongsFragment;
 import teefourteen.glideplayer.R;
 import teefourteen.glideplayer.music.PlayQueue;
 
@@ -23,8 +23,8 @@ public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
     public static final String EXTRA_PLAY_QUEUE = "play_queue";
-    private LibraryFragment libraryFragment;
-    private String libraryTag="LIBRARY";
+    private SongsFragment songsFragment;
+    private String songsTag ="SONGS";
     private FragmentSwitcher mainFragment;
     public static PlayQueue playQueue = null;
     final private int REQUEST_READ_EXTERNAL_STORAGE = 1;
@@ -47,9 +47,9 @@ public class MainActivity extends AppCompatActivity
         navigationView.setNavigationItemSelectedListener(this);
 
         mainFragment = new FragmentSwitcher(getSupportFragmentManager(), R.id.main_container);
-        libraryFragment = new LibraryFragment();
+        songsFragment = new SongsFragment();
         checkPermissions();
-        mainFragment.switchTo(libraryFragment,libraryTag);
+        mainFragment.switchTo(songsFragment, songsTag);
     }
 
     @Override
@@ -118,6 +118,6 @@ public class MainActivity extends AppCompatActivity
                                            int[] grantResults) {
         if(requestCode==REQUEST_READ_EXTERNAL_STORAGE && grantResults.length>0
                 && grantResults[0]==PackageManager.PERMISSION_GRANTED)
-            libraryFragment.updateLibrary();
+            songsFragment.updateLibrary();
     }
 }
