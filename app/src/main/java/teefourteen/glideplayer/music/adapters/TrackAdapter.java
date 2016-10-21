@@ -1,4 +1,4 @@
-package teefourteen.distroplayer.music.adapters;
+package teefourteen.glideplayer.music.adapters;
 
 import android.content.Context;
 import android.support.annotation.LayoutRes;
@@ -8,8 +8,8 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 import java.util.ArrayList;
-import teefourteen.distroplayer.R;
-import teefourteen.distroplayer.music.Song;
+import teefourteen.glideplayer.R;
+import teefourteen.glideplayer.music.Song;
 
 /**
  * Created by george on 14/10/16.

@@ -1,4 +1,4 @@
-package teefourteen.distroplayer.music;
+package teefourteen.glideplayer.music;
 
 import android.os.Parcel;
 import android.os.Parcelable;

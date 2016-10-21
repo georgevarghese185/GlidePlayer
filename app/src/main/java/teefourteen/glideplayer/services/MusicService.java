@@ -1,4 +1,4 @@
-package teefourteen.distroplayer.music;
+package teefourteen.glideplayer.services;
 
 import android.app.Service;
 import android.content.Intent;
@@ -7,8 +7,9 @@ import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
-import static teefourteen.distroplayer.MainActivity.playQueue;
-import static teefourteen.distroplayer.activities.PlayerActivity.playerActivityHandler;
+import teefourteen.glideplayer.music.MusicPlayer;
+import static teefourteen.glideplayer.activities.MainActivity.playQueue;
+import static teefourteen.glideplayer.activities.PlayerActivity.playerActivityHandler;
 
 public class MusicService extends Service {
     //TODO: All stuff in media player guide

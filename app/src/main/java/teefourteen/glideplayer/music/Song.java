@@ -1,4 +1,4 @@
-package teefourteen.distroplayer.music;
+package teefourteen.glideplayer.music;
 
 import android.content.ContentResolver;
 import android.database.Cursor;

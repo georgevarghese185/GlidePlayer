@@ -1,4 +1,4 @@
-package teefourteen.distroplayer.activities;
+package teefourteen.glideplayer.activities;
 
 import android.content.Intent;
 import android.os.Handler;
@@ -9,10 +9,9 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-import teefourteen.distroplayer.LibraryFragment;
-import teefourteen.distroplayer.R;
-import teefourteen.distroplayer.music.MusicService;
-import static teefourteen.distroplayer.MainActivity.playQueue;
+import teefourteen.glideplayer.R;
+import teefourteen.glideplayer.services.MusicService;
+import static teefourteen.glideplayer.activities.MainActivity.playQueue;
 
 public class PlayerActivity extends AppCompatActivity {
     public static PlayerActivityHandler playerActivityHandler;
@@ -35,7 +34,7 @@ public class PlayerActivity extends AppCompatActivity {
         setContentView(R.layout.activity_player);
 
         Intent intent = getIntent();
-        playQueue = intent.getParcelableExtra(LibraryFragment.EXTRA_PLAY_QUEUE);
+        playQueue = intent.getParcelableExtra(MainActivity.EXTRA_PLAY_QUEUE);
 
         findViewById(R.id.playerPlayButton).setOnClickListener(new View.OnClickListener() {
             @Override

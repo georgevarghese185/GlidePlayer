@@ -1,4 +1,4 @@
-package teefourteen.distroplayer;
+package teefourteen.glideplayer.activities;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
@@ -13,11 +13,16 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
-import teefourteen.distroplayer.music.PlayQueue;
+
+import teefourteen.glideplayer.FragmentSwitcher;
+import teefourteen.glideplayer.fragments.LibraryFragment;
+import teefourteen.glideplayer.R;
+import teefourteen.glideplayer.music.PlayQueue;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
+    public static final String EXTRA_PLAY_QUEUE = "play_queue";
     private LibraryFragment libraryFragment;
     private String libraryTag="LIBRARY";
     private FragmentSwitcher mainFragment;

@@ -1,4 +1,4 @@
-package teefourteen.distroplayer;
+package teefourteen.glideplayer;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;

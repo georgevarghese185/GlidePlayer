@@ -1,4 +1,4 @@
-package teefourteen.distroplayer;
+package teefourteen.glideplayer.fragments;
 
 import android.Manifest;
 import android.content.Context;
@@ -15,9 +15,11 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 import java.util.ArrayList;
 
-import teefourteen.distroplayer.activities.PlayerActivity;
-import teefourteen.distroplayer.music.*;
-import teefourteen.distroplayer.music.adapters.TrackAdapter;
+import teefourteen.glideplayer.R;
+import teefourteen.glideplayer.activities.MainActivity;
+import teefourteen.glideplayer.activities.PlayerActivity;
+import teefourteen.glideplayer.music.*;
+import teefourteen.glideplayer.music.adapters.TrackAdapter;
 
 
 ///**
@@ -28,7 +30,6 @@ import teefourteen.distroplayer.music.adapters.TrackAdapter;
 // */
 public class LibraryFragment extends Fragment {
     ArrayList<Song> songLibrary;
-    public static final String EXTRA_PLAY_QUEUE = "play_queue";
     //private OnFragmentInteractionListener mListener;
 
     public LibraryFragment() {
@@ -105,7 +106,7 @@ public class LibraryFragment extends Fragment {
                         }
                         //end of temporary code
                         
-                        intent.putExtra(EXTRA_PLAY_QUEUE, new PlayQueue(albumList, 0));
+                        intent.putExtra(MainActivity.EXTRA_PLAY_QUEUE, new PlayQueue(albumList, 0));
                         startActivity(intent);
                     }
                 }
