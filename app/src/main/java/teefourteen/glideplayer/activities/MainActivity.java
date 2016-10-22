@@ -27,7 +27,6 @@ public class MainActivity extends AppCompatActivity
     private String songsTag ="SONGS";
     private FragmentSwitcher mainFragment;
     public static PlayQueue playQueue = null;
-    final private int REQUEST_READ_EXTERNAL_STORAGE = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,7 +47,7 @@ public class MainActivity extends AppCompatActivity
 
         mainFragment = new FragmentSwitcher(getSupportFragmentManager(), R.id.main_container);
         songsFragment = new SongsFragment();
-        checkPermissions();
+
         mainFragment.switchTo(songsFragment, songsTag);
     }
 
@@ -99,25 +98,5 @@ public class MainActivity extends AppCompatActivity
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
-    }
-
-    private boolean checkPermissions() {
-        if(ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
-                != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
-                    REQUEST_READ_EXTERNAL_STORAGE);
-            return false;
-        }
-        else
-            return true;
-    }
-
-    @Override
-    //TODO: fix the multiple permission dialogs and crashing issue on API23
-    public void onRequestPermissionsResult(int requestCode, String permissions[],
-                                           int[] grantResults) {
-        if(requestCode==REQUEST_READ_EXTERNAL_STORAGE && grantResults.length>0
-                && grantResults[0]==PackageManager.PERMISSION_GRANTED)
-            songsFragment.updateLibrary();
     }
 }

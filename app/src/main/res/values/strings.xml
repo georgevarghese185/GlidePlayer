@@ -10,4 +10,8 @@
     <string name="track_artist">Unknown Artist</string>
     <string name="track_title">Song Title</string>
     <string name="track_album">Unknown Album</string>
+    <string name="alert_permissions_message">You have not granted storage read permission
+    to GlidePlayer! This permission is required for GlidePlayer to access songs on your device.
+    If you would like to grant permission to the app, click Okay. To exit, click Cancel.</string>
+    <string name="album_art_description">placeHolder for no album art</string>
 </resources>
