@@ -1,13 +1,11 @@
 package teefourteen.glideplayer.fragments;
 
-import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.net.Uri;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.support.v4.content.ContextCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,52 +16,30 @@ import java.util.ArrayList;
 import teefourteen.glideplayer.R;
 import teefourteen.glideplayer.activities.MainActivity;
 import teefourteen.glideplayer.activities.PlayerActivity;
+import teefourteen.glideplayer.databases.library.LibraryHelper;
+import teefourteen.glideplayer.databases.library.SongTable;
 import teefourteen.glideplayer.music.*;
 import teefourteen.glideplayer.music.adapters.TrackAdapter;
 
+import static teefourteen.glideplayer.activities.MainActivity.libraryDb;
 
-///**
-// * A simple {@link Fragment} subclass.
-// * Activities that contain this fragment must implement the
-// * {@link SongsFragment.OnFragmentInteractionListener} interface
-// * to handle interaction events.
-// */
 public class SongsFragment extends Fragment {
-    ArrayList<Song> songLibrary;
-    //private OnFragmentInteractionListener mListener;
 
-    public SongsFragment() {
-        // Required empty public constructor
-    }
 
+    public SongsFragment() {}
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_songs, container, false);
 
-        updateLibrary();
         updateTrackList((ListView) view.findViewById(R.id.trackList));
         return view;
-    }
-
-    // TO DO: Rename method, update argument and hook method into UI event
-    public void onButtonPressed(Uri uri) {
-//        if (mListener != null) {
-//            mListener.onFragmentInteraction(uri);
-//        }
     }
 
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-//        if (context instanceof OnFragmentInteractionListener) {
-//            mListener = (OnFragmentInteractionListener) context;
-//        } else {
-//            throw new RuntimeException(context.toString()
-//                    + " must implement OnFragmentInteractionListener");
-//        }
     }
 
     @Override
@@ -74,23 +50,22 @@ public class SongsFragment extends Fragment {
     @Override
     public void onDetach() {
         super.onDetach();
-//        mListener = null;
-    }
-
-    public void updateLibrary() {
-        if(ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.READ_EXTERNAL_STORAGE)
-                != PackageManager.PERMISSION_GRANTED)
-            return;
-
-        songLibrary = Song.getSongArrayList(getContext().getContentResolver());
     }
 
     public boolean updateTrackList(ListView trackList) {
-        if(songLibrary==null)
-            return false;
-        TrackAdapter trackAdapter = new TrackAdapter(getContext(),R.layout.track, songLibrary);
-        trackList.setAdapter(trackAdapter);
+        //TODO: Move this work to SplashActivity. But think about it first
+        if(libraryDb==null) {
+            LibraryHelper libraryHelper = new LibraryHelper(getActivity());
+            libraryDb = libraryHelper.getReadableDatabase();
+        }
 
+        Cursor trackCursor = libraryDb.query(false, SongTable.TABLE_NAME,
+                new String[]{SongTable._ID, SongTable.FILE_PATH, SongTable.TITLE, SongTable.ALBUM,
+                        SongTable.ALBUM_ID, SongTable.ARTIST, SongTable.ARTIST_ID,
+                        SongTable.DURATION},null,null,null,null,SongTable.TITLE,null);
+
+        final TrackAdapter trackAdapter = new TrackAdapter(getActivity(), trackCursor);
+        trackList.setAdapter(trackAdapter);
         trackList.setOnItemClickListener(
                 new AdapterView.OnItemClickListener() {
                     @Override
@@ -98,14 +73,21 @@ public class SongsFragment extends Fragment {
                         Song song = (Song) parent.getItemAtPosition(position);
                         Intent intent = new Intent(getActivity(), PlayerActivity.class);
 
+                        String[] args = {SongTable.ALBUM_ID, String.valueOf(song.getAlbumId())};
+
+                        Cursor trackCursor = libraryDb.query(false, SongTable.TABLE_NAME,
+                                new String[]{SongTable._ID, SongTable.FILE_PATH, SongTable.TITLE, SongTable.ALBUM,
+                                        SongTable.ALBUM_ID, SongTable.ARTIST, SongTable.ARTIST_ID,
+                                        SongTable.DURATION}, SongTable.ALBUM_ID+"=?", new String[]{String.valueOf(song.getAlbumId())},
+                                null, null, SongTable.TITLE, null);
                         //Temporary multi-item queue playback testing
                         ArrayList<Song> albumList = new ArrayList<Song>();
-                        for(Song s : songLibrary) {
-                            if (s.getAlbumId()==song.getAlbumId())
-                                albumList.add(s);
-                        }
+                        trackCursor.moveToFirst();
+                        do {
+                            albumList.add(Song.toSong(trackCursor));
+                        }while(trackCursor.moveToNext());
                         //end of temporary code
-                        
+
                         intent.putExtra(MainActivity.EXTRA_PLAY_QUEUE, new PlayQueue(albumList, 0));
                         startActivity(intent);
                     }
@@ -113,19 +95,4 @@ public class SongsFragment extends Fragment {
         );
         return true;
     }
-
-    /**
-     * This interface must be implemented by activities that contain this
-     * fragment to allow an interaction in this fragment to be communicated
-     * to the activity and potentially other fragments contained in that
-     * activity.
-     * <p/>
-     * See the Android Training lesson <a href=
-     * "http://developer.android.com/training/basics/fragments/communicating.html"
-     * >Communicating with Other Fragments</a> for more information.
-     */
-//    public interface OnFragmentInteractionListener {
-//        // TO DO: Update argument type and name
-//        void onFragmentInteraction(Uri uri);
-//    }
 }

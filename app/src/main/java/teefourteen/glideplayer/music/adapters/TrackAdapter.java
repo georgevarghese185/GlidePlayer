@@ -1,45 +1,47 @@
 package teefourteen.glideplayer.music.adapters;
 
 import android.content.Context;
-import android.support.annotation.LayoutRes;
+import android.database.Cursor;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
+import android.widget.CursorAdapter;
 import android.widget.TextView;
-import java.util.ArrayList;
+
 import teefourteen.glideplayer.R;
+import teefourteen.glideplayer.databases.library.SongTable;
 import teefourteen.glideplayer.music.Song;
 
 /**
  * Created by george on 14/10/16.
  */
-public class TrackAdapter extends ArrayAdapter<Song>{
-
-    private @LayoutRes int layoutResource;
-
-    public TrackAdapter(Context context, @LayoutRes int resource, ArrayList<Song> songList) {
-        super(context, resource, songList);
-        layoutResource = resource;
+public class TrackAdapter extends CursorAdapter {
+    public TrackAdapter(Context context, Cursor cursor) {
+        super(context, cursor, 0);
     }
 
     @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
-        Song song = super.getItem(position);
-        View trackView;
+    public View newView(Context context, Cursor cursor, ViewGroup parent) {
+        return LayoutInflater.from(context).inflate(R.layout.track, parent, false);
+    }
 
-        LayoutInflater trackLayoutInflater = LayoutInflater.from(getContext());
-        trackView = trackLayoutInflater.inflate(layoutResource, parent, false);
+    @Override
+    public void bindView(View view, Context context, Cursor cursor) {
+        TextView trackArtist = (TextView) view.findViewById(R.id.trackArtist);
+        TextView trackAlbum = (TextView) view.findViewById(R.id.trackAlbum);
+        TextView trackTitle = (TextView) view.findViewById(R.id.trackTitle);
 
-        TextView textView = (TextView) trackView.findViewById(R.id.trackArtist);
-        textView.setText(song.getArtist());
+        trackAlbum.setText(cursor.getString(cursor.getColumnIndex(SongTable.ALBUM)));
+        trackArtist.setText(cursor.getString(cursor.getColumnIndex(SongTable.ARTIST)));
+        trackTitle.setText(cursor.getString(cursor.getColumnIndex(SongTable.TITLE)));
+    }
 
-        textView = (TextView) trackView.findViewById(R.id.trackTitle);
-        textView.setText(song.getTitle());
-
-        textView = (TextView) trackView.findViewById(R.id.trackAlbum);
-        textView.setText(song.getAlbum());
-
-        return trackView;
+    @Override
+    public Object getItem(int position) {
+        Cursor cursor = (Cursor) super.getItem(position);
+        if(cursor != null) {
+            return Song.toSong(cursor);
+        }
+        else return null;
     }
 }

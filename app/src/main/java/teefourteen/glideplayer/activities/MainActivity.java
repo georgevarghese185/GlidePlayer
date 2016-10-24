@@ -2,6 +2,7 @@ package teefourteen.glideplayer.activities;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.ActivityCompat;
@@ -27,6 +28,7 @@ public class MainActivity extends AppCompatActivity
     private String songsTag ="SONGS";
     private FragmentSwitcher mainFragment;
     public static PlayQueue playQueue = null;
+    public static SQLiteDatabase libraryDb;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

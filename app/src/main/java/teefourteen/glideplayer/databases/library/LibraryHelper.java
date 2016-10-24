@@ -1,9 +1,9 @@
 package teefourteen.glideplayer.databases.library;
 
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import teefourteen.glideplayer.databases.library.LibraryContract.SongTable;
 
 /**
  * Created by george on 21/10/16.
@@ -21,21 +21,21 @@ public class LibraryHelper extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase db) {
         String createQuery = "CREATE TABLE " + SongTable.TABLE_NAME + " ("
                 + SongTable._ID + " INTEGER PRIMARY KEY,"
-                + SongTable.COLUMN_NAME_ALBUM + " TEXT,"
-                + SongTable.COLUMN_NAME_ALBUM_ID + " INTEGER,"
-                + SongTable.COLUMN_NAME_ALBUM_KEY + " TEXT,"
-                + SongTable.COLUMN_NAME_ARTIST + " TEXT,"
-                + SongTable.COLUMN_NAME_ARTIST_ID + " INTEGER,"
-                + SongTable.COLUMN_NAME_ARTIST_KEY + " TEXT,"
-                + SongTable.COLUMN_NAME_DATE_ADDED + " INTEGER,"
-                + SongTable.COLUMN_NAME_DURATION + " INTEGER,"
-                + SongTable.COLUMN_NAME_FILE_PATH + " TEXT,"
-                + SongTable.COLUMN_NAME_BOOKMARK + " INTEGER,"
-                + SongTable.COLUMN_NAME_SIZE + " INTEGER,"
-                + SongTable.COLUMN_NAME_TITLE + " TEXT,"
-                + SongTable.COLUMN_NAME_TITLE_KEY + " TEXT,"
-                + SongTable.COLUMN_NAME_TRACK_NUMBER + " INTEGER,"
-                + SongTable.COLUMN_NAME_YEAR + " INTEGER"
+                + SongTable.ALBUM + " TEXT,"
+                + SongTable.ALBUM_ID + " INTEGER,"
+                + SongTable.ALBUM_KEY + " TEXT,"
+                + SongTable.ARTIST + " TEXT,"
+                + SongTable.ARTIST_ID + " INTEGER,"
+                + SongTable.ARTIST_KEY + " TEXT,"
+                + SongTable.DATE_ADDED + " INTEGER,"
+                + SongTable.DURATION + " INTEGER,"
+                + SongTable.FILE_PATH + " TEXT,"
+                + SongTable.BOOKMARK + " INTEGER,"
+                + SongTable.SIZE + " INTEGER,"
+                + SongTable.TITLE + " TEXT,"
+                + SongTable.TITLE_KEY + " TEXT,"
+                + SongTable.TRACK_NUMBER + " INTEGER,"
+                + SongTable.YEAR + " INTEGER"
                 + ")";
 
         db.execSQL(createQuery);

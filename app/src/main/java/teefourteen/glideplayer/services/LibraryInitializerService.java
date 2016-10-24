@@ -10,11 +10,9 @@ import android.net.Uri;
 import android.provider.MediaStore;
 import android.support.v4.content.LocalBroadcastManager;
 
-import teefourteen.glideplayer.NeedPermissionsDialog;
-import teefourteen.glideplayer.activities.MainActivity;
 import teefourteen.glideplayer.activities.SplashActivity;
-import teefourteen.glideplayer.databases.library.LibraryContract;
 import teefourteen.glideplayer.databases.library.LibraryHelper;
+import teefourteen.glideplayer.databases.library.SongTable;
 
 /**
  * Created by george on 21/10/16.
@@ -27,9 +25,9 @@ public class LibraryInitializerService extends IntentService {
 
     @Override
     protected void onHandleIntent(final Intent intent) {
-        SQLiteDatabase libraryDb =
-                new LibraryHelper(getApplicationContext()).getWritableDatabase();
-        libraryDb.delete(LibraryContract.SongTable.TABLE_NAME, null, null);
+        LibraryHelper libraryHelper = new LibraryHelper(getApplicationContext());
+        SQLiteDatabase libraryDb = libraryHelper.getWritableDatabase();
+        libraryDb.delete(SongTable.TABLE_NAME, null, null);
 
         Cursor mediaStoreCursor = getMediaStoreCursor();
         if (mediaStoreCursor == null)
@@ -39,7 +37,7 @@ public class LibraryInitializerService extends IntentService {
             mediaStoreCursor.moveToFirst();
             do {
                 ContentValues values = putMediaStoreValues(mediaStoreCursor);
-                libraryDb.insert(LibraryContract.SongTable.TABLE_NAME, null, values);
+                libraryDb.insert(SongTable.TABLE_NAME, null, values);
             } while (mediaStoreCursor.moveToNext());
         }
         catch (NullPointerException e) {
@@ -78,21 +76,21 @@ public class LibraryInitializerService extends IntentService {
 
     private ContentValues putMediaStoreValues(Cursor mediaStoreCursor) {
         ContentValues values = new ContentValues();
-        values.put(LibraryContract.SongTable.COLUMN_NAME_ALBUM, mediaStoreCursor.getString(mediaStoreCursor.getColumnIndex(MediaStore.Audio.AudioColumns.ALBUM)));
-        values.put(LibraryContract.SongTable.COLUMN_NAME_ALBUM_ID, mediaStoreCursor.getLong(mediaStoreCursor.getColumnIndex(MediaStore.Audio.AudioColumns.ALBUM_ID)));
-        values.put(LibraryContract.SongTable.COLUMN_NAME_ALBUM_KEY, mediaStoreCursor.getString(mediaStoreCursor.getColumnIndex(MediaStore.Audio.AudioColumns.ALBUM_KEY)));
-        values.put(LibraryContract.SongTable.COLUMN_NAME_ARTIST, mediaStoreCursor.getString(mediaStoreCursor.getColumnIndex(MediaStore.Audio.AudioColumns.ARTIST)));
-        values.put(LibraryContract.SongTable.COLUMN_NAME_ARTIST_ID, mediaStoreCursor.getLong(mediaStoreCursor.getColumnIndex(MediaStore.Audio.AudioColumns.ARTIST_ID)));
-        values.put(LibraryContract.SongTable.COLUMN_NAME_ARTIST_KEY, mediaStoreCursor.getString(mediaStoreCursor.getColumnIndex(MediaStore.Audio.AudioColumns.ARTIST_KEY)));
-        values.put(LibraryContract.SongTable.COLUMN_NAME_DATE_ADDED, mediaStoreCursor.getLong(mediaStoreCursor.getColumnIndex(MediaStore.Audio.AudioColumns.DATE_ADDED)));
-        values.put(LibraryContract.SongTable.COLUMN_NAME_DURATION, mediaStoreCursor.getLong(mediaStoreCursor.getColumnIndex(MediaStore.Audio.AudioColumns.DURATION)));
-        values.put(LibraryContract.SongTable.COLUMN_NAME_FILE_PATH, mediaStoreCursor.getString(mediaStoreCursor.getColumnIndex(MediaStore.Audio.AudioColumns.DATA)));
-        values.put(LibraryContract.SongTable.COLUMN_NAME_BOOKMARK, mediaStoreCursor.getLong(mediaStoreCursor.getColumnIndex(MediaStore.Audio.AudioColumns.BOOKMARK)));
-        values.put(LibraryContract.SongTable.COLUMN_NAME_SIZE, mediaStoreCursor.getLong(mediaStoreCursor.getColumnIndex(MediaStore.Audio.AudioColumns.SIZE)));
-        values.put(LibraryContract.SongTable.COLUMN_NAME_TITLE, mediaStoreCursor.getString(mediaStoreCursor.getColumnIndex(MediaStore.Audio.AudioColumns.TITLE)));
-        values.put(LibraryContract.SongTable.COLUMN_NAME_TITLE_KEY, mediaStoreCursor.getString(mediaStoreCursor.getColumnIndex(MediaStore.Audio.AudioColumns.TITLE_KEY)));
-        values.put(LibraryContract.SongTable.COLUMN_NAME_TRACK_NUMBER, mediaStoreCursor.getInt(mediaStoreCursor.getColumnIndex(MediaStore.Audio.AudioColumns.TRACK)));
-        values.put(LibraryContract.SongTable.COLUMN_NAME_YEAR, mediaStoreCursor.getInt(mediaStoreCursor.getColumnIndex(MediaStore.Audio.AudioColumns.YEAR)));
+        values.put(SongTable.ALBUM, mediaStoreCursor.getString(mediaStoreCursor.getColumnIndex(MediaStore.Audio.AudioColumns.ALBUM)));
+        values.put(SongTable.ALBUM_ID, mediaStoreCursor.getLong(mediaStoreCursor.getColumnIndex(MediaStore.Audio.AudioColumns.ALBUM_ID)));
+        values.put(SongTable.ALBUM_KEY, mediaStoreCursor.getString(mediaStoreCursor.getColumnIndex(MediaStore.Audio.AudioColumns.ALBUM_KEY)));
+        values.put(SongTable.ARTIST, mediaStoreCursor.getString(mediaStoreCursor.getColumnIndex(MediaStore.Audio.AudioColumns.ARTIST)));
+        values.put(SongTable.ARTIST_ID, mediaStoreCursor.getLong(mediaStoreCursor.getColumnIndex(MediaStore.Audio.AudioColumns.ARTIST_ID)));
+        values.put(SongTable.ARTIST_KEY, mediaStoreCursor.getString(mediaStoreCursor.getColumnIndex(MediaStore.Audio.AudioColumns.ARTIST_KEY)));
+        values.put(SongTable.DATE_ADDED, mediaStoreCursor.getLong(mediaStoreCursor.getColumnIndex(MediaStore.Audio.AudioColumns.DATE_ADDED)));
+        values.put(SongTable.DURATION, mediaStoreCursor.getLong(mediaStoreCursor.getColumnIndex(MediaStore.Audio.AudioColumns.DURATION)));
+        values.put(SongTable.FILE_PATH, mediaStoreCursor.getString(mediaStoreCursor.getColumnIndex(MediaStore.Audio.AudioColumns.DATA)));
+        values.put(SongTable.BOOKMARK, mediaStoreCursor.getLong(mediaStoreCursor.getColumnIndex(MediaStore.Audio.AudioColumns.BOOKMARK)));
+        values.put(SongTable.SIZE, mediaStoreCursor.getLong(mediaStoreCursor.getColumnIndex(MediaStore.Audio.AudioColumns.SIZE)));
+        values.put(SongTable.TITLE, mediaStoreCursor.getString(mediaStoreCursor.getColumnIndex(MediaStore.Audio.AudioColumns.TITLE)));
+        values.put(SongTable.TITLE_KEY, mediaStoreCursor.getString(mediaStoreCursor.getColumnIndex(MediaStore.Audio.AudioColumns.TITLE_KEY)));
+        values.put(SongTable.TRACK_NUMBER, mediaStoreCursor.getInt(mediaStoreCursor.getColumnIndex(MediaStore.Audio.AudioColumns.TRACK)));
+        values.put(SongTable.YEAR, mediaStoreCursor.getInt(mediaStoreCursor.getColumnIndex(MediaStore.Audio.AudioColumns.YEAR)));
         return values;
     }
 }

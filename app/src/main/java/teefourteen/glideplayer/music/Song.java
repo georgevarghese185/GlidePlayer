@@ -8,6 +8,8 @@ import android.os.Parcelable;
 import android.provider.MediaStore;
 import java.util.ArrayList;
 
+import teefourteen.glideplayer.databases.library.SongTable;
+
 /**
  * Created by george on 12/10/16.
  */
@@ -19,8 +21,9 @@ public class Song implements Parcelable{
     private long albumId;
     private String artist;
     private long artistId;
+    private long duration;
 
-    public Song(long songId, String filePath, String title, String album, long albumId, String artist, long artistId) {
+    public Song(long songId, String filePath, String title, String album, long albumId, String artist, long artistId, long duration) {
         this.songId = songId;
         this.filePath = filePath;
         this.title = title;
@@ -28,6 +31,7 @@ public class Song implements Parcelable{
         this.albumId = albumId;
         this.artist = artist;
         this.artistId = artistId;
+        this.duration = duration;
     }
 
     public long getSongId() {
@@ -50,6 +54,10 @@ public class Song implements Parcelable{
         return artistId;
     }
 
+    public long getDuration() {
+        return duration;
+    }
+
     public String getFilePath() {
         return filePath;
     }
@@ -58,55 +66,11 @@ public class Song implements Parcelable{
         return title;
     }
 
-    static public ArrayList<Song> getSongArrayList(ContentResolver contentResolver) {
-        ArrayList<Song> songList = new ArrayList<>();
-
-        Uri musicUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
-        String[] projection = {
-                MediaStore.Audio.AudioColumns._ID, MediaStore.Audio.AudioColumns.DATA,
-                MediaStore.Audio.AudioColumns.TITLE,
-                MediaStore.Audio.AudioColumns.ALBUM, MediaStore.Audio.AudioColumns.ALBUM_ID,
-                MediaStore.Audio.AudioColumns.ARTIST, MediaStore.Audio.AudioColumns.ARTIST_ID
-        };
-        Cursor musicCursor = contentResolver.query(musicUri, projection, "IS_MUSIC != 0", null, null);
-        if(musicCursor==null)
-            return null;
-        else if(musicCursor.moveToFirst()) {
-            do {
-                long songId = musicCursor.getLong(musicCursor.getColumnIndex(MediaStore.Audio.AudioColumns._ID));
-                String filePath = musicCursor.getString(musicCursor.getColumnIndex(MediaStore.Audio.AudioColumns.DATA));
-                String title = musicCursor.getString(musicCursor.getColumnIndex(MediaStore.Audio.AudioColumns.TITLE));
-                String album = musicCursor.getString(musicCursor.getColumnIndex(MediaStore.Audio.AudioColumns.ALBUM));
-                long albumId = musicCursor.getLong(musicCursor.getColumnIndex(MediaStore.Audio.AudioColumns.ALBUM_ID));
-                String artist = musicCursor.getString(musicCursor.getColumnIndex(MediaStore.Audio.AudioColumns.ARTIST));
-                long artistId = musicCursor.getLong(musicCursor.getColumnIndex(MediaStore.Audio.AudioColumns.ARTIST_ID));
-
-                if(album.equals("<unknown>")) album = "Unknown Album";
-                if(artist.equals("<unknown>")) artist = "Unknown Artist";
-
-                songList.add(new Song(songId, filePath, title, album, albumId, artist, artistId));
-            }while (musicCursor.moveToNext());
-            musicCursor.close();
-        }
-        else {
-            musicCursor.close();
-            return null;
-        }
-
-        return songList;
-    }
-
     @Override
     public int describeContents() {
         return 0;
     }
-//    private long songId;
-//    private String filePath;
-//    private String title;
-//    private String album;
-//    private long albumId;
-//    private String artist;
-//    private long artistId;
+
     @Override
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeLong(songId);
@@ -116,6 +80,7 @@ public class Song implements Parcelable{
         dest.writeLong(albumId);
         dest.writeString(artist);
         dest.writeLong(artistId);
+        dest.writeLong(duration);
     }
 
     static public Parcelable.Creator CREATOR = new Parcelable.Creator<Song>() {
@@ -128,7 +93,8 @@ public class Song implements Parcelable{
             long albumId = source.readLong();
             String artist = source.readString();
             long artistId = source.readLong();
-            return new Song(songId, filePath, title, album, albumId, artist, artistId);
+            long duration = source.readLong();
+            return new Song(songId, filePath, title, album, albumId, artist, artistId,duration);
         }
 
         @Override
@@ -136,4 +102,17 @@ public class Song implements Parcelable{
             return new Song[size];
         }
     };
+
+    static public Song toSong(Cursor cursor) {
+        return new Song(
+                cursor.getLong(cursor.getColumnIndex(SongTable._ID)),
+                cursor.getString(cursor.getColumnIndex(SongTable.FILE_PATH)),
+                cursor.getString(cursor.getColumnIndex(SongTable.TITLE)),
+                cursor.getString(cursor.getColumnIndex(SongTable.ALBUM)),
+                cursor.getLong(cursor.getColumnIndex(SongTable.ALBUM_ID)),
+                cursor.getString(cursor.getColumnIndex(SongTable.ARTIST)),
+                cursor.getLong(cursor.getColumnIndex(SongTable.ARTIST_ID)),
+                cursor.getLong(cursor.getColumnIndex(SongTable.DURATION)));
+    }
+
 }
