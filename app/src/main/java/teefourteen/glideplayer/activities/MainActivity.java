@@ -1,12 +1,8 @@
 package teefourteen.glideplayer.activities;
 
-import android.Manifest;
-import android.content.pm.PackageManager;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -14,9 +10,10 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.TabHost;
 
 import teefourteen.glideplayer.FragmentSwitcher;
-import teefourteen.glideplayer.fragments.SongsFragment;
+import teefourteen.glideplayer.fragments.LibraryFragment;
 import teefourteen.glideplayer.R;
 import teefourteen.glideplayer.music.PlayQueue;
 
@@ -24,11 +21,12 @@ public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
     public static final String EXTRA_PLAY_QUEUE = "play_queue";
-    private SongsFragment songsFragment;
-    private String songsTag ="SONGS";
-    private FragmentSwitcher mainFragment;
+    private LibraryFragment libraryFragment;
+    private String LIBRARY_FRAGMENT_TAG ="SONGS";
+    private FragmentSwitcher mainFragmentSwitcher;
     public static PlayQueue playQueue = null;
     public static SQLiteDatabase libraryDb;
+    private TabHost tabHost;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,10 +45,10 @@ public class MainActivity extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
-        mainFragment = new FragmentSwitcher(getSupportFragmentManager(), R.id.main_container);
-        songsFragment = new SongsFragment();
+        mainFragmentSwitcher = new FragmentSwitcher(getSupportFragmentManager(), R.id.main_container);
+        libraryFragment = new LibraryFragment();
 
-        mainFragment.switchTo(songsFragment, songsTag);
+        mainFragmentSwitcher.switchTo(libraryFragment, LIBRARY_FRAGMENT_TAG);
     }
 
     @Override

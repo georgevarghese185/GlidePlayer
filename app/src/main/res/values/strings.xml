@@ -14,4 +14,7 @@
     to GlidePlayer! This permission is required for GlidePlayer to access songs on your device.
     If you would like to grant permission to the app, click Okay. To exit, click Cancel.</string>
     <string name="album_art_description">placeHolder for no album art</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

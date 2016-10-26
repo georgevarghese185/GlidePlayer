@@ -1,5 +1,6 @@
 package teefourteen.glideplayer.music;
 
+import android.database.Cursor;
 import android.os.Parcel;
 import android.os.Parcelable;
 import java.util.ArrayList;
@@ -23,25 +24,32 @@ public class PlayQueue implements Parcelable {
         playQueue.add(song);
         currentPlaying = 0;
     }
+    /** Initializes play queue from cursor and sets the initially pointed song as the current*/
+    public PlayQueue(Cursor cursor) {
+        playQueue = new ArrayList<Song>();
+        currentPlaying = cursor.getPosition();
+        cursor.moveToFirst();
+        do {
+            playQueue.add(Song.toSong(cursor));
+        } while (cursor.moveToNext());
+    }
 
     public Song getCurrentPlaying() {
         return playQueue.get(currentPlaying);
     }
 
-    public Song getSongAt(int index) {
-        if(currentPlaying>=0 && currentPlaying<=playQueue.size())
-            return playQueue.get(index);
-        else
-            return null;
+
+    public Song changeTrack(int index) {
+        return playQueue.get(setCurrentPlaying(index));
     }
 
-    synchronized public Song setCurrentPlaying(int index) {
+    synchronized public int setCurrentPlaying(int index) {
         if(index>=0 && index<=playQueue.size()) {
             currentPlaying = index;
-            return playQueue.get(currentPlaying);
+            return index;
         }
         else
-            return null;
+            return 0;
     }
 
     synchronized public Song next() {

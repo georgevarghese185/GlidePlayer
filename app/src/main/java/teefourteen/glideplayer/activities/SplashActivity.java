@@ -15,6 +15,7 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.webkit.WebView;
+import android.webkit.WebViewClient;
 
 import teefourteen.glideplayer.NeedPermissionsDialog;
 import teefourteen.glideplayer.R;
@@ -52,9 +53,14 @@ public class SplashActivity extends AppCompatActivity {
         findViewById(R.id.splashContainer).getWidth();
         WebView webView = (WebView) findViewById(R.id.splashWebView);
         webView.loadUrl("file:///android_asset/splash.html");
-
-       if(readPermissionGranted())
-           startService(new Intent(this, LibraryInitializerService.class));
+        webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                if(readPermissionGranted())
+                    startService(new Intent(getApplicationContext(), LibraryInitializerService.class));
+                super.onPageFinished(view, url);
+            }
+        });
     }
 
     private boolean readPermissionGranted() {

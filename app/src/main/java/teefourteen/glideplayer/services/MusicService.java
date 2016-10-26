@@ -21,7 +21,7 @@ public class MusicService extends Service {
     private PlayerHandler playerHandler;
     private static final String PLAYER_HANDLER_THREAD_NAME = "player_handler_thread";
     public enum Command {
-        PLAY_SONG, PLAY_NEXT, PLAY_PREV,
+        CHANGE_TRACK, PLAY_NEXT, PLAY_PREV,
         PLAY_NEW_QUEUE, PAUSE, RESUME
     }
     public static final int SONG_STARTED = 1;
@@ -36,11 +36,10 @@ public class MusicService extends Service {
             super.handleMessage(msg);
         }
 
-        public void playSong(final int index) {
+        public void playSong() {
             //PUT CODE FOR CHECKING IF THREAD IS ALREADY RUNNING AND PLAYING
             player.reset();
-            playQueue.setCurrentPlaying(index);
-            player.playSong(playQueue.getSongAt(index));
+            player.playSong(playQueue.getCurrentPlaying());
             notifySongStarted();
         }
 
@@ -95,9 +94,10 @@ public class MusicService extends Service {
             @Override
             public void run() {
                 switch (command) {
-                    case PLAY_SONG:
+                    case CHANGE_TRACK:
                         int songIndex = intent.getIntExtra(EXTRA_SONG_INDEX, 0);
-                        playerHandler.playSong(songIndex);
+                        playQueue.changeTrack(songIndex);
+                        playerHandler.playSong();
                         break;
 
                     case PLAY_NEXT:
@@ -110,7 +110,7 @@ public class MusicService extends Service {
 
                     case PLAY_NEW_QUEUE:
                         playQueue = intent.getParcelableExtra(EXTRA_PLAY_QUEUE);
-                        playerHandler.playSong(0);
+                        playerHandler.playSong();
                         break;
 
                     case PAUSE:

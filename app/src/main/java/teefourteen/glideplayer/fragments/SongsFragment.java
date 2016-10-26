@@ -52,7 +52,7 @@ public class SongsFragment extends Fragment {
         super.onDetach();
     }
 
-    public boolean updateTrackList(ListView trackList) {
+    public boolean updateTrackList(final ListView trackList) {
         //TODO: Move this work to SplashActivity. But think about it first
         if(libraryDb==null) {
             LibraryHelper libraryHelper = new LibraryHelper(getActivity());
@@ -73,22 +73,15 @@ public class SongsFragment extends Fragment {
                         Song song = (Song) parent.getItemAtPosition(position);
                         Intent intent = new Intent(getActivity(), PlayerActivity.class);
 
-                        String[] args = {SongTable.ALBUM_ID, String.valueOf(song.getAlbumId())};
-
-                        Cursor trackCursor = libraryDb.query(false, SongTable.TABLE_NAME,
-                                new String[]{SongTable._ID, SongTable.FILE_PATH, SongTable.TITLE, SongTable.ALBUM,
-                                        SongTable.ALBUM_ID, SongTable.ARTIST, SongTable.ARTIST_ID,
-                                        SongTable.DURATION}, SongTable.ALBUM_ID+"=?", new String[]{String.valueOf(song.getAlbumId())},
-                                null, null, SongTable.TITLE, null);
+                        Cursor trackCursor = LibraryHelper.getAlbumSongs(song.getAlbumId());
                         //Temporary multi-item queue playback testing
-                        ArrayList<Song> albumList = new ArrayList<Song>();
                         trackCursor.moveToFirst();
-                        do {
-                            albumList.add(Song.toSong(trackCursor));
-                        }while(trackCursor.moveToNext());
-                        //end of temporary code
-
-                        intent.putExtra(MainActivity.EXTRA_PLAY_QUEUE, new PlayQueue(albumList, 0));
+                        while(trackCursor.getLong(trackCursor.getColumnIndex(SongTable._ID))
+                                != song.getSongId()) {
+                            trackCursor.moveToNext();
+                        }
+                        intent.putExtra(MainActivity.EXTRA_PLAY_QUEUE, new PlayQueue(trackCursor));
+                        trackCursor.close();
                         startActivity(intent);
                     }
                 }
