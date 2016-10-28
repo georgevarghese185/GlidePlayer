@@ -1,20 +1,25 @@
 package teefourteen.glideplayer.activities;
 
 import android.content.Intent;
+import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import teefourteen.glideplayer.R;
+import teefourteen.glideplayer.music.Song;
 import teefourteen.glideplayer.services.MusicService;
 import static teefourteen.glideplayer.activities.MainActivity.playQueue;
 
 public class PlayerActivity extends AppCompatActivity {
     public static PlayerActivityHandler playerActivityHandler;
+    private ImageView albumArtView;
 
     public class PlayerActivityHandler extends Handler {
         PlayerActivityHandler() { super(getMainLooper());}
@@ -24,6 +29,13 @@ public class PlayerActivity extends AppCompatActivity {
             switch (msg.arg1) {
                 case MusicService.SONG_STARTED:
                     showPause();
+                    break;
+                case MusicService.PLAYBACK_FAILED:
+                    Toast toast = new Toast(getApplicationContext());
+                    toast.setText("Unable to play " + playQueue.getCurrentPlaying().getTitle());
+                    toast.setDuration(Toast.LENGTH_LONG);
+                    toast.show();
+                    break;
             }
         }
     }
@@ -42,6 +54,8 @@ public class PlayerActivity extends AppCompatActivity {
                 play(v);
             }
         });
+        albumArtView = (ImageView) findViewById(R.id.playerAlbumArt);
+        changeSongInfo(playQueue.getCurrentPlaying());
 
         intent = new Intent(this, MusicService.class);
         intent.putExtra(MusicService.EXTRA_SONG_COMMAND, MusicService.Command.PLAY_NEW_QUEUE);
@@ -77,6 +91,7 @@ public class PlayerActivity extends AppCompatActivity {
 
     public void next(View view) {
         showPlay();
+        changeSongInfo(playQueue.getNext());
         Intent intent = new Intent(this, MusicService.class);
         intent.putExtra(MusicService.EXTRA_SONG_COMMAND, MusicService.Command.PLAY_NEXT);
         startService(intent);
@@ -84,6 +99,7 @@ public class PlayerActivity extends AppCompatActivity {
 
     public void prev(View view) {
         showPlay();
+        changeSongInfo(playQueue.getPrev());
         Intent intent = new Intent(this, MusicService.class);
         intent.putExtra(MusicService.EXTRA_SONG_COMMAND, MusicService.Command.PLAY_PREV);
         startService(intent);
@@ -110,13 +126,20 @@ public class PlayerActivity extends AppCompatActivity {
                 pause(v);
             }
         });
+    }
 
+    private void changeSongInfo(Song song) {
         TextView textView = (TextView)findViewById(R.id.playerTrackTitle);
-        textView.setText(playQueue.getCurrentPlaying().getTitle());
+        textView.setText(song.getTitle());
         textView = (TextView) findViewById(R.id.playerTrackAlbum);
-        textView.setText(playQueue.getCurrentPlaying().getAlbum());
+        textView.setText(song.getAlbum());
         textView = (TextView) findViewById(R.id.playerTrackArtist);
-        textView.setText(playQueue.getCurrentPlaying().getArtist());
+        textView.setText(song.getArtist());
+
+        String albumArt = song.getAlbumArt();
+        if(albumArt!=null)
+            albumArtView.setImageDrawable(Drawable.createFromPath(albumArt));
+        else albumArtView.setImageResource(R.drawable.record);
     }
 
 

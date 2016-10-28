@@ -8,11 +8,11 @@
     <ImageView
         android:layout_width="60dp"
         android:layout_height="60dp"
-        android:id="@+id/albumArt"
+        android:id="@+id/trackAlbumArt"
         android:contentDescription="@string/albumArt_description"
         android:layout_margin="5dp"
         android:layout_gravity="center_vertical"
-        android:src="@mipmap/record"
+        android:src="@drawable/record"
         android:clickable="false" />
 
     <LinearLayout

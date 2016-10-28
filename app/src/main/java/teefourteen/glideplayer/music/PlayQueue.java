@@ -61,6 +61,16 @@ public class PlayQueue implements Parcelable {
         }
     }
 
+    public Song getNext() {
+        if(currentPlaying == playQueue.size()-1) return playQueue.get(0);
+        else return playQueue.get(currentPlaying+1);
+    }
+
+    public Song getPrev() {
+        if(currentPlaying == 0) return playQueue.get(playQueue.size()-1);
+        return playQueue.get(currentPlaying-1);
+    }
+
     synchronized public Song prev() {
         if(currentPlaying>0)
             return playQueue.get(--currentPlaying);

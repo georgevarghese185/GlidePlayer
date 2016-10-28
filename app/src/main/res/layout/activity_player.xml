@@ -13,7 +13,7 @@
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="10dp"
-        android:src="@mipmap/record"
+        android:src="@drawable/record"
         android:contentDescription="@string/album_art_description"/>
 
     <TextView

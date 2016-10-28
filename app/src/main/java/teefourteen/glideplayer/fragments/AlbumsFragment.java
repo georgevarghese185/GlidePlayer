@@ -1,6 +1,8 @@
 package teefourteen.glideplayer.fragments;
 
 
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -10,7 +12,8 @@ import android.view.ViewGroup;
 import teefourteen.glideplayer.R;
 
 public class AlbumsFragment extends Fragment {
-
+    public static Cursor albumCursor;
+    public static SQLiteDatabase albumArtDb = null;
 
     public AlbumsFragment() {
         // Required empty public constructor

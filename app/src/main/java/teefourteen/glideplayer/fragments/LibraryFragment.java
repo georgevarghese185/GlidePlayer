@@ -10,6 +10,7 @@ import android.widget.TabHost;
 
 import teefourteen.glideplayer.FragmentSwitcher;
 import teefourteen.glideplayer.R;
+import teefourteen.glideplayer.databases.library.LibraryHelper;
 
 public class LibraryFragment extends Fragment {
     private TabHost tabHost;
@@ -50,5 +51,4 @@ public class LibraryFragment extends Fragment {
 
         return view;
     }
-
 }

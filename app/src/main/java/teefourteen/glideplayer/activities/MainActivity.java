@@ -25,8 +25,6 @@ public class MainActivity extends AppCompatActivity
     private String LIBRARY_FRAGMENT_TAG ="SONGS";
     private FragmentSwitcher mainFragmentSwitcher;
     public static PlayQueue playQueue = null;
-    public static SQLiteDatabase libraryDb;
-    private TabHost tabHost;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

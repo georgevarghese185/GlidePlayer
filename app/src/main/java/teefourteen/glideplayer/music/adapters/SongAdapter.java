@@ -2,21 +2,26 @@ package teefourteen.glideplayer.music.adapters;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.graphics.drawable.Drawable;
+import android.provider.MediaStore.Audio.Media;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CursorAdapter;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import teefourteen.glideplayer.R;
-import teefourteen.glideplayer.databases.library.SongTable;
+import teefourteen.glideplayer.databases.library.LibraryHelper;
+
+import teefourteen.glideplayer.fragments.AlbumsFragment;
 import teefourteen.glideplayer.music.Song;
 
 /**
  * Created by george on 14/10/16.
  */
-public class TrackAdapter extends CursorAdapter {
-    public TrackAdapter(Context context, Cursor cursor) {
+public class SongAdapter extends CursorAdapter {
+    public SongAdapter(Context context, Cursor cursor) {
         super(context, cursor, 0);
     }
 
@@ -30,11 +35,22 @@ public class TrackAdapter extends CursorAdapter {
         TextView trackArtist = (TextView) view.findViewById(R.id.trackArtist);
         TextView trackAlbum = (TextView) view.findViewById(R.id.trackAlbum);
         TextView trackTitle = (TextView) view.findViewById(R.id.trackTitle);
+        ImageView trackAlbumArt = (ImageView) view.findViewById(R.id.trackAlbumArt);
 
-        trackAlbum.setText(cursor.getString(cursor.getColumnIndex(SongTable.ALBUM)));
-        trackArtist.setText(cursor.getString(cursor.getColumnIndex(SongTable.ARTIST)));
-        trackTitle.setText(cursor.getString(cursor.getColumnIndex(SongTable.TITLE)));
-    }
+        trackAlbum.setText(LibraryHelper.getString(cursor,Media.ALBUM));
+        String string = LibraryHelper.getString(cursor,Media.ARTIST);
+        if(!string.equals("<unknown>"))
+            trackArtist.setText(string);
+        else trackArtist.setText(R.string.track_artist);
+        trackTitle.setText(LibraryHelper.getString(cursor,Media.TITLE));
+
+        long albumId = LibraryHelper.getLong(cursor, Media.ALBUM_ID);
+        Drawable albumArt = Drawable.createFromPath(
+                LibraryHelper.getAlbumArt(albumId, AlbumsFragment.albumArtDb));
+        if(albumArt!=null)
+            trackAlbumArt.setImageDrawable(albumArt);
+        else trackAlbumArt.setImageResource(R.drawable.record);
+}
 
     @Override
     public Object getItem(int position) {

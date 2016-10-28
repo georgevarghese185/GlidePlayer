@@ -6,8 +6,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
-import android.os.Handler;
-import android.os.HandlerThread;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -19,7 +17,7 @@ import android.webkit.WebViewClient;
 
 import teefourteen.glideplayer.NeedPermissionsDialog;
 import teefourteen.glideplayer.R;
-import teefourteen.glideplayer.services.LibraryInitializerService;
+import teefourteen.glideplayer.services.LibraryService;
 
 public class SplashActivity extends AppCompatActivity {
     public static final String LIBRARY_INIT_THREAD_NAME = "lib-init-thread";
@@ -57,7 +55,7 @@ public class SplashActivity extends AppCompatActivity {
             @Override
             public void onPageFinished(WebView view, String url) {
                 if(readPermissionGranted())
-                    startService(new Intent(getApplicationContext(), LibraryInitializerService.class));
+                    startService(new Intent(getApplicationContext(), LibraryService.class));
                 super.onPageFinished(view, url);
             }
         });
@@ -78,7 +76,7 @@ public class SplashActivity extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
             if(requestCode==REQUEST_READ_EXTERNAL_STORAGE && grantResults.length>0
                     && grantResults[0]==PackageManager.PERMISSION_GRANTED)
-                startService(new Intent(this, LibraryInitializerService.class));
+                startService(new Intent(this, LibraryService.class));
             else {
                 new Thread(new Runnable() {
                     @Override

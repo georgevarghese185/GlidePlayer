@@ -8,6 +8,8 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import teefourteen.glideplayer.music.MusicPlayer;
+import teefourteen.glideplayer.music.Song;
+
 import static teefourteen.glideplayer.activities.MainActivity.playQueue;
 import static teefourteen.glideplayer.activities.PlayerActivity.playerActivityHandler;
 
@@ -25,6 +27,7 @@ public class MusicService extends Service {
         PLAY_NEW_QUEUE, PAUSE, RESUME
     }
     public static final int SONG_STARTED = 1;
+    public static final int PLAYBACK_FAILED = 2;
     
     public class PlayerHandler extends Handler {
         PlayerHandler(Looper looper) {
@@ -36,44 +39,42 @@ public class MusicService extends Service {
             super.handleMessage(msg);
         }
 
-        public void playSong() {
+        private void play(Song song) {
+            if(player.playSong(song))
+                notifyPlayerActivity(SONG_STARTED);
+            else
+                notifyPlayerActivity(PLAYBACK_FAILED);
+        }
+
+        public void playNewSong() {
             //PUT CODE FOR CHECKING IF THREAD IS ALREADY RUNNING AND PLAYING
             player.reset();
-            player.playSong(playQueue.getCurrentPlaying());
-            notifySongStarted();
+            play(playQueue.getCurrentPlaying());
         }
 
         public void playNext() {
-            //TODO: PUT CODE FOR CHECKING IF THREAD IS ALREADY RUNNING AND PLAYING
+            //TODO: PUT CODE FOR CHECKING IF THREAD IS ALREADY RUNNING AND PLAYING IN REQUIRED METHODS
             player.reset();
-            player.playSong(playQueue.next());
-            notifySongStarted();
+            play(playQueue.next());
         }
 
         public void playPrev() {
-            //PUT CODE FOR CHECKING IF THREAD IS ALREADY RUNNING AND PLAYING
             player.reset();
-            player.playSong(playQueue.prev());
-            notifySongStarted();
+            play(playQueue.prev());
         }
 
         public void pause() {
-            //PUT CODE FOR CHECKING IF THREAD IS ALREADY RUNNING AND PLAYING
-
             player.pauseSong();
         }
 
         public void resume() {
-            //PUT CODE FOR CHECKING IF THREAD IS ALREADY RUNNING AND PLAYING
-
             player.playSong(playQueue.getCurrentPlaying());
-            notifySongStarted();
         }
 
-        void notifySongStarted() {
+        void notifyPlayerActivity(int messageContent) {
             if(playerActivityHandler!=null) {
                 Message message = obtainMessage();
-                message.arg1 = SONG_STARTED;
+                message.arg1 = messageContent;
                 playerActivityHandler.sendMessage(message);
             }
         }
@@ -97,7 +98,7 @@ public class MusicService extends Service {
                     case CHANGE_TRACK:
                         int songIndex = intent.getIntExtra(EXTRA_SONG_INDEX, 0);
                         playQueue.changeTrack(songIndex);
-                        playerHandler.playSong();
+                        playerHandler.playNewSong();
                         break;
 
                     case PLAY_NEXT:
@@ -110,7 +111,7 @@ public class MusicService extends Service {
 
                     case PLAY_NEW_QUEUE:
                         playQueue = intent.getParcelableExtra(EXTRA_PLAY_QUEUE);
-                        playerHandler.playSong();
+                        playerHandler.playNewSong();
                         break;
 
                     case PAUSE:
