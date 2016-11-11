@@ -6,7 +6,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.support.v4.content.LocalBroadcastManager;
 
 import teefourteen.glideplayer.activities.SplashActivity;
-import teefourteen.glideplayer.databases.library.LibraryHelper;
+import teefourteen.glideplayer.Library;
 import teefourteen.glideplayer.fragments.AlbumsFragment;
 import teefourteen.glideplayer.fragments.SongsFragment;
 
@@ -23,17 +23,17 @@ public class LibraryService extends IntentService {
 
     @Override
     protected void onHandleIntent(final Intent intent) {
-        SongsFragment.songCursor = LibraryHelper.getSongs(this.getContentResolver());
+        SongsFragment.songCursor = Library.getSongs(this.getContentResolver());
 
-        albumCursor = LibraryHelper.getAlbums(this.getContentResolver());
+        albumCursor = Library.getAlbums(this.getContentResolver());
 
-        LibraryHelper.AlbumArtHelper artHelper = new LibraryHelper.AlbumArtHelper(this);
+        Library.AlbumArtHelper artHelper = new Library.AlbumArtHelper(this);
         SQLiteDatabase albumArtDb = artHelper.getWritableDatabase();
-        LibraryHelper.cacheAlbumArt(albumCursor, albumArtDb);
+        Library.cacheAlbumArt(albumCursor, albumArtDb);
         albumArtDb.close();
 
         AlbumsFragment.albumArtDb =
-                new LibraryHelper.AlbumArtHelper(this).getReadableDatabase();
+                new Library.AlbumArtHelper(this).getReadableDatabase();
 
         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(
                 new Intent(SplashActivity.LIBRARY_INITIALIZED_ACTION));

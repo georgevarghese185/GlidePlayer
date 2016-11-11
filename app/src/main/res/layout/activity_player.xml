@@ -41,37 +41,34 @@
         android:textColor="#e5e5e5"
         android:layout_marginTop="20dp" />
 
-    <Button
-        style="?android:attr/buttonStyleSmall"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Play"
-        android:id="@+id/playerPlayButton"
+    <ImageView
+        android:layout_width="70dp"
+        android:layout_height="70dp"
+        android:id="@+id/player_play_button"
         android:layout_marginBottom="49dp"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
+        android:src="@drawable/ic_play_arrow_white_24dp"
         android:onClick="play" />
 
-    <Button
-        style="?android:attr/buttonStyleSmall"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="&lt;"
+    <ImageView
+        android:layout_width="70dp"
+        android:layout_height="70dp"
         android:id="@+id/playerPrevButton"
-        android:layout_alignTop="@+id/playerPlayButton"
-        android:layout_toLeftOf="@+id/playerPlayButton"
+        android:layout_alignTop="@+id/player_play_button"
+        android:src="@drawable/ic_skip_previous_white_24dp"
+        android:layout_toLeftOf="@+id/player_play_button"
         android:layout_marginRight="20dp"
         android:onClick="prev"/>
 
-    <Button
-        style="?android:attr/buttonStyleSmall"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text=">"
+    <ImageView
+        android:layout_width="70dp"
+        android:layout_height="70dp"
         android:id="@+id/playerNextButton"
-        android:layout_alignTop="@+id/playerPlayButton"
-        android:layout_toRightOf="@+id/playerPlayButton"
+        android:layout_alignTop="@+id/player_play_button"
+        android:layout_toRightOf="@+id/player_play_button"
         android:layout_marginLeft="20dp"
+        android:src="@drawable/ic_skip_next_white_24dp"
         android:onClick="next"/>
 
     <Button

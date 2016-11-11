@@ -1,4 +1,4 @@
-package teefourteen.glideplayer;
+package teefourteen.glideplayer.fragments;
 
 import android.support.annotation.IdRes;
 import android.support.v4.app.Fragment;

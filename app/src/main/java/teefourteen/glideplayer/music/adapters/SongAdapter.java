@@ -4,6 +4,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.graphics.drawable.Drawable;
 import android.provider.MediaStore.Audio.Media;
+import android.support.v4.content.ContextCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,7 +13,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import teefourteen.glideplayer.R;
-import teefourteen.glideplayer.databases.library.LibraryHelper;
+import teefourteen.glideplayer.Library;
 
 import teefourteen.glideplayer.fragments.AlbumsFragment;
 import teefourteen.glideplayer.music.Song;
@@ -21,8 +22,17 @@ import teefourteen.glideplayer.music.Song;
  * Created by george on 14/10/16.
  */
 public class SongAdapter extends CursorAdapter {
-    public SongAdapter(Context context, Cursor cursor) {
+    private SelectionChecker checker;
+
+    public interface SelectionChecker {
+        public boolean isSelected(int position);
+    }
+
+    public void setChecker(SelectionChecker checker){this.checker = checker;}
+
+    public SongAdapter(Context context, Cursor cursor, SelectionChecker checker) {
         super(context, cursor, 0);
+        this.checker = checker;
     }
 
     @Override
@@ -36,21 +46,30 @@ public class SongAdapter extends CursorAdapter {
         TextView trackAlbum = (TextView) view.findViewById(R.id.trackAlbum);
         TextView trackTitle = (TextView) view.findViewById(R.id.trackTitle);
         ImageView trackAlbumArt = (ImageView) view.findViewById(R.id.trackAlbumArt);
+        colorBackground(view, context, cursor.getPosition());
 
-        trackAlbum.setText(LibraryHelper.getString(cursor,Media.ALBUM));
-        String string = LibraryHelper.getString(cursor,Media.ARTIST);
+
+        trackAlbum.setText(Library.getString(cursor,Media.ALBUM));
+        String string = Library.getString(cursor,Media.ARTIST);
         if(!string.equals("<unknown>"))
             trackArtist.setText(string);
         else trackArtist.setText(R.string.track_artist);
-        trackTitle.setText(LibraryHelper.getString(cursor,Media.TITLE));
+        trackTitle.setText(Library.getString(cursor,Media.TITLE));
 
-        long albumId = LibraryHelper.getLong(cursor, Media.ALBUM_ID);
+        long albumId = Library.getLong(cursor, Media.ALBUM_ID);
         Drawable albumArt = Drawable.createFromPath(
-                LibraryHelper.getAlbumArt(albumId, AlbumsFragment.albumArtDb));
+                Library.getAlbumArt(albumId, AlbumsFragment.albumArtDb));
         if(albumArt!=null)
             trackAlbumArt.setImageDrawable(albumArt);
         else trackAlbumArt.setImageResource(R.drawable.record);
 }
+
+    public void colorBackground(View view, Context context, int position) {
+        if(checker!=null && checker.isSelected(position))
+            view.setBackgroundColor(ContextCompat.getColor(context,R.color.track_selected));
+        else
+            view.setBackgroundColor(ContextCompat.getColor(context, R.color.track_unselected));
+    }
 
     @Override
     public Object getItem(int position) {

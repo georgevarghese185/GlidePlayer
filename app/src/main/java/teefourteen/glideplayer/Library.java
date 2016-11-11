@@ -1,4 +1,4 @@
-package teefourteen.glideplayer.databases.library;
+package teefourteen.glideplayer;
 
 import android.content.ContentResolver;
 import android.content.ContentValues;
@@ -20,9 +20,9 @@ import java.io.File;
  * Created by george on 21/10/16.
  */
 
-public class LibraryHelper {
+public class Library {
 
-    private LibraryHelper() {
+    private Library() {
     }
 
     public static class AlbumArtHelper extends SQLiteOpenHelper {

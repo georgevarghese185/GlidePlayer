@@ -9,10 +9,9 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme">
-        <activity android:name=".activities.SplashActivity">
-            android:label="@string/app_name"
-            android:theme="@style/AppTheme.NoActionBar">
+        android:theme="@style/AppTheme.NoActionBar">
+        <activity android:name=".activities.SplashActivity"
+            android:label="@string/app_name">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -22,7 +21,7 @@
         <activity android:name=".activities.MainActivity"/>
 
         <service
-            android:name=".services.MusicService"
+            android:name=".services.PlayerService"
             android:enabled="true"
             android:exported="false" />
 

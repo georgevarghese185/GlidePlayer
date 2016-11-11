@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="horizontal" android:layout_width="match_parent"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
     android:layout_height="80dp"
-    android:background="#c7c7c7"
+    android:background="@color/track_unselected"
     android:clickable="false">
 
     <ImageView
@@ -12,7 +13,6 @@
         android:contentDescription="@string/albumArt_description"
         android:layout_margin="5dp"
         android:layout_gravity="center_vertical"
-        android:src="@drawable/record"
         android:clickable="false" />
 
     <LinearLayout

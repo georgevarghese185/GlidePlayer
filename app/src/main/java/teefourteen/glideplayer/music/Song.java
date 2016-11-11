@@ -5,7 +5,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.provider.MediaStore.Audio.AudioColumns;
 
-import teefourteen.glideplayer.databases.library.LibraryHelper;
+import teefourteen.glideplayer.Library;
 import teefourteen.glideplayer.fragments.AlbumsFragment;
 
 /**
@@ -110,15 +110,15 @@ public class Song implements Parcelable{
     };
 
     static public Song toSong(Cursor cursor) {
-        long _id = LibraryHelper.getLong(cursor,AudioColumns._ID);
-        String filePath = LibraryHelper.getString(cursor,AudioColumns.DATA);
-        String title = LibraryHelper.getString(cursor,AudioColumns.TITLE);
-        String album = LibraryHelper.getString(cursor,AudioColumns.ALBUM);
-        Long albumId = LibraryHelper.getLong(cursor,AudioColumns.ALBUM_ID);
-        String albumArt = LibraryHelper.getAlbumArt(albumId,AlbumsFragment.albumArtDb);
-        String artist = LibraryHelper.getString(cursor,AudioColumns.ARTIST);
-        Long artistId = LibraryHelper.getLong(cursor,AudioColumns.ARTIST_ID);
-        Long duration = LibraryHelper.getLong(cursor,AudioColumns.DURATION);
+        long _id = Library.getLong(cursor,AudioColumns._ID);
+        String filePath = Library.getString(cursor,AudioColumns.DATA);
+        String title = Library.getString(cursor,AudioColumns.TITLE);
+        String album = Library.getString(cursor,AudioColumns.ALBUM);
+        Long albumId = Library.getLong(cursor,AudioColumns.ALBUM_ID);
+        String albumArt = Library.getAlbumArt(albumId,AlbumsFragment.albumArtDb);
+        String artist = Library.getString(cursor,AudioColumns.ARTIST);
+        Long artistId = Library.getLong(cursor,AudioColumns.ARTIST_ID);
+        Long duration = Library.getLong(cursor,AudioColumns.DURATION);
 
         return new Song(_id, filePath, title, album, albumId, albumArt, artist, artistId, duration);
     }

@@ -15,7 +15,7 @@ import android.os.Bundle;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
-import teefourteen.glideplayer.NeedPermissionsDialog;
+import teefourteen.glideplayer.dialogs.NeedPermissionsDialog;
 import teefourteen.glideplayer.R;
 import teefourteen.glideplayer.services.LibraryService;
 
@@ -43,10 +43,6 @@ public class SplashActivity extends AppCompatActivity {
                 new IntentFilter("library_initialized"));
 
         setContentView(R.layout.activity_splash);
-        try {
-            getSupportActionBar().hide();
-        }
-        catch(NullPointerException e){}
 
         findViewById(R.id.splashContainer).getWidth();
         WebView webView = (WebView) findViewById(R.id.splashWebView);

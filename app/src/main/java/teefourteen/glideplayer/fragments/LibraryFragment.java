@@ -8,14 +8,14 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TabHost;
 
-import teefourteen.glideplayer.FragmentSwitcher;
 import teefourteen.glideplayer.R;
-import teefourteen.glideplayer.databases.library.LibraryHelper;
 
 public class LibraryFragment extends Fragment {
     private TabHost tabHost;
     private SongsFragment songsFragment;
+    private AlbumsFragment albumsFragment;
     private static final String SONGS_FRAGMENT_TAG = "songs_fragment";
+    private static final String ALBUMS_FRAGMENT_TAG = "albums_fragment";
 
     public LibraryFragment() {
         // Required empty public constructor
@@ -48,6 +48,9 @@ public class LibraryFragment extends Fragment {
 
         songsFragment = new SongsFragment();
         new FragmentSwitcher(getFragmentManager(), R.id.songsTab).switchTo(songsFragment,SONGS_FRAGMENT_TAG);
+
+        albumsFragment = new AlbumsFragment();
+        new FragmentSwitcher(getFragmentManager(), R.id.albumsTab).switchTo(albumsFragment, ALBUMS_FRAGMENT_TAG);
 
         return view;
     }

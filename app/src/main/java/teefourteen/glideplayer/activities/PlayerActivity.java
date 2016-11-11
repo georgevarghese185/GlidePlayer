@@ -7,15 +7,15 @@ import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import teefourteen.glideplayer.R;
+import teefourteen.glideplayer.music.PlayQueue;
 import teefourteen.glideplayer.music.Song;
-import teefourteen.glideplayer.services.MusicService;
-import static teefourteen.glideplayer.activities.MainActivity.playQueue;
+import teefourteen.glideplayer.services.PlayerService;
+import static teefourteen.glideplayer.activities.MainActivity.globalPlayQueue;
 
 public class PlayerActivity extends AppCompatActivity {
     public static PlayerActivityHandler playerActivityHandler;
@@ -27,12 +27,12 @@ public class PlayerActivity extends AppCompatActivity {
         @Override
         public void handleMessage(Message msg) {
             switch (msg.arg1) {
-                case MusicService.SONG_STARTED:
+                case PlayerService.SONG_STARTED:
                     showPause();
                     break;
-                case MusicService.PLAYBACK_FAILED:
+                case PlayerService.PLAYBACK_FAILED:
                     Toast toast = new Toast(getApplicationContext());
-                    toast.setText("Unable to play " + playQueue.getCurrentPlaying().getTitle());
+                    toast.setText("Unable to play " + globalPlayQueue.getCurrentPlaying().getTitle());
                     toast.setDuration(Toast.LENGTH_LONG);
                     toast.show();
                     break;
@@ -46,9 +46,9 @@ public class PlayerActivity extends AppCompatActivity {
         setContentView(R.layout.activity_player);
 
         Intent intent = getIntent();
-        playQueue = intent.getParcelableExtra(MainActivity.EXTRA_PLAY_QUEUE);
+        PlayQueue playQueue = intent.getParcelableExtra(MainActivity.EXTRA_PLAY_QUEUE);
 
-        findViewById(R.id.playerPlayButton).setOnClickListener(new View.OnClickListener() {
+        findViewById(R.id.player_play_button).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 play(v);
@@ -57,9 +57,9 @@ public class PlayerActivity extends AppCompatActivity {
         albumArtView = (ImageView) findViewById(R.id.playerAlbumArt);
         changeSongInfo(playQueue.getCurrentPlaying());
 
-        intent = new Intent(this, MusicService.class);
-        intent.putExtra(MusicService.EXTRA_SONG_COMMAND, MusicService.Command.PLAY_NEW_QUEUE);
-        intent.putExtra(MusicService.EXTRA_PLAY_QUEUE, playQueue);
+        intent = new Intent(this, PlayerService.class);
+        intent.putExtra(PlayerService.EXTRA_SONG_COMMAND, PlayerService.Command.NEW_QUEUE);
+        intent.putExtra(PlayerService.EXTRA_PLAY_QUEUE, playQueue);
         startService(intent);
     }
 
@@ -76,14 +76,14 @@ public class PlayerActivity extends AppCompatActivity {
     }
 
     public void play(View view) {
-        Intent intent = new Intent(this, MusicService.class);
-        intent.putExtra(MusicService.EXTRA_SONG_COMMAND, MusicService.Command.RESUME);
+        Intent intent = new Intent(this, PlayerService.class);
+        intent.putExtra(PlayerService.EXTRA_SONG_COMMAND, PlayerService.Command.PLAY);
         startService(intent);
     }
 
     public void pause(View view) {
-        Intent intent = new Intent(this, MusicService.class);
-        intent.putExtra(MusicService.EXTRA_SONG_COMMAND, MusicService.Command.PAUSE);
+        Intent intent = new Intent(this, PlayerService.class);
+        intent.putExtra(PlayerService.EXTRA_SONG_COMMAND, PlayerService.Command.PAUSE);
         startService(intent);
 
         showPlay();
@@ -91,23 +91,24 @@ public class PlayerActivity extends AppCompatActivity {
 
     public void next(View view) {
         showPlay();
-        changeSongInfo(playQueue.getNext());
-        Intent intent = new Intent(this, MusicService.class);
-        intent.putExtra(MusicService.EXTRA_SONG_COMMAND, MusicService.Command.PLAY_NEXT);
-        startService(intent);
+        changeSongInfo(globalPlayQueue.getNext());
+        Intent nextIntent = new Intent(this, PlayerService.class);
+        nextIntent.putExtra(PlayerService.EXTRA_SONG_COMMAND, PlayerService.Command.PLAY_NEXT);
+        startService(nextIntent);
     }
 
     public void prev(View view) {
         showPlay();
-        changeSongInfo(playQueue.getPrev());
-        Intent intent = new Intent(this, MusicService.class);
-        intent.putExtra(MusicService.EXTRA_SONG_COMMAND, MusicService.Command.PLAY_PREV);
-        startService(intent);
+        changeSongInfo(globalPlayQueue.getPrev());
+        Intent prevIntent = new Intent(this, PlayerService.class);
+        prevIntent.putExtra(PlayerService.EXTRA_SONG_COMMAND, PlayerService.Command.PLAY_PREV);
+        startService(prevIntent);
     }
 
     private void showPlay() {
-        Button playButton = (Button) findViewById(R.id.playerPlayButton);
-        playButton.setText("PLAY");
+        ImageView playButton = (ImageView) findViewById(R.id.player_play_button);
+        playButton.setImageResource(R.drawable.ic_play_arrow_white_24dp);
+
         playButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -117,8 +118,8 @@ public class PlayerActivity extends AppCompatActivity {
     }
 
     private void showPause() {
-        Button playButton = (Button) findViewById(R.id.playerPlayButton);
-        playButton.setText("PAUSE");
+        ImageView playButton = (ImageView) findViewById(R.id.player_play_button);
+        playButton.setImageResource(R.drawable.ic_pause_white_24dp);
 
         playButton.setOnClickListener(new View.OnClickListener() {
             @Override

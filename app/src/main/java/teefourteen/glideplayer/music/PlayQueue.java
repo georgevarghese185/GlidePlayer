@@ -10,41 +10,51 @@ import java.util.ArrayList;
  */
 public class PlayQueue implements Parcelable {
 
-    private ArrayList<Song> playQueue;
+    private ArrayList<Song> queue;
     private int currentPlaying;
 
-    public PlayQueue(ArrayList<Song> playQueue, int currentPlaying) {
-        this.playQueue = playQueue;
-        if(currentPlaying>=0 && currentPlaying<=playQueue.size())
+    public PlayQueue(ArrayList<Song> queue, int currentPlaying) {
+        this.queue = queue;
+        if(currentPlaying>=0 && currentPlaying<= queue.size())
             this.currentPlaying = currentPlaying;
     }
 
     public PlayQueue(Song song) {
-        playQueue = new ArrayList<Song>();
-        playQueue.add(song);
+        queue = new ArrayList<Song>();
+        queue.add(song);
         currentPlaying = 0;
     }
     /** Initializes play queue from cursor and sets the initially pointed song as the current*/
     public PlayQueue(Cursor cursor) {
-        playQueue = new ArrayList<Song>();
+        queue = new ArrayList<>();
         currentPlaying = cursor.getPosition();
         cursor.moveToFirst();
         do {
-            playQueue.add(Song.toSong(cursor));
+            queue.add(Song.toSong(cursor));
         } while (cursor.moveToNext());
     }
 
+    public PlayQueue(Cursor cursor, ArrayList<Integer> selections){
+        currentPlaying = 0;
+        queue = new ArrayList<>();
+        for(Integer i : selections){
+            cursor.moveToPosition(i);
+            queue.add(Song.toSong(cursor));
+        }
+    }
+
+
     public Song getCurrentPlaying() {
-        return playQueue.get(currentPlaying);
+        return queue.get(currentPlaying);
     }
 
 
     public Song changeTrack(int index) {
-        return playQueue.get(setCurrentPlaying(index));
+        return queue.get(setCurrentPlaying(index));
     }
 
     synchronized public int setCurrentPlaying(int index) {
-        if(index>=0 && index<=playQueue.size()) {
+        if(index>=0 && index<= queue.size()) {
             currentPlaying = index;
             return index;
         }
@@ -53,30 +63,30 @@ public class PlayQueue implements Parcelable {
     }
 
     synchronized public Song next() {
-        if(currentPlaying<playQueue.size()-1)
-            return playQueue.get(++currentPlaying);
+        if(currentPlaying< queue.size()-1)
+            return queue.get(++currentPlaying);
         else {
             currentPlaying= 0;
-            return playQueue.get(currentPlaying);
+            return queue.get(currentPlaying);
         }
     }
 
     public Song getNext() {
-        if(currentPlaying == playQueue.size()-1) return playQueue.get(0);
-        else return playQueue.get(currentPlaying+1);
+        if(currentPlaying == queue.size()-1) return queue.get(0);
+        else return queue.get(currentPlaying+1);
     }
 
     public Song getPrev() {
-        if(currentPlaying == 0) return playQueue.get(playQueue.size()-1);
-        return playQueue.get(currentPlaying-1);
+        if(currentPlaying == 0) return queue.get(queue.size()-1);
+        return queue.get(currentPlaying-1);
     }
 
     synchronized public Song prev() {
         if(currentPlaying>0)
-            return playQueue.get(--currentPlaying);
+            return queue.get(--currentPlaying);
         else {
-            currentPlaying = playQueue.size() - 1;
-            return playQueue.get(currentPlaying);
+            currentPlaying = queue.size() - 1;
+            return queue.get(currentPlaying);
         }
     }
 
@@ -87,7 +97,7 @@ public class PlayQueue implements Parcelable {
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
-        dest.writeTypedList(playQueue);
+        dest.writeTypedList(queue);
         dest.writeInt(currentPlaying);
     }
 

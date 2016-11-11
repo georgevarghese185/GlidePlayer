@@ -1,4 +1,4 @@
-package teefourteen.glideplayer;
+package teefourteen.glideplayer.dialogs;
 
 import android.Manifest;
 import android.app.Dialog;
@@ -9,6 +9,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AlertDialog;
 
+import teefourteen.glideplayer.R;
 import teefourteen.glideplayer.activities.SplashActivity;
 
 /**
