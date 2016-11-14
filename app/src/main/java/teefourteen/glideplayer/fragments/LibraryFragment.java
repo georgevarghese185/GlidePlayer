@@ -1,6 +1,7 @@
 package teefourteen.glideplayer.fragments;
 
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -9,6 +10,10 @@ import android.view.ViewGroup;
 import android.widget.TabHost;
 
 import teefourteen.glideplayer.R;
+import teefourteen.glideplayer.activities.PlayerActivity;
+import teefourteen.glideplayer.music.Global;
+import teefourteen.glideplayer.music.PlayQueue;
+import teefourteen.glideplayer.music.adapters.SongAdapter;
 
 public class LibraryFragment extends Fragment {
     private TabHost tabHost;
@@ -47,6 +52,16 @@ public class LibraryFragment extends Fragment {
         tabHost.addTab(spec);
 
         songsFragment = new SongsFragment();
+        songsFragment.setupList(new SongAdapter(getActivity(), Global.songCursor,null), true,
+                new SongsFragment.SelectionHandler() {
+                    @Override
+                    public void handleSelection(PlayQueue playQueue, int position) {
+                        Intent intent = new Intent(getContext(), PlayerActivity.class);
+                        intent.putExtra(PlayerActivity.EXTRA_PLAY_QUEUE, playQueue);
+                        getActivity().startActivity(intent);
+                    }
+                });
+
         new FragmentSwitcher(getFragmentManager(), R.id.songsTab).switchTo(songsFragment,SONGS_FRAGMENT_TAG);
 
         albumsFragment = new AlbumsFragment();

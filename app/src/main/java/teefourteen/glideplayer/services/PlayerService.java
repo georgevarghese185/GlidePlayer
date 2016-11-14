@@ -7,11 +7,13 @@ import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
+
+import teefourteen.glideplayer.music.Global;
 import teefourteen.glideplayer.music.MusicPlayer;
 import teefourteen.glideplayer.music.PlayQueue;
 
-import static teefourteen.glideplayer.activities.MainActivity.globalPlayQueue;
-import static teefourteen.glideplayer.activities.PlayerActivity.playerActivityHandler;
+import static teefourteen.glideplayer.music.Global.playQueue;
+import static teefourteen.glideplayer.fragments.PlayerFragment.playerFragmentHandler;
 
 public class PlayerService extends Service {
 
@@ -41,7 +43,7 @@ public class PlayerService extends Service {
         }
 
         private void play() {
-            if(player.playSong(globalPlayQueue.getCurrentPlaying()))
+            if(player.playSong(playQueue.getCurrentPlaying()))
                 notifyPlayerActivity(SONG_STARTED);
             else
                 notifyPlayerActivity(PLAYBACK_FAILED);
@@ -53,33 +55,33 @@ public class PlayerService extends Service {
 
         private void next() {
             player.reset();
-            globalPlayQueue.next();
+            playQueue.next();
             play();
         }
 
         private void prev() {
             player.reset();
-            globalPlayQueue.prev();
+            playQueue.prev();
             play();
         }
 
         private void changeTrack(int songIndex) {
             player.reset();
-            globalPlayQueue.changeTrack(songIndex);
+            playQueue.changeTrack(songIndex);
             play();
         }
 
         private void newQueue(PlayQueue playQueue){
             player.reset();
-            globalPlayQueue = playQueue;
+            Global.playQueue = playQueue;
             play();
         }
 
         void notifyPlayerActivity(int messageContent) {
-            if(playerActivityHandler!=null) {
+            if(playerFragmentHandler !=null) {
                 Message message = obtainMessage();
                 message.arg1 = messageContent;
-                playerActivityHandler.sendMessage(message);
+                playerFragmentHandler.sendMessage(message);
             }
         }
     }

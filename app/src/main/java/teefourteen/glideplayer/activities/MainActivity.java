@@ -10,21 +10,18 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 
-import teefourteen.glideplayer.CustomToolbarOptions;
+import teefourteen.glideplayer.ToolbarEditor;
 import teefourteen.glideplayer.fragments.FragmentSwitcher;
 import teefourteen.glideplayer.fragments.LibraryFragment;
 import teefourteen.glideplayer.R;
-import teefourteen.glideplayer.music.PlayQueue;
 
 public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener {
+        implements NavigationView.OnNavigationItemSelectedListener, ToolbarEditor.ToolbarEditable {
 
-    public static final String EXTRA_PLAY_QUEUE = "play_queue";
     private LibraryFragment libraryFragment;
     private String LIBRARY_FRAGMENT_TAG ="SONGS";
     private FragmentSwitcher mainFragmentSwitcher;
-    public static PlayQueue globalPlayQueue = null;
-    public CustomToolbarOptions toolbarOptions;
+    private ToolbarEditor toolbarEditor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,7 +31,7 @@ public class MainActivity extends AppCompatActivity
         setSupportActionBar(toolbar);
 
         showDrawerToggle(true);
-        toolbarOptions = new CustomToolbarOptions(this) {
+        toolbarEditor = new ToolbarEditor(this) {
             @Override
             public void reInflateMenu() {
                 invalidateOptionsMenu();
@@ -84,12 +81,12 @@ public class MainActivity extends AppCompatActivity
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu (getMenuInflater().inflate()); this adds items to the action bar if it is present.
-        int result = toolbarOptions.getCurrentMenu();
+        int result = toolbarEditor.getCurrentMenu();
         if (result == -1) {
             return false;
         }
         else {
-            getMenuInflater().inflate(toolbarOptions.getCurrentMenu(), menu);
+            getMenuInflater().inflate(toolbarEditor.getCurrentMenu(), menu);
             return true;
         }
     }
@@ -100,7 +97,7 @@ public class MainActivity extends AppCompatActivity
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
             return true;
-        } else toolbarOptions.handleOption(id);
+        } else toolbarEditor.handleOption(id);
         return super.onOptionsItemSelected(item);
     }
 
@@ -119,5 +116,10 @@ public class MainActivity extends AppCompatActivity
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    @Override
+    public ToolbarEditor getEditor() {
+        return toolbarEditor;
     }
 }

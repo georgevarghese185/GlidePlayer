@@ -19,13 +19,21 @@ public class FragmentSwitcher {
     }
 
     public void switchTo(Fragment fragment, String tag) {
+        switchTo(fragment, tag, false);
+    }
+
+    public void switchTo(Fragment fragment, String tag, boolean destroyPreviousFragment) {
         if(fragment == currentlyVisible)
             return;
 
         FragmentTransaction transaction = fragmentManager.beginTransaction();
 
-        if(currentlyVisible != null)
-            transaction.detach(currentlyVisible);
+        if(currentlyVisible != null) {
+            if(destroyPreviousFragment)
+                transaction.remove(currentlyVisible);
+            else
+                transaction.detach(currentlyVisible);
+        }
 
         if(fragmentManager.findFragmentByTag(tag) == null)
             transaction.add(containerViewId,fragment,tag);

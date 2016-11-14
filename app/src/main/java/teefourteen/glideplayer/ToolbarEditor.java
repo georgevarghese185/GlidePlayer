@@ -9,7 +9,7 @@ import java.util.ArrayList;
  * Creates an interface for fragments inside an activity to change the actionbar temporarily
  */
 
-abstract public class CustomToolbarOptions {
+abstract public class ToolbarEditor {
     private String currentMenu;
     private AppCompatActivity activity;
     private ArrayList<Integer> menus;
@@ -23,9 +23,13 @@ abstract public class CustomToolbarOptions {
         /**Implemented to receive id of the pressed option. Don't call directly*/
         public void handleOption(int optionItemId);
     }
-    ArrayList<MenuHandler> menuHandlers;
+    private ArrayList<MenuHandler> menuHandlers;
 
-    public CustomToolbarOptions(AppCompatActivity activity) {
+    public interface ToolbarEditable{
+        public ToolbarEditor getEditor();
+    }
+
+    public ToolbarEditor(AppCompatActivity activity) {
         menus = new ArrayList<>();
         menuNames = new ArrayList<>();
         menuHandlers = new ArrayList<>();

@@ -8,7 +8,7 @@ import android.support.v4.content.LocalBroadcastManager;
 import teefourteen.glideplayer.activities.SplashActivity;
 import teefourteen.glideplayer.Library;
 import teefourteen.glideplayer.fragments.AlbumsFragment;
-import teefourteen.glideplayer.fragments.SongsFragment;
+import teefourteen.glideplayer.music.Global;
 
 import static teefourteen.glideplayer.fragments.AlbumsFragment.albumCursor;
 
@@ -23,7 +23,7 @@ public class LibraryService extends IntentService {
 
     @Override
     protected void onHandleIntent(final Intent intent) {
-        SongsFragment.songCursor = Library.getSongs(this.getContentResolver());
+        Global.songCursor = Library.getSongs(this.getContentResolver());
 
         albumCursor = Library.getAlbums(this.getContentResolver());
 

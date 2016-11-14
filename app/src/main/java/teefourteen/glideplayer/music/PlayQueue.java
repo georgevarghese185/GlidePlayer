@@ -1,9 +1,23 @@
 package teefourteen.glideplayer.music;
 
+import android.content.Context;
 import android.database.Cursor;
+import android.graphics.drawable.Drawable;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.support.annotation.NonNull;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.ImageView;
+import android.widget.TextView;
+
 import java.util.ArrayList;
+
+import teefourteen.glideplayer.Library;
+import teefourteen.glideplayer.R;
+import teefourteen.glideplayer.fragments.AlbumsFragment;
 
 /**
  * Created by george on 15/10/16.
@@ -81,6 +95,8 @@ public class PlayQueue implements Parcelable {
         return queue.get(currentPlaying-1);
     }
 
+    public Song getSongAt(int songIndex) { return queue.get(songIndex); }
+
     synchronized public Song prev() {
         if(currentPlaying>0)
             return queue.get(--currentPlaying);
@@ -116,5 +132,46 @@ public class PlayQueue implements Parcelable {
         }
     };
 
+    public SongListAdapter getListAdapter(Context context) {
+        return new SongListAdapter(context, queue);
+    }
+
+    private class SongListAdapter extends ArrayAdapter<Song> {
+        public SongListAdapter(Context context, ArrayList<Song> songs) {
+            super(context, 0, songs);
+        }
+
+        @NonNull
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            Song song = getItem(position);
+
+            if(convertView == null) {
+                convertView = LayoutInflater.from(parent.getContext()).inflate(
+                        R.layout.track, parent,false);
+            }
+
+            TextView trackArtist = (TextView) convertView.findViewById(R.id.trackArtist);
+            TextView trackAlbum = (TextView) convertView.findViewById(R.id.trackAlbum);
+            TextView trackTitle = (TextView) convertView.findViewById(R.id.trackTitle);
+            ImageView trackAlbumArt = (ImageView) convertView.findViewById(R.id.trackAlbumArt);
+
+            trackAlbum.setText(song.getAlbum());
+            String string = song.getArtist();
+            if(!string.equals("<unknown>"))
+                trackArtist.setText(string);
+            else trackArtist.setText(R.string.track_artist);
+            trackTitle.setText(song.getTitle());
+
+            long albumId = song.getAlbumId();
+            Drawable albumArt = Drawable.createFromPath(
+                    Library.getAlbumArt(albumId, AlbumsFragment.albumArtDb));
+            if(albumArt!=null)
+                trackAlbumArt.setImageDrawable(albumArt);
+            else trackAlbumArt.setImageResource(R.drawable.record);
+
+            return convertView;
+        }
+    }
 
 }

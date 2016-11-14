@@ -1,8 +1,6 @@
 package teefourteen.glideplayer.fragments;
 
 import android.content.Context;
-import android.content.Intent;
-import android.database.Cursor;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -13,6 +11,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.ListAdapter;
 import android.widget.ListView;
 
 import java.util.ArrayList;
@@ -20,19 +19,29 @@ import java.util.BitSet;
 import java.util.Collections;
 import java.util.Comparator;
 
-import teefourteen.glideplayer.CustomToolbarOptions;
+import teefourteen.glideplayer.ToolbarEditor;
+import teefourteen.glideplayer.ToolbarEditor.ToolbarEditable;
 import teefourteen.glideplayer.R;
-import teefourteen.glideplayer.activities.MainActivity;
-import teefourteen.glideplayer.activities.PlayerActivity;
 import teefourteen.glideplayer.music.*;
 import teefourteen.glideplayer.music.adapters.SongAdapter;
 
 public class SongsFragment extends Fragment {
-    public static Cursor songCursor = null;
-    static SongAdapter songAdapter = null;
+    private ListAdapter songAdapter = null;
     private ListView songList = null;
+    private boolean allowMultiSelection;
+    public interface SelectionHandler{
+        public void handleSelection(PlayQueue playQueue, int position);
+    }
+    SelectionHandler selectionHandler;
 
     public SongsFragment() {
+    }
+
+    public void setupList(ListAdapter adapter, boolean allowMultiSelection,
+                          SelectionHandler handler){
+        songAdapter = adapter;
+        this.allowMultiSelection = allowMultiSelection;
+        selectionHandler = handler;
     }
 
     @Override
@@ -61,11 +70,11 @@ public class SongsFragment extends Fragment {
     }
 
     public void initSongList() {
-        songAdapter = new SongAdapter(getActivity(), songCursor, null);
         songList.setAdapter(songAdapter);
         SingleSelect single = new SingleSelect();
         songList.setOnItemClickListener(single);
-        songList.setOnItemLongClickListener(single);
+        if(allowMultiSelection)
+            songList.setOnItemLongClickListener(single);
     }
 
     class SingleSelect implements AdapterView.OnItemClickListener,
@@ -73,11 +82,8 @@ public class SongsFragment extends Fragment {
 
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-            Intent intent = new Intent(getContext(), PlayerActivity.class);
-
-            songCursor.moveToPosition(position);
-            intent.putExtra(MainActivity.EXTRA_PLAY_QUEUE, new PlayQueue(songCursor));
-            getActivity().startActivity(intent);
+            Global.songCursor.moveToPosition(position);
+            selectionHandler.handleSelection(new PlayQueue(Global.songCursor),position);
         }
 
         @Override
@@ -85,17 +91,17 @@ public class SongsFragment extends Fragment {
             MultiSelect multi = new MultiSelect(position, parent.getAdapter().getCount());
             parent.setOnItemClickListener(multi);
             parent.setOnItemLongClickListener(null);
-            SongsFragment.songAdapter.setChecker(multi);
-            songAdapter.colorBackground(view, getActivity(), position);
-            CustomToolbarOptions options = ((MainActivity)getActivity()).toolbarOptions;
-            options.registerMenu(R.menu.multi_select, MultiSelect.MENU_NAME, multi);
-            options.changeToolbar(MultiSelect.MENU_NAME);
+            ((SongAdapter)songAdapter).setChecker(multi);
+            ((SongAdapter)songAdapter).colorBackground(view, getActivity(), position);
+            ToolbarEditor editor = ((ToolbarEditable)getActivity()).getEditor();
+            editor.registerMenu(R.menu.multi_select, MultiSelect.MENU_NAME, multi);
+            editor.changeToolbar(MultiSelect.MENU_NAME);
             return true;
         }
     }
 
     public class MultiSelect implements AdapterView.OnItemClickListener,
-            SongAdapter.SelectionChecker, CustomToolbarOptions.MenuHandler {
+            SongAdapter.SelectionChecker, ToolbarEditor.MenuHandler {
         public static final String MENU_NAME ="multi_select_menu";
         private BitSet selected;
         private ArrayList<Integer> selectionList;
@@ -125,7 +131,7 @@ public class SongsFragment extends Fragment {
                         Collections.sort(selectionList, new SelectionListComparator());
                     }
                 });
-                songAdapter.colorBackground(view, getActivity(), position);
+                ((SongAdapter)songAdapter).colorBackground(view, getActivity(), position);
             }
             else {
                 selectionListHandler.post(new Runnable() {
@@ -135,7 +141,7 @@ public class SongsFragment extends Fragment {
                         Collections.sort(selectionList, new SelectionListComparator());
                     }
                 });
-                songAdapter.colorBackground(view, getActivity(), position);
+                ((SongAdapter)songAdapter).colorBackground(view, getActivity(), position);
             }
 
         }
@@ -149,8 +155,8 @@ public class SongsFragment extends Fragment {
             selectionListHandler = null;
             selectionHandlerThread.quit();
             selectionHandlerThread = null;
-            songAdapter.setChecker(null);
-            songAdapter.notifyDataSetChanged();
+            ((SongAdapter)songAdapter).setChecker(null);
+            ((SongAdapter)songAdapter).notifyDataSetChanged();
         }
 
         @Override
@@ -168,17 +174,13 @@ public class SongsFragment extends Fragment {
         @Override
         public void handleOption(int optionItemId) {
             if(optionItemId == R.id.cancel_multi_select){
-                CustomToolbarOptions options = ((MainActivity) getActivity()).toolbarOptions;
-                options.returnToNormal();
-                options.unregisterMenu(MENU_NAME);
+                ToolbarEditor editor = ((ToolbarEditable) getActivity()).getEditor();
+                editor.returnToNormal();
+                editor.unregisterMenu(MENU_NAME);
                 cancelMultiSelect();
             }
             else if(optionItemId == R.id.queue_and_play){
-                Intent intent = new Intent(getContext(), PlayerActivity.class);
-
-                intent.putExtra(MainActivity.EXTRA_PLAY_QUEUE,
-                        new PlayQueue(songCursor, selectionList));
-                getActivity().startActivity(intent);
+                selectionHandler.handleSelection(new PlayQueue(Global.songCursor, selectionList),0);
             }
         }
 
