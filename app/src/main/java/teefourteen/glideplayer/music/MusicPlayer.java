@@ -12,7 +12,7 @@ import java.io.IOException;
  */
 
 public class MusicPlayer {
-    private MediaPlayer player=null;
+    private MediaPlayer mediaPlayer =null;
     private Context context=null;
     private boolean prepared = false;
 
@@ -24,8 +24,8 @@ public class MusicPlayer {
         try {
             if (!prepared)
                 prepareSong(song);
-            if(!player.isPlaying())
-                player.start();
+            if(!mediaPlayer.isPlaying())
+                mediaPlayer.start();
         }
         catch (IOException e) {
             return false;
@@ -35,22 +35,26 @@ public class MusicPlayer {
     }
 
     public void pauseSong() {
-        player.pause();
+        mediaPlayer.pause();
     }
 
     public void reset() {
         if(prepared) {
-            player.reset();
+            mediaPlayer.reset();
             prepared = false;
         }
     }
 
     private void prepareSong(Song song) throws IOException {
-        player = new MediaPlayer();
-        player.setAudioStreamType(AudioManager.STREAM_MUSIC);
+        mediaPlayer = new MediaPlayer();
+        mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
 
-        player.setDataSource(context, Uri.parse(song.getFilePath()));
-        player.prepare();
+        mediaPlayer.setDataSource(context, Uri.parse(song.getFilePath()));
+        mediaPlayer.prepare();
         prepared = true;
+    }
+
+    public boolean isPlaying() {
+        return mediaPlayer.isPlaying();
     }
 }

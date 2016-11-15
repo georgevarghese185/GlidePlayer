@@ -6,11 +6,11 @@ import android.database.sqlite.SQLiteDatabase;
 import android.support.v4.content.LocalBroadcastManager;
 
 import teefourteen.glideplayer.activities.SplashActivity;
-import teefourteen.glideplayer.Library;
-import teefourteen.glideplayer.fragments.AlbumsFragment;
-import teefourteen.glideplayer.music.Global;
+import teefourteen.glideplayer.music.Library;
+import teefourteen.glideplayer.fragments.library.AlbumsFragment;
+import teefourteen.glideplayer.Global;
 
-import static teefourteen.glideplayer.fragments.AlbumsFragment.albumCursor;
+import static teefourteen.glideplayer.fragments.library.AlbumsFragment.albumCursor;
 
 /**
  * Created by george on 21/10/16.

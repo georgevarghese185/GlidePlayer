@@ -1,4 +1,4 @@
-package teefourteen.glideplayer;
+package teefourteen.glideplayer.music;
 
 import android.content.ContentResolver;
 import android.content.ContentValues;

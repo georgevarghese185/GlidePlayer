@@ -1,4 +1,4 @@
-package teefourteen.glideplayer.fragments;
+package teefourteen.glideplayer.fragments.library;
 
 
 import android.database.Cursor;

@@ -8,10 +8,10 @@ import android.os.Bundle;
 
 import teefourteen.glideplayer.R;
 import teefourteen.glideplayer.fragments.FragmentSwitcher;
-import teefourteen.glideplayer.fragments.PlayerFragment;
-import teefourteen.glideplayer.fragments.SongsFragment;
+import teefourteen.glideplayer.fragments.player.PlayerFragment;
+import teefourteen.glideplayer.fragments.library.SongsFragment;
 import teefourteen.glideplayer.music.PlayQueue;
-import static teefourteen.glideplayer.music.Global.playQueue;
+import static teefourteen.glideplayer.Global.playQueue;
 
 public class PlayerActivity extends AppCompatActivity {
     public static final String EXTRA_PLAY_QUEUE = "play_queue";
@@ -51,6 +51,7 @@ public class PlayerActivity extends AppCompatActivity {
                                 }
                             });
                     playerFragmentSwitcher.switchTo(songsFragment, SONGS_FRAGMENT_TAG);
+
                     return true;
                 }
                 else if(msg.arg1 == MESSAGE_RETURN_TO_PLAYER){
@@ -63,5 +64,17 @@ public class PlayerActivity extends AppCompatActivity {
                 return false;
             }
         });
+    }
+
+    @Override
+    public void onBackPressed() {
+        if(playerFragmentSwitcher.getCurrentlyVisible() == playerFragment)
+            super.onBackPressed();
+        else {
+            Message msg = new Message();
+            msg.arg1 = MESSAGE_RETURN_TO_PLAYER;
+            msg.arg2 = -1;
+            playerActivityHandler.dispatchMessage(msg);
+        }
     }
 }

@@ -1,4 +1,4 @@
-package teefourteen.glideplayer.fragments;
+package teefourteen.glideplayer.fragments.library;
 
 
 import android.content.Intent;
@@ -11,7 +11,8 @@ import android.widget.TabHost;
 
 import teefourteen.glideplayer.R;
 import teefourteen.glideplayer.activities.PlayerActivity;
-import teefourteen.glideplayer.music.Global;
+import teefourteen.glideplayer.fragments.FragmentSwitcher;
+import teefourteen.glideplayer.Global;
 import teefourteen.glideplayer.music.PlayQueue;
 import teefourteen.glideplayer.music.adapters.SongAdapter;
 

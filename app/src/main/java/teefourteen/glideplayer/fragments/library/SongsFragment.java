@@ -1,4 +1,4 @@
-package teefourteen.glideplayer.fragments;
+package teefourteen.glideplayer.fragments.library;
 
 import android.content.Context;
 import android.os.Bundle;
@@ -19,6 +19,7 @@ import java.util.BitSet;
 import java.util.Collections;
 import java.util.Comparator;
 
+import teefourteen.glideplayer.Global;
 import teefourteen.glideplayer.ToolbarEditor;
 import teefourteen.glideplayer.ToolbarEditor.ToolbarEditable;
 import teefourteen.glideplayer.R;

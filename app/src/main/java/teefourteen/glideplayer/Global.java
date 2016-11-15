@@ -1,6 +1,8 @@
-package teefourteen.glideplayer.music;
+package teefourteen.glideplayer;
 
 import android.database.Cursor;
+
+import teefourteen.glideplayer.music.PlayQueue;
 
 /**
  * Created by George on 11/12/2016.

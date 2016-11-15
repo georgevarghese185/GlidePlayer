@@ -8,12 +8,12 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 
-import teefourteen.glideplayer.music.Global;
+import teefourteen.glideplayer.Global;
 import teefourteen.glideplayer.music.MusicPlayer;
 import teefourteen.glideplayer.music.PlayQueue;
 
-import static teefourteen.glideplayer.music.Global.playQueue;
-import static teefourteen.glideplayer.fragments.PlayerFragment.playerFragmentHandler;
+import static teefourteen.glideplayer.Global.playQueue;
+import static teefourteen.glideplayer.fragments.player.PlayerFragment.playerFragmentHandler;
 
 public class PlayerService extends Service {
 
@@ -27,10 +27,10 @@ public class PlayerService extends Service {
     private static final String PLAYER_HANDLER_THREAD_NAME = "player_handler_thread";
     public enum Command {
         CHANGE_TRACK, PLAY_NEXT, PLAY_PREV,
-        NEW_QUEUE, PLAY, PAUSE
+        NEW_QUEUE, PLAY, PAUSE, CHECK_IS_PLAYING
     }
-    public static final int SONG_STARTED = 1;
-    public static final int PLAYBACK_FAILED = 2;
+    public static final int MESSAGE_SONG_STARTED = 1;
+    public static final int MESSAGE_PLAYBACK_FAILED = 2;
     
     public class PlayerHandler extends Handler {
         PlayerHandler(Looper looper) {
@@ -44,9 +44,9 @@ public class PlayerService extends Service {
 
         private void play() {
             if(player.playSong(playQueue.getCurrentPlaying()))
-                notifyPlayerActivity(SONG_STARTED);
+                notifyPlayerActivity(MESSAGE_SONG_STARTED);
             else
-                notifyPlayerActivity(PLAYBACK_FAILED);
+                notifyPlayerActivity(MESSAGE_PLAYBACK_FAILED);
         }
 
         private void pause() {
@@ -83,6 +83,11 @@ public class PlayerService extends Service {
                 message.arg1 = messageContent;
                 playerFragmentHandler.sendMessage(message);
             }
+        }
+
+        void checkIsPlaying() {
+            if(player.isPlaying())
+                notifyPlayerActivity(MESSAGE_SONG_STARTED);
         }
     }
 
@@ -124,6 +129,9 @@ public class PlayerService extends Service {
                     case NEW_QUEUE:
                         playerHandler.newQueue(
                                 (PlayQueue)intent.getParcelableExtra(EXTRA_PLAY_QUEUE));
+                        break;
+                    case CHECK_IS_PLAYING:
+                        playerHandler.checkIsPlaying();
                         break;
                 }
             }

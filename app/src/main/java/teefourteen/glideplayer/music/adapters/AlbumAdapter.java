@@ -12,7 +12,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import teefourteen.glideplayer.R;
-import teefourteen.glideplayer.Library;
+import teefourteen.glideplayer.music.Library;
 
 /**
  * Created by george on 2/11/16.

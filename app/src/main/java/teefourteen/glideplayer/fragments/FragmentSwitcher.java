@@ -42,4 +42,8 @@ public class FragmentSwitcher {
         currentlyVisible = fragment;
         transaction.commit();
     }
+
+    public Fragment getCurrentlyVisible() {
+        return currentlyVisible;
+    }
 }

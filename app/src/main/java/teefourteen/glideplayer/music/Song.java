@@ -5,8 +5,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.provider.MediaStore.Audio.AudioColumns;
 
-import teefourteen.glideplayer.Library;
-import teefourteen.glideplayer.fragments.AlbumsFragment;
+import teefourteen.glideplayer.fragments.library.AlbumsFragment;
 
 /**
  * Created by george on 12/10/16.

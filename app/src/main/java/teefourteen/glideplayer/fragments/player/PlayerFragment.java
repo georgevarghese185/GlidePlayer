@@ -1,4 +1,4 @@
-package teefourteen.glideplayer.fragments;
+package teefourteen.glideplayer.fragments.player;
 
 
 import android.content.Intent;
@@ -16,13 +16,13 @@ import android.widget.Toast;
 
 import teefourteen.glideplayer.R;
 import teefourteen.glideplayer.activities.PlayerActivity;
-import teefourteen.glideplayer.music.Global;
+import teefourteen.glideplayer.Global;
 import teefourteen.glideplayer.music.PlayQueue;
 import teefourteen.glideplayer.music.Song;
 import teefourteen.glideplayer.services.PlayerService;
 
 import static android.os.Looper.getMainLooper;
-import static teefourteen.glideplayer.music.Global.playQueue;
+import static teefourteen.glideplayer.Global.playQueue;
 
 
 public class PlayerFragment extends Fragment {
@@ -36,10 +36,10 @@ public class PlayerFragment extends Fragment {
         @Override
         public void handleMessage(Message msg) {
             switch (msg.arg1) {
-                case PlayerService.SONG_STARTED:
+                case PlayerService.MESSAGE_SONG_STARTED:
                     showPause();
                     break;
-                case PlayerService.PLAYBACK_FAILED:
+                case PlayerService.MESSAGE_PLAYBACK_FAILED:
                     showPlay();
                     Toast toast = new Toast(getActivity());
                     toast.setText("Unable to play " + playQueue.getCurrentPlaying().getTitle());
@@ -103,7 +103,13 @@ public class PlayerFragment extends Fragment {
             changeTrack(index);
             changeSongInfo(Global.playQueue.getSongAt(index), view);
         }
-
+        else {
+            changeSongInfo(Global.playQueue.getCurrentPlaying(), view);
+            Intent checkPlaying = new Intent(getContext(), PlayerService.class);
+            checkPlaying.putExtra(PlayerService.EXTRA_SONG_COMMAND,
+                    PlayerService.Command.CHECK_IS_PLAYING);
+            getActivity().startService(checkPlaying);
+        }
         // Inflate the layout for this fragment
         rootView = view;
         return view;

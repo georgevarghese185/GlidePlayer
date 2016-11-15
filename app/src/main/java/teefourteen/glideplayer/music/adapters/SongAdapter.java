@@ -13,9 +13,9 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import teefourteen.glideplayer.R;
-import teefourteen.glideplayer.Library;
+import teefourteen.glideplayer.music.Library;
 
-import teefourteen.glideplayer.fragments.AlbumsFragment;
+import teefourteen.glideplayer.fragments.library.AlbumsFragment;
 import teefourteen.glideplayer.music.Song;
 
 /**

@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#313131"
-    tools:context="teefourteen.glideplayer.fragments.PlayerFragment">
+    tools:context="teefourteen.glideplayer.fragments.player.PlayerFragment">
 
         <ImageView
             android:layout_width="300dp"

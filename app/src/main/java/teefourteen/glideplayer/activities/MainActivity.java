@@ -12,7 +12,7 @@ import android.view.MenuItem;
 
 import teefourteen.glideplayer.ToolbarEditor;
 import teefourteen.glideplayer.fragments.FragmentSwitcher;
-import teefourteen.glideplayer.fragments.LibraryFragment;
+import teefourteen.glideplayer.fragments.library.LibraryFragment;
 import teefourteen.glideplayer.R;
 
 public class MainActivity extends AppCompatActivity

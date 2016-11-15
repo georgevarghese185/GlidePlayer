@@ -15,9 +15,8 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 
-import teefourteen.glideplayer.Library;
 import teefourteen.glideplayer.R;
-import teefourteen.glideplayer.fragments.AlbumsFragment;
+import teefourteen.glideplayer.fragments.library.AlbumsFragment;
 
 /**
  * Created by george on 15/10/16.
