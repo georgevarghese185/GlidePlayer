@@ -11,6 +11,7 @@ import teefourteen.glideplayer.music.PlayQueue;
 public class Global {
     public static Cursor songCursor = null;
     public static PlayQueue playQueue = null;
+    public static Connectivity connectivity;
 
     private Global(){}
 }
