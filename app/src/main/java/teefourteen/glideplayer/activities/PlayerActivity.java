@@ -68,7 +68,7 @@ public class PlayerActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        if(playerFragmentSwitcher.getCurrentlyVisible() == playerFragment)
+        if(playerFragmentSwitcher.getCurrentFragment() == playerFragment)
             super.onBackPressed();
         else {
             Message msg = new Message();

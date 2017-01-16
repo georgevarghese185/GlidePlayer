@@ -2,7 +2,8 @@
 <resources>
     <color name="colorPrimary">#3f51b5</color>
     <color name="colorPrimaryDark">#303F9F</color>
-    <color name="colorAccent">#FF4081</color>
+    <color name="colorAccent">#2f77fd</color>
     <color name="track_selected">#8ac0cc</color>
     <color name="track_unselected">#c7c7c7</color>
+    <color name="group_details_color">#505050</color>
 </resources>

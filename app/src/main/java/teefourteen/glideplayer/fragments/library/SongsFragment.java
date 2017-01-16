@@ -24,7 +24,7 @@ import teefourteen.glideplayer.ToolbarEditor;
 import teefourteen.glideplayer.ToolbarEditor.ToolbarEditable;
 import teefourteen.glideplayer.R;
 import teefourteen.glideplayer.music.*;
-import teefourteen.glideplayer.music.adapters.SongAdapter;
+import teefourteen.glideplayer.fragments.library.adapters.SongAdapter;
 
 public class SongsFragment extends Fragment {
     private ListAdapter songAdapter = null;

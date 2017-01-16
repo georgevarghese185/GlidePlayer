@@ -9,7 +9,8 @@ import android.support.v4.app.FragmentTransaction;
  * Created by george on 2/10/16.
  */
 public class FragmentSwitcher {
-    private Fragment currentlyVisible;
+    private Fragment currentFragment;
+    private String currentFragmentTag;
     private FragmentManager fragmentManager;
     private @IdRes int containerViewId;
 
@@ -19,31 +20,41 @@ public class FragmentSwitcher {
     }
 
     public void switchTo(Fragment fragment, String tag) {
-        switchTo(fragment, tag, false);
+        switchTo(fragment, tag, false, false);
     }
 
     public void switchTo(Fragment fragment, String tag, boolean destroyPreviousFragment) {
-        if(fragment == currentlyVisible)
+        switchTo(fragment, tag, destroyPreviousFragment, false);
+    }
+
+    private void switchTo(Fragment fragment, String tag, boolean destroyPreviousFragment,
+                         boolean forceReattach) {
+        if(fragment == currentFragment && !forceReattach)
             return;
 
         FragmentTransaction transaction = fragmentManager.beginTransaction();
 
-        if(currentlyVisible != null) {
+        if(currentFragment != null) {
             if(destroyPreviousFragment)
-                transaction.remove(currentlyVisible);
+                transaction.remove(currentFragment);
             else
-                transaction.detach(currentlyVisible);
+                transaction.detach(currentFragment);
         }
 
         if(fragmentManager.findFragmentByTag(tag) == null)
             transaction.add(containerViewId,fragment,tag);
         else
             transaction.attach(fragment);
-        currentlyVisible = fragment;
+        currentFragment = fragment;
+        currentFragmentTag = tag;
         transaction.commit();
     }
 
-    public Fragment getCurrentlyVisible() {
-        return currentlyVisible;
+    public void reattach() {
+        switchTo(currentFragment, currentFragmentTag, false, true);
+    }
+
+    public Fragment getCurrentFragment() {
+        return currentFragment;
     }
 }

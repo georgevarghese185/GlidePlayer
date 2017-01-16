@@ -1,4 +1,4 @@
-package teefourteen.glideplayer.music.adapters;
+package teefourteen.glideplayer.fragments.library.adapters;
 
 import android.content.Context;
 import android.database.Cursor;
@@ -61,7 +61,7 @@ public class SongAdapter extends CursorAdapter {
                 Library.getAlbumArt(albumId, AlbumsFragment.albumArtDb));
         if(albumArt!=null)
             trackAlbumArt.setImageDrawable(albumArt);
-        else trackAlbumArt.setImageResource(R.drawable.record);
+        else trackAlbumArt.setImageResource(R.drawable.ic_album_black_24dp);
 }
 
     public void colorBackground(View view, Context context, int position) {

@@ -167,7 +167,7 @@ public class PlayQueue implements Parcelable {
                     Library.getAlbumArt(albumId, AlbumsFragment.albumArtDb));
             if(albumArt!=null)
                 trackAlbumArt.setImageDrawable(albumArt);
-            else trackAlbumArt.setImageResource(R.drawable.record);
+            else trackAlbumArt.setImageResource(R.drawable.ic_album_white_24dp);
 
             return convertView;
         }

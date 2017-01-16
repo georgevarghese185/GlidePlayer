@@ -1,53 +1,68 @@
 package teefourteen.glideplayer.fragments.connectivity;
 
 
-import android.content.Context;
-import android.net.wifi.p2p.WifiP2pManager;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ListView;
-
-import teefourteen.glideplayer.Connectivity;
-import teefourteen.glideplayer.Global;
 import teefourteen.glideplayer.R;
+import teefourteen.glideplayer.connectivity.ShareGroup;
+import teefourteen.glideplayer.fragments.FragmentSwitcher;
+import teefourteen.glideplayer.fragments.connectivity.listeners.ConnectionCloseListener;
+import teefourteen.glideplayer.fragments.connectivity.listeners.ConnectivitySelectionListener;
 
-public class ConnectivityFragment extends Fragment {
 
+public class ConnectivityFragment extends Fragment implements ConnectivitySelectionListener,
+        ConnectionCloseListener{
+    private FragmentSwitcher connectivityFragmentSwitcher;
+    private ConnectivityHomeFragment homeFragment;
+    private JoinGroupFragment joinFragment;
+    private CreateGroupFragment createFragment;
+    private ShareGroup group;
+    private static final String JOIN_FRAGMENT_TAG="join_fragment";
+    private static final String CREATE_FRAGMENT_TAG="create_fragment";
+    private static final String HOME_FRAGMENT_TAG="home_fragment";
 
     public ConnectivityFragment() {
         // Required empty public constructor
     }
 
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_connectivity, container, false);
-        if(Global.connectivity == null) {
-            Global.connectivity = new Connectivity(getContext(),
-                    (WifiP2pManager) getActivity().getSystemService(Context.WIFI_P2P_SERVICE));
+        View rootView = inflater.inflate(R.layout.fragment_connectivity, container, false);
+        if(homeFragment == null) {
+            homeFragment = new ConnectivityHomeFragment();
+            homeFragment.setConnectivitySelectionListener(this);
         }
-        Global.connectivity.initialize();
-        ListView peerListView = (ListView) view.findViewById(R.id.peer_list);
-        peerListView.setAdapter(Global.connectivity.getPeerListAdapter());
-
-        (view.findViewById(R.id.button2)).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                discover(v);
-            }
-        });
-
-        // Inflate the layout for this fragment
-        return view;
+        if(connectivityFragmentSwitcher == null) {
+            connectivityFragmentSwitcher = new FragmentSwitcher(getFragmentManager(),
+                    R.id.fragment_connectivity_main_container);
+            connectivityFragmentSwitcher.switchTo(homeFragment, HOME_FRAGMENT_TAG);
+        }
+        else {
+            connectivityFragmentSwitcher.reattach();
+        }
+        return rootView;
     }
 
-    public void discover(View view) {
-        Global.connectivity.startDiscovery();
+    @Override
+    public void OnJoinGroupSelected(String username) {
+        joinFragment = JoinGroupFragment.newInstance(new ShareGroup(getActivity(), username),
+                this);
+        connectivityFragmentSwitcher.switchTo(joinFragment, JOIN_FRAGMENT_TAG);
     }
 
+    @Override
+    public void OnCreateGroupSelected(String username) {
+        createFragment = CreateGroupFragment.newInstance(new ShareGroup(getActivity(), username),
+                this);
+        connectivityFragmentSwitcher.switchTo(createFragment,CREATE_FRAGMENT_TAG);
+    }
 
+    @Override
+    public void onConnectionClose() {
+        connectivityFragmentSwitcher.switchTo(homeFragment, HOME_FRAGMENT_TAG, true);
+    }
 }

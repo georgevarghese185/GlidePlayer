@@ -14,11 +14,13 @@ import teefourteen.glideplayer.activities.PlayerActivity;
 import teefourteen.glideplayer.fragments.FragmentSwitcher;
 import teefourteen.glideplayer.Global;
 import teefourteen.glideplayer.music.PlayQueue;
-import teefourteen.glideplayer.music.adapters.SongAdapter;
+import teefourteen.glideplayer.fragments.library.adapters.SongAdapter;
 
 public class LibraryFragment extends Fragment {
     private TabHost tabHost;
+    private FragmentSwitcher songFragmentSwitcher;
     private SongsFragment songsFragment;
+    private FragmentSwitcher albumFragmentSwitcher;
     private AlbumsFragment albumsFragment;
     private static final String SONGS_FRAGMENT_TAG = "songs_fragment";
     private static final String ALBUMS_FRAGMENT_TAG = "albums_fragment";
@@ -33,6 +35,7 @@ public class LibraryFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_library, container, false);
+
 
         tabHost = (TabHost) view.findViewById(R.id.libraryTabHost);
         tabHost.setup();
@@ -52,21 +55,30 @@ public class LibraryFragment extends Fragment {
         spec.setIndicator("Artists");
         tabHost.addTab(spec);
 
-        songsFragment = new SongsFragment();
-        songsFragment.setupList(new SongAdapter(getActivity(), Global.songCursor,null), true,
-                new SongsFragment.SelectionHandler() {
-                    @Override
-                    public void handleSelection(PlayQueue playQueue, int position) {
-                        Intent intent = new Intent(getContext(), PlayerActivity.class);
-                        intent.putExtra(PlayerActivity.EXTRA_PLAY_QUEUE, playQueue);
-                        getActivity().startActivity(intent);
-                    }
-                });
+        if(songsFragment == null) {
+            songsFragment = new SongsFragment();
+            songsFragment.setupList(new SongAdapter(getActivity(), Global.songCursor,null), true,
+                    new SongsFragment.SelectionHandler() {
+                        @Override
+                        public void handleSelection(PlayQueue playQueue, int position) {
+                            Intent intent = new Intent(getContext(), PlayerActivity.class);
+                            intent.putExtra(PlayerActivity.EXTRA_PLAY_QUEUE, playQueue);
+                            getActivity().startActivity(intent);
+                        }
+                    });
+            songFragmentSwitcher = new FragmentSwitcher(getFragmentManager(), R.id.songsTab);
+            songFragmentSwitcher.switchTo(songsFragment,SONGS_FRAGMENT_TAG);
+        } else {
+            songFragmentSwitcher.reattach();
+        }
 
-        new FragmentSwitcher(getFragmentManager(), R.id.songsTab).switchTo(songsFragment,SONGS_FRAGMENT_TAG);
-
-        albumsFragment = new AlbumsFragment();
-        new FragmentSwitcher(getFragmentManager(), R.id.albumsTab).switchTo(albumsFragment, ALBUMS_FRAGMENT_TAG);
+        if(albumsFragment == null) {
+            albumsFragment = new AlbumsFragment();
+            albumFragmentSwitcher = new FragmentSwitcher(getFragmentManager(), R.id.albumsTab);
+            albumFragmentSwitcher.switchTo(albumsFragment, ALBUMS_FRAGMENT_TAG);
+        } else {
+            albumFragmentSwitcher.reattach();
+        }
 
         return view;
     }

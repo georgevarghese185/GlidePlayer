@@ -1,8 +1,5 @@
--Add tabbed library for sorting songs, albums, artists etc
--Use db for songs
 -MusicService playqueue backup and other saving stuff. (maybe for later)
 -Move trackadapter to outside of music package
--Move permissions checking to splash screen. if not recieved, exit
 -PLAYLISTS YOU DUMMY
 -when player activity pauses, if song is paused, release the media player.
 -make musicservice return START_STICKY and deal with that.

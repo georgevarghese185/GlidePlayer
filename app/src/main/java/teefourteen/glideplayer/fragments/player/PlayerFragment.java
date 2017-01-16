@@ -198,6 +198,6 @@ public class PlayerFragment extends Fragment {
         String albumArt = song.getAlbumArt();
         if(albumArt!=null)
             albumArtView.setImageDrawable(Drawable.createFromPath(albumArt));
-        else albumArtView.setImageResource(R.drawable.record);
+        else albumArtView.setImageResource(R.drawable.ic_album_white_24dp);
     }
 }

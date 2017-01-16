@@ -1,4 +1,4 @@
-package teefourteen.glideplayer.music.adapters;
+package teefourteen.glideplayer.fragments.library.adapters;
 
 import android.content.Context;
 import android.database.Cursor;
@@ -42,6 +42,6 @@ public class AlbumAdapter extends CursorAdapter {
         if(path!=null)
             albumArt.setImageDrawable(Drawable.createFromPath(path));
         else
-            albumArt.setImageResource(R.drawable.record);
+            albumArt.setImageResource(R.drawable.ic_album_black_24dp);
     }
 }
