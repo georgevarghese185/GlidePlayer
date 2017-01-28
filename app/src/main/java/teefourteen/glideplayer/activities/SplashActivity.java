@@ -45,16 +45,9 @@ public class SplashActivity extends AppCompatActivity {
         setContentView(R.layout.activity_splash);
 
         findViewById(R.id.splashContainer).getWidth();
-        WebView webView = (WebView) findViewById(R.id.splashWebView);
-        webView.loadUrl("file:///android_asset/splash.html");
-        webView.setWebViewClient(new WebViewClient() {
-            @Override
-            public void onPageFinished(WebView view, String url) {
-                if(readPermissionGranted())
+
+        if(readPermissionGranted())
                     startService(new Intent(getApplicationContext(), LibraryService.class));
-                super.onPageFinished(view, url);
-            }
-        });
     }
 
     private boolean readPermissionGranted() {
