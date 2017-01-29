@@ -26,7 +26,7 @@ public class LibraryService extends IntentService {
         Library library = new Library(this, file);
 
         library.initializeTables();
-        library.doneUpdating();
+        library.close();
 
         SQLiteDatabase libraryDb = library.getReadableDatabase();
 

@@ -51,7 +51,7 @@ public class SongAdapter extends CursorAdapter {
 
         trackAlbum.setText(Library.getString(cursor, AlbumTable.Columns.ALBUM_NAME));
         String string = Library.getString(cursor, ArtistTable.Columns.ARTIST_NAME);
-        if(!string.equals("<unknown>"))
+        if(string!=null && !string.equals("<unknown>"))
             trackArtist.setText(string);
         else trackArtist.setText(R.string.track_artist);
         trackTitle.setText(Library.getString(cursor, SongTable.Columns.TITLE));

@@ -18,6 +18,7 @@ public class ArtistTable extends Table {
     }
 
     ArtistTable(ContentResolver resolver) {
+        super(TABLE_NAME);
         this.resolver = resolver;
     }
 
@@ -55,7 +56,9 @@ public class ArtistTable extends Table {
         if (cursor != null) {
             cursor.moveToFirst();
             do {
-                db.insert(TABLE_NAME, null, putValues(cursor));
+                ContentValues values = putValues(cursor);
+
+                insertValues(values, db);
             } while (cursor.moveToNext());
 
             cursor.close();

@@ -27,6 +27,7 @@ public class SongTable extends Table {
     }
 
     SongTable(ContentResolver resolver) {
+        super(TABLE_NAME);
         this.resolver = resolver;
     }
 
@@ -79,7 +80,7 @@ public class SongTable extends Table {
             do {
                 ContentValues values = putValues(cursor);
 
-                db.insert(TABLE_NAME, null, values);
+                insertValues(values, db);
             } while (cursor.moveToNext());
 
             cursor.close();

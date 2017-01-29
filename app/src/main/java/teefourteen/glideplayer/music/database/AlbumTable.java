@@ -13,6 +13,7 @@ public class AlbumTable extends Table {
     ContentResolver resolver;
 
     AlbumTable(ContentResolver resolver) {
+        super(TABLE_NAME);
         this.resolver = resolver;
     }
 
@@ -45,8 +46,9 @@ public class AlbumTable extends Table {
         if (cursor != null) {
             cursor.moveToFirst();
             do {
+                ContentValues values = putValues(cursor);
 
-                db.insert(TABLE_NAME, null, putValues(cursor));
+                insertValues(values, db);
             } while (cursor.moveToNext());
 
             cursor.close();
