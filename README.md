@@ -1,4 +1,4 @@
-# Copyright (c) 2016 - 2017, George Varghese M.
+Copyright (c) 2016 - 2017, George Varghese M.
 # GlidePlayer
 An android app that should make locally sharing music easier.
 
