@@ -3,6 +3,7 @@
     package="teefourteen.glideplayer">
 
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:allowBackup="true"
@@ -29,7 +30,8 @@
 
         <service
             android:name=".services.LibraryService"
-            android:exported="false"/>
+            android:exported="false" />
+
     </application>
 
 </manifest>

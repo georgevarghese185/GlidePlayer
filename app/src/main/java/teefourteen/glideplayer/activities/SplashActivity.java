@@ -10,10 +10,14 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
+import android.support.v4.view.ViewGroupCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.View;
+import android.view.ViewGroup;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.EditText;
 
 import teefourteen.glideplayer.dialogs.NeedPermissionsDialog;
 import teefourteen.glideplayer.R;
@@ -46,8 +50,35 @@ public class SplashActivity extends AppCompatActivity {
 
         findViewById(R.id.splashContainer).getWidth();
 
-        if(readPermissionGranted())
-                    startService(new Intent(getApplicationContext(), LibraryService.class));
+        findViewById(R.id.test_sender_button).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(new Intent(getApplicationContext(), LibraryService.class));
+                intent.putExtra("TEST_Mode_Sender", "");
+                ((ViewGroup) findViewById(R.id.test_layout_lib).getParent()).removeView(findViewById(R.id.test_layout_lib));
+                startService(intent);
+            }
+        });
+
+        findViewById(R.id.test_receiver_button).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String ip = ((EditText) findViewById(R.id.test_ip_address)).getText().toString();
+                Intent intent = new Intent(new Intent(getApplicationContext(), LibraryService.class));
+                intent.putExtra("TEST_Mode_Receiver", ip);
+                ((ViewGroup) findViewById(R.id.test_layout_lib).getParent()).removeView(findViewById(R.id.test_layout_lib));
+                startService(intent);
+            }
+        });
+
+        findViewById(R.id.test_button_neither).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(new Intent(getApplicationContext(), LibraryService.class));
+                ((ViewGroup) findViewById(R.id.test_layout_lib).getParent()).removeView(findViewById(R.id.test_layout_lib));
+                startService(intent);
+            }
+        });
     }
 
     private boolean readPermissionGranted() {

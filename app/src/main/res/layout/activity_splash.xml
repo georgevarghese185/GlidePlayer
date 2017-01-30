@@ -47,6 +47,48 @@
             android:visibility="visible"
             tools:visibility="visible"/>
 
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/test_layout_lib">
+
+            <Button
+                android:text="Normal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/test_button_neither" />
+
+            <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <Button
+                    android:text="Receiver"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/test_receiver_button"
+                    android:layout_weight="1" />
+
+                <Button
+                    android:text="Sender"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/test_sender_button"
+                    android:layout_weight="1" />
+            </LinearLayout>
+
+            <EditText
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textPersonName"
+                android:ems="10"
+                android:id="@+id/test_ip_address"
+                android:hint="IP address of sender" />
+
+        </LinearLayout>
+
     </LinearLayout>
 
 </RelativeLayout>
