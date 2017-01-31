@@ -3,9 +3,11 @@ package teefourteen.glideplayer.music;
 import android.database.Cursor;
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.provider.MediaStore.Audio.AudioColumns;
 
-import teefourteen.glideplayer.fragments.library.AlbumsFragment;
+import teefourteen.glideplayer.music.database.AlbumTable;
+import teefourteen.glideplayer.music.database.ArtistTable;
+import teefourteen.glideplayer.music.database.Library;
+import teefourteen.glideplayer.music.database.SongTable;
 
 /**
  * Created by george on 12/10/16.
@@ -109,15 +111,15 @@ public class Song implements Parcelable{
     };
 
     static public Song toSong(Cursor cursor) {
-        long _id = Library.getLong(cursor,AudioColumns._ID);
-        String filePath = Library.getString(cursor,AudioColumns.DATA);
-        String title = Library.getString(cursor,AudioColumns.TITLE);
-        String album = Library.getString(cursor,AudioColumns.ALBUM);
-        Long albumId = Library.getLong(cursor,AudioColumns.ALBUM_ID);
-        String albumArt = Library.getAlbumArt(albumId,AlbumsFragment.albumArtDb);
-        String artist = Library.getString(cursor,AudioColumns.ARTIST);
-        Long artistId = Library.getLong(cursor,AudioColumns.ARTIST_ID);
-        Long duration = Library.getLong(cursor,AudioColumns.DURATION);
+        long _id = Library.getLong(cursor, SongTable.Columns._ID);
+        String filePath = Library.getString(cursor, SongTable.Columns.FILE_PATH);
+        String title = Library.getString(cursor, SongTable.Columns.TITLE);
+        String album = Library.getString(cursor, AlbumTable.Columns.ALBUM_NAME);
+        Long albumId = Library.getLong(cursor, SongTable.Columns.ALBUM_ID);
+        String albumArt = Library.getString(cursor, AlbumTable.Columns.ALBUM_ART);
+        String artist = Library.getString(cursor, ArtistTable.Columns.ARTIST_NAME);
+        Long artistId = Library.getLong(cursor, SongTable.Columns.ARTIST_ID);
+        Long duration = Library.getLong(cursor, SongTable.Columns.DURATION);
 
         return new Song(_id, filePath, title, album, albumId, albumArt, artist, artistId, duration);
     }
