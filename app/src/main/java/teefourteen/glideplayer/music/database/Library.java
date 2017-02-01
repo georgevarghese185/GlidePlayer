@@ -25,7 +25,10 @@ import java.util.Iterator;
 
 
 public class Library {
-    public static final String DATABASE_NAME = "music_library.db";
+    public static final String LOCAL_DATABASE_NAME = "music_library.db";
+    private File dbFile;
+    public static String DATABASE_LOCATION;
+    public static String REMOTE_COVERS_LOCATION;
     private static final int DATABASE_VERSION = 1;
     private SQLiteDatabase libraryDb;
     private LibraryDbOpenHelper openHelper;
@@ -34,6 +37,7 @@ public class Library {
 
     public Library(Context context, File databaseFile) {
         openHelper = new LibraryDbOpenHelper(context, databaseFile);
+        dbFile = databaseFile;
         this.context = context;
 
         tables = new Table[]{
@@ -214,6 +218,7 @@ public class Library {
 
 
     public boolean getFromStream(InputStream in, OutputStream out)throws JSONException, IOException {
+        //TODO: clear album art cache on disconnect/close app
         BufferedReader reader = new BufferedReader(new InputStreamReader(in));
         PrintWriter printWriter = new PrintWriter(out, true);
 
@@ -262,8 +267,14 @@ public class Library {
 
 
         //Get album art files
-        File albumCoverDir = new File(context.getExternalFilesDir(null),"remote_album_covers");
-        if(!albumCoverDir.exists()) albumCoverDir.mkdir();
+        File remoteCoversDir = new File(REMOTE_COVERS_LOCATION);
+        if(!remoteCoversDir.exists()) {
+            remoteCoversDir.mkdir();
+        }
+        File albumCoverDir = new File(remoteCoversDir, dbFile.getName());
+        if(!albumCoverDir.exists()) {
+            albumCoverDir.mkdir();
+        }
 
         //get each file
         printWriter.println("ready"); //ready to receive
@@ -275,7 +286,7 @@ public class Library {
             String filename = reader.readLine();
             int size = Integer.parseInt(reader.readLine());
 
-            File file = new File(albumCoverDir, filename);
+            File file = new File(albumCoverDir.getAbsolutePath(), filename);
             if(file.exists()) {
                 file.delete();
             }
@@ -295,14 +306,6 @@ public class Library {
                 fileOut.write(buffer, 0, count);
             }
 
-            if(size > 0) {
-                while ((count = dataIn.read(buffer, 0, buffer.length)) > 0) {
-                    fileOut.write(buffer, 0, count);
-                    readBytes += count;
-                    if (readBytes >= size) break;
-                }
-            }
-
             fileOut.close();
 
             ContentValues values = new ContentValues();
@@ -319,10 +322,6 @@ public class Library {
 
         Cursor cursor = libraryDb.query(false, AlbumTable.TABLE_NAME, new String[] { AlbumTable.Columns._ID,AlbumTable.Columns.ALBUM_NAME, AlbumTable.Columns.ALBUM_ART},
                 null,null,null,null,null,null);
-
-        for(boolean res = cursor.moveToFirst(); res; res = cursor.moveToNext()) {
-            Log.d("album art", cursor.getString(0) + ": " + cursor.getString(1)+ ": " + cursor.getString(2));
-        }
 
         cursor.close();
         return true;

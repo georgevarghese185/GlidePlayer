@@ -3,6 +3,7 @@
     package="teefourteen.glideplayer">
 
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <uses-permission
         android:required="true"
         android:name="android.permission.ACCESS_WIFI_STATE"/>
@@ -39,6 +40,8 @@
         <service
             android:name=".services.LibraryService"
             android:exported="false"/>
+
+        <service android:name=".connectivity.NetworkService"/>
     </application>
 
 </manifest>

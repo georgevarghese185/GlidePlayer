@@ -17,6 +17,7 @@ import android.webkit.WebViewClient;
 
 import teefourteen.glideplayer.dialogs.NeedPermissionsDialog;
 import teefourteen.glideplayer.R;
+import teefourteen.glideplayer.music.database.Library;
 import teefourteen.glideplayer.services.LibraryService;
 
 public class SplashActivity extends AppCompatActivity {
@@ -28,6 +29,9 @@ public class SplashActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        Library.DATABASE_LOCATION = getCacheDir().getAbsolutePath();
+        Library.REMOTE_COVERS_LOCATION = getCacheDir().getAbsolutePath() + "remote_album_covers";
 
         libInitCompleteReceiver = new BroadcastReceiver() {
             @Override

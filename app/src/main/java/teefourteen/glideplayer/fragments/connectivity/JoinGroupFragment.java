@@ -1,7 +1,7 @@
 package teefourteen.glideplayer.fragments.connectivity;
 
 
-import android.content.Context;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -9,16 +9,22 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import teefourteen.glideplayer.R;
 import teefourteen.glideplayer.connectivity.ShareGroup;
+import teefourteen.glideplayer.connectivity.listeners.GroupConnectionListener;
+import teefourteen.glideplayer.connectivity.listeners.GroupMemberListener;
 import teefourteen.glideplayer.fragments.connectivity.adapters.GroupAdapter;
 import teefourteen.glideplayer.fragments.connectivity.listeners.ConnectionCloseListener;
 
 
-public class JoinGroupFragment extends Fragment {
+public class JoinGroupFragment extends Fragment implements GroupConnectionListener,
+        GroupMemberListener{
     private View rootView;
     private ShareGroup group;
+    private GroupAdapter groupAdapter;
     private ConnectionCloseListener closeListener;
 
     public JoinGroupFragment() {
@@ -50,21 +56,59 @@ public class JoinGroupFragment extends Fragment {
     }
 
     private void setupGroupList() {
-        GroupAdapter adapter = new GroupAdapter(getContext(), group.getGroupList());
-        ListView groupList =(ListView) rootView.findViewById(R.id.group_list);
-        groupList.setAdapter(adapter);
+        groupAdapter = new GroupAdapter(getContext(), group.getGroupList());
+        ListView groupList = (ListView) rootView.findViewById(R.id.group_list);
+        groupList.setAdapter(groupAdapter);
+        final JoinGroupFragment fragment = this;
         groupList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-               //TODO: Connect to group
+                group.connectToGroup(position, fragment, fragment);
+                TextView connectionStatus = (TextView)rootView.findViewById(R.id.connection_status);
+                connectionStatus.setText("Connecting");
+                connectionStatus.setTextColor(Color.parseColor("#FF00506B"));
+                rootView.findViewById(R.id.creating_group_progress_bar).setVisibility(View.VISIBLE);
             }
         });
-        group.findGroups(adapter);
+        group.findGroups(groupAdapter);
     }
 
     private void closeConnection() {
         group.stopFindingGroups();
+        group.close();
         group = null;
         closeListener.onConnectionClose();
+    }
+
+    @Override
+    public void onConnectionFailed(String failureMessage) {
+        Toast.makeText(getContext(), failureMessage, Toast.LENGTH_LONG).show();
+    }
+
+    @Override
+    public void onConnectionSuccess(String connectedGroup) {
+        ((ListView)rootView.findViewById(R.id.group_list)).setOnItemClickListener(null);
+        TextView connectionStatus = (TextView)rootView.findViewById(R.id.connection_status);
+        connectionStatus.setText("Connected to " + connectedGroup);
+        connectionStatus.setTextColor(Color.parseColor("#FF0A5900"));
+        rootView.findViewById(R.id.creating_group_progress_bar).setVisibility(View.INVISIBLE);
+        Toast.makeText(getContext(),"Connected to " + connectedGroup + " successfully",
+                Toast.LENGTH_LONG).show();
+    }
+
+    @Override
+    public void onMemberLeft(String member) {
+
+    }
+
+    @Override
+    public void onNewMemberJoined(String memberId, String memberName) {
+        Toast.makeText(getContext(), memberName + " connected", Toast.LENGTH_LONG).show();
+    }
+
+    @Override
+    public void onExchangingInfo() {
+        TextView connectionStatus = (TextView)rootView.findViewById(R.id.connection_status);
+        connectionStatus.setText("exchanging libraries");
     }
 }

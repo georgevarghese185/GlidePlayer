@@ -21,7 +21,7 @@ public class LibraryService extends IntentService {
 
     @Override
     protected void onHandleIntent(final Intent intent) {
-        File file = new File(getCacheDir().getAbsolutePath(), Library.DATABASE_NAME);
+        File file = new File(Library.DATABASE_LOCATION, Library.LOCAL_DATABASE_NAME);
 
         Library library = new Library(this, file);
 

@@ -19,22 +19,37 @@
         android:id="@+id/group_members_caption"
         android:textSize="20sp" />
 
-    <TextView
-        android:text="Not connected to any group"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginBottom="40dp"
-        android:textColor="@android:color/holo_red_dark"
-        android:id="@+id/connection_status" />
-
     <ListView
         android:layout_width="match_parent"
-        android:layout_height="400dp"
+        android:layout_height="350dp"
         android:id="@+id/group_list"
         android:layout_below="@+id/group_members_caption"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true" />
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@id/group_list"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:text="Not connected"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#0a5900"
+            android:id="@+id/connection_status"
+            android:layout_weight="1" />
+
+        <ProgressBar
+            style="?android:attr/progressBarStyle"
+            android:layout_width="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_height="wrap_content"
+            android:id="@+id/creating_group_progress_bar"
+            android:visibility="invisible"
+            android:layout_weight="1" />
+    </LinearLayout>
 
 </RelativeLayout>

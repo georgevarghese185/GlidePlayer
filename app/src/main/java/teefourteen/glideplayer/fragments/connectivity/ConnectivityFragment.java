@@ -49,16 +49,26 @@ public class ConnectivityFragment extends Fragment implements ConnectivitySelect
 
     @Override
     public void OnJoinGroupSelected(String username) {
-        joinFragment = JoinGroupFragment.newInstance(new ShareGroup(getActivity(), username),
+        joinFragment = JoinGroupFragment.newInstance(new ShareGroup(getActivity(), username,
+                        new ShareGroup.ShareGroupInitListener() {
+                            @Override
+                            public void onShareGroupReady() {
+                                connectivityFragmentSwitcher.switchTo(joinFragment, JOIN_FRAGMENT_TAG);
+                            }
+                        }),
                 this);
-        connectivityFragmentSwitcher.switchTo(joinFragment, JOIN_FRAGMENT_TAG);
     }
 
     @Override
     public void OnCreateGroupSelected(String username) {
-        createFragment = CreateGroupFragment.newInstance(new ShareGroup(getActivity(), username),
+        createFragment = CreateGroupFragment.newInstance(new ShareGroup(getActivity(), username,
+                new ShareGroup.ShareGroupInitListener() {
+                    @Override
+                    public void onShareGroupReady() {
+                        connectivityFragmentSwitcher.switchTo(createFragment,CREATE_FRAGMENT_TAG);
+                    }
+                }),
                 this);
-        connectivityFragmentSwitcher.switchTo(createFragment,CREATE_FRAGMENT_TAG);
     }
 
     @Override

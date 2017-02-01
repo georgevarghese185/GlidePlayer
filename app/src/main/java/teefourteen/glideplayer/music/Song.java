@@ -9,10 +9,8 @@ import teefourteen.glideplayer.music.database.ArtistTable;
 import teefourteen.glideplayer.music.database.Library;
 import teefourteen.glideplayer.music.database.SongTable;
 
-/**
- * Created by george on 12/10/16.
- */
-public class Song implements Parcelable{
+
+public class Song implements Parcelable {
     private long _id;
     private String filePath;
     private String title;
@@ -23,7 +21,8 @@ public class Song implements Parcelable{
     private long artistId;
     private long duration;
 
-    public Song(long _id, String filePath, String title, String album, long albumId, String albumArt, String artist, long artistId, long duration) {
+    public Song(long _id, String filePath, String title, String album, long albumId,
+                String albumArt, String artist, long artistId, long duration) {
         this._id = _id;
         this.filePath = filePath;
         this.title = title;
@@ -123,5 +122,4 @@ public class Song implements Parcelable{
 
         return new Song(_id, filePath, title, album, albumId, albumArt, artist, artistId, duration);
     }
-
 }

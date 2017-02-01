@@ -1,11 +1,16 @@
 package teefourteen.glideplayer.fragments.player;
 
 
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Message;
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -25,30 +30,10 @@ import static android.os.Looper.getMainLooper;
 import static teefourteen.glideplayer.Global.playQueue;
 
 
-public class PlayerFragment extends Fragment {
-    public static PlayerFragmentHandler playerFragmentHandler;
+public class PlayerFragment extends Fragment implements PlayerService.SongListener{
+    private static PlayerService.PlayerServiceBinder binder;
     private ImageView albumArtView;
     private View rootView;
-
-    public class PlayerFragmentHandler extends Handler {
-        PlayerFragmentHandler() { super(getMainLooper());}
-
-        @Override
-        public void handleMessage(Message msg) {
-            switch (msg.arg1) {
-                case PlayerService.MESSAGE_SONG_STARTED:
-                    showPause();
-                    break;
-                case PlayerService.MESSAGE_PLAYBACK_FAILED:
-                    showPlay();
-                    Toast toast = new Toast(getActivity());
-                    toast.setText("Unable to play " + playQueue.getCurrentPlaying().getTitle());
-                    toast.setDuration(Toast.LENGTH_LONG);
-                    toast.show();
-                    break;
-            }
-        }
-    }
 
     public PlayerFragment() {
         // Required empty public constructor
@@ -87,80 +72,76 @@ public class PlayerFragment extends Fragment {
             }
         });
 
-        Intent intent = getActivity().getIntent();
-        if(intent.hasExtra(PlayerActivity.EXTRA_PLAY_QUEUE)) {
-            PlayQueue playQueue = intent.getParcelableExtra(PlayerActivity.EXTRA_PLAY_QUEUE);
-            intent.removeExtra(PlayerActivity.EXTRA_PLAY_QUEUE);
 
-            intent = new Intent(getActivity(), PlayerService.class);
-            intent.putExtra(PlayerService.EXTRA_SONG_COMMAND, PlayerService.Command.NEW_QUEUE);
-            intent.putExtra(PlayerService.EXTRA_PLAY_QUEUE, playQueue);
-            getActivity().startService(intent);
-            changeSongInfo(playQueue.getCurrentPlaying(), view);
-        }
-        else if(intent.hasExtra(PlayerActivity.EXTRA_CHANGE_TRACK)){
-            int index = intent.getIntExtra(PlayerActivity.EXTRA_CHANGE_TRACK, 0);
-            changeTrack(index);
-            changeSongInfo(Global.playQueue.getSongAt(index), view);
-        }
-        else {
-            changeSongInfo(Global.playQueue.getCurrentPlaying(), view);
-            Intent checkPlaying = new Intent(getContext(), PlayerService.class);
-            checkPlaying.putExtra(PlayerService.EXTRA_SONG_COMMAND,
-                    PlayerService.Command.CHECK_IS_PLAYING);
-            getActivity().startService(checkPlaying);
-        }
         // Inflate the layout for this fragment
         rootView = view;
         return view;
     }
 
     @Override
-    public void onResume() {
-        super.onResume();
-        playerFragmentHandler = new PlayerFragmentHandler();
+    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        ServiceConnection connection = new ServiceConnection() {
+            @Override
+            public void onServiceConnected(ComponentName name, IBinder service) {
+                binder = (PlayerService.PlayerServiceBinder) service;
+                initializePlayer();
+            }
+
+            @Override
+            public void onServiceDisconnected(ComponentName name) {/*TODO: handle*/}
+        };
+
+        if(binder == null) {
+            Intent intent = new Intent(getActivity(), PlayerService.class);
+            getActivity().bindService(intent, connection, Context.BIND_AUTO_CREATE);
+        } else {
+            initializePlayer();
+        }
     }
 
-    @Override
-    public void onPause() {
-        super.onPause();
-        playerFragmentHandler = null;
+    private void initializePlayer(){
+        binder.registerSongListener(this);
+        Intent intent = getActivity().getIntent();
+
+        if(intent.hasExtra(PlayerActivity.EXTRA_PLAY_QUEUE)) {
+            PlayQueue playQueue = intent.getParcelableExtra(PlayerActivity.EXTRA_PLAY_QUEUE);
+            intent.removeExtra(PlayerActivity.EXTRA_PLAY_QUEUE);
+            binder.newQueue(playQueue);
+            changeSongInfo(playQueue.getCurrentPlaying(), rootView);
+        } else if(intent.hasExtra(PlayerActivity.EXTRA_CHANGE_TRACK)) {
+            int index = intent.getIntExtra(PlayerActivity.EXTRA_CHANGE_TRACK, 0);
+            changeTrack(index);
+            changeSongInfo(Global.playQueue.getSongAt(index), rootView);
+        } else {
+            changeSongInfo(Global.playQueue.getCurrentPlaying(), rootView);
+            if(binder.isPlaying()) { showPause(); }
+        }
     }
 
     public void play(View view) {
-        Intent intent = new Intent(getActivity(), PlayerService.class);
-        intent.putExtra(PlayerService.EXTRA_SONG_COMMAND, PlayerService.Command.PLAY);
-        getActivity().startService(intent);
+        binder.play();
     }
 
     public void pause(View view) {
-        Intent intent = new Intent(getActivity(), PlayerService.class);
-        intent.putExtra(PlayerService.EXTRA_SONG_COMMAND, PlayerService.Command.PAUSE);
-        getActivity().startService(intent);
-
+        binder.pause();
         showPlay();
     }
 
     public void next(View view) {
         changeSongInfo(playQueue.getNext(), rootView);
-        Intent nextIntent = new Intent(getActivity(), PlayerService.class);
-        nextIntent.putExtra(PlayerService.EXTRA_SONG_COMMAND, PlayerService.Command.PLAY_NEXT);
-        getActivity().startService(nextIntent);
+        binder.next();
     }
 
     public void prev(View view) {
         changeSongInfo(playQueue.getPrev(), rootView);
-        Intent prevIntent = new Intent(getActivity(), PlayerService.class);
-        prevIntent.putExtra(PlayerService.EXTRA_SONG_COMMAND, PlayerService.Command.PLAY_PREV);
-        getActivity().startService(prevIntent);
+        binder.prev();
     }
 
     public void changeTrack(int songIndex){
         showPlay();
-        Intent changeIntent = new Intent(getActivity(), PlayerService.class);
-        changeIntent.putExtra(PlayerService.EXTRA_SONG_COMMAND, PlayerService.Command.CHANGE_TRACK);
-        changeIntent.putExtra(PlayerService.EXTRA_SONG_INDEX, songIndex);
-        getActivity().startService(changeIntent);
+        binder.changeTrack(songIndex);
     }
 
     private void showPlay() {
@@ -199,5 +180,29 @@ public class PlayerFragment extends Fragment {
         if(albumArt!=null)
             albumArtView.setImageDrawable(Drawable.createFromPath(albumArt));
         else albumArtView.setImageResource(R.drawable.ic_album_white_24dp);
+    }
+
+    @Override
+    public void onSongStarted() {
+        showPause();
+    }
+
+    @Override
+    public void onSongPlaybackFailed() {
+        showPlay();
+        Toast.makeText(getContext(), "Unable to play " + playQueue.getCurrentPlaying().getTitle(),
+                Toast.LENGTH_LONG).show();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        binder.unregisterSongListener();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        binder.registerSongListener(this);
     }
 }

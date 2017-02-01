@@ -10,12 +10,16 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import teefourteen.glideplayer.R;
 import teefourteen.glideplayer.connectivity.ShareGroup;
+import teefourteen.glideplayer.connectivity.listeners.GroupCreationListener;
+import teefourteen.glideplayer.connectivity.listeners.GroupMemberListener;
 import teefourteen.glideplayer.fragments.connectivity.listeners.ConnectionCloseListener;
 
-public class CreateGroupFragment extends Fragment {
+public class CreateGroupFragment extends Fragment implements GroupCreationListener,
+        GroupMemberListener{
     private View rootView;
     private boolean groupCreated = false;
     private boolean waitingForGroupCreation = false;
@@ -81,7 +85,7 @@ public class CreateGroupFragment extends Fragment {
 
     private void createGroup(View view){
         String groupName = ((EditText) rootView.findViewById(R.id.group_name)).getText().toString();
-        group.createGroup(groupName, groupCreatedHandler);
+        group.createGroup(groupName, this, this);
         waitingForGroupCreation = true;
         onWaitingForGroupCreation();
     }
@@ -91,15 +95,32 @@ public class CreateGroupFragment extends Fragment {
         rootView.findViewById(R.id.create_group).setEnabled(false);
     }
 
-    private void onGroupCreated() {
+    private void closeConnection() {
+        group.deleteGroup();
+        group.close();
+        group = null;
+        closeListener.onConnectionClose();
+    }
+
+    @Override
+    public void onGroupCreated() {
         rootView.findViewById(R.id.creating_group_progress_bar).setVisibility(View.INVISIBLE);
         rootView.findViewById(R.id.create_group).setVisibility(View.INVISIBLE);
         rootView.findViewById(R.id.group_created_message).setVisibility(View.VISIBLE);
     }
 
-    private void closeConnection() {
-        group.deleteGroup();
-        group = null;
-        closeListener.onConnectionClose();
+    @Override
+    public void onGroupCreationFailed(String failureMessage) {
+        Toast.makeText(getContext(), failureMessage, Toast.LENGTH_LONG).show();
+    }
+
+    @Override
+    public void onMemberLeft(String member) {
+
+    }
+
+    @Override
+    public void onNewMemberJoined(String memberId, String memberName) {
+        Toast.makeText(getContext(), memberName + " joined", Toast.LENGTH_LONG).show();
     }
 }

@@ -3,7 +3,6 @@ package teefourteen.glideplayer.music.database;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.provider.BaseColumns;
 import android.provider.MediaStore;
 
@@ -45,24 +44,6 @@ public class ArtistTable extends Table {
 
         return resolver.query(MediaStore.Audio.Artists.EXTERNAL_CONTENT_URI, projection,
                 null, null, null);
-    }
-
-    @Override
-    public void initialize(SQLiteDatabase db) {
-        db.delete(TABLE_NAME, null, null);
-
-        Cursor cursor = getMediaStoreCursor();
-
-        if (cursor != null) {
-            cursor.moveToFirst();
-            do {
-                ContentValues values = putValues(cursor);
-
-                insertValues(values, db);
-            } while (cursor.moveToNext());
-
-            cursor.close();
-        }
     }
 
     @Override
