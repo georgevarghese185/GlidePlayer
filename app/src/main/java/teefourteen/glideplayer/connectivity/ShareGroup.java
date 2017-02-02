@@ -6,6 +6,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.database.Cursor;
 import android.os.IBinder;
 import android.util.Log;
 import android.widget.ArrayAdapter;
@@ -28,25 +29,28 @@ import teefourteen.glideplayer.connectivity.listeners.GroupMemberListener;
 import teefourteen.glideplayer.connectivity.listeners.NewGroupListener;
 import teefourteen.glideplayer.connectivity.listeners.RequestListener;
 import teefourteen.glideplayer.connectivity.listeners.ResponseListener;
+import teefourteen.glideplayer.music.Song;
 import teefourteen.glideplayer.music.database.Library;
 
 public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberListener,
         RequestListener, Closeable {
-    private static final int ACTION_GET_USERNAME = 1000;
-    private static final int ACTION_GET_LIBRARY = 1002;
+    //TODO: change method parameters to be relevant to sharegroup (eg: memberId in place of deviceId)
 
+    private static final int ACTION_GET_USERNAME = 1000;
+    private static final int ACTION_GET_SONG = 1002;
+    public static ShareGroup instance;  //TODO: find memory leak work around
     private NetworkService.LocalBinder netManager;
     private String userName;
-    private GlidePlayerGroup currentGroup;
+    private static GlidePlayerGroup currentGroup;
     private ArrayList<GlidePlayerGroup> foundGroups;
     private Activity activity;
     private ArrayAdapter groupListAdapter;
+    private ArrayList<String> memberList;
+    private ArrayAdapter<String> memberListAdapter;
     private GroupConnectionListener groupConnectionListener;
     private GroupMemberListener groupMemberListener;
     private ShareGroupInitListener shareGroupInitListener;
     private EasyHandler handler;
-
-
 
     public class GlidePlayerGroup {
         public final String ownerId;
@@ -99,6 +103,11 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
         void onShareGroupReady();
     }
 
+    public interface GetSongListener {
+        void onGotSong(String songFilePath);
+        void onFailedGettingSong();
+    }
+
 
 
     private ServiceConnection serviceConnection = new ServiceConnection() {
@@ -116,12 +125,69 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
     };
 
 
+    public static File getLibraryFile(String memberName) {
+        //TODO: change key value of groupMembers to username itself (after implementing username conflict check)
+        for(String memberId : currentGroup.groupMembers.keySet()){
+            Member member = currentGroup.groupMembers.get(memberId);
+            if(member.name.equals(memberName)) {
+                return new File(member.dbFile);
+            }
+        }
 
+        return null;
+    }
 
-    public ShareGroup(Activity activity, String userName, ShareGroupInitListener listener){
+    public static void getSong(String memberName, long songId,
+                                 final GetSongListener getSongListener) {
+        //TODO: update the SongTable's filepath column to avoid having to re download each time
+        String memberId = null;
+        for(String id : currentGroup.groupMembers.keySet()) {
+            Member member = currentGroup.groupMembers.get(id);
+            if(member.name.equals(memberName)) {
+                memberId = id;
+                break;
+            }
+        }
+
+        instance.netManager.sendRequest(memberId, ACTION_GET_SONG, songId,
+                new ResponseListener() {
+                    @Override
+                    public void onResponseReceived(Object responseData) {
+                        getSongListener.onGotSong(((File) responseData).getAbsolutePath());
+                    }
+
+                    @Override
+                    public void onRequestFailed() {
+                        getSongListener.onFailedGettingSong();
+                    }
+                });
+    }
+
+    private File getSongRequest(long songId) {
+        Library lib = new Library(activity,
+                new File(Library.DATABASE_LOCATION, Library.LOCAL_DATABASE_NAME));
+
+        Cursor cursor = Library.getSong(lib.getReadableDatabase(), songId);
+        lib.close();
+        if(cursor.moveToFirst()) {
+            return new File(Song.toSong(cursor).getFilePath());
+        } else {
+            return null; //TODO: something less destructive. This will cause the receiver to throw an exception due to null file
+        }
+    }
+
+    public ShareGroup(Activity activity, String userName, ShareGroupInitListener listener,
+                      ArrayList<String> memberList, ArrayAdapter<String> memberListAdapter){
+        instance = this;
         this.activity = activity;
         this.userName = userName;
         this.shareGroupInitListener = listener;
+
+        this.memberList = memberList;
+
+        this.memberListAdapter = memberListAdapter;
+        memberListAdapter.notifyDataSetChanged();
+
         handler = new EasyHandler();
         foundGroups = new ArrayList<>();
         startService();
@@ -195,6 +261,7 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
     public void close() {
         activity.unbindService(serviceConnection);
         handler.closeAllHandlers();
+        instance = null;
     }
 
     @Override
@@ -223,6 +290,8 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
                         exchangeLibraries(memberId, (Socket) responseData, true);
                         groupMemberListener.onNewMemberJoined(memberId,
                                 newMemberUsername);
+
+                        updateLibraryLists(memberId);
                     }
 
                     @Override
@@ -241,10 +310,21 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
         netManager.sendRequest(memberId, ACTION_GET_USERNAME, userName, usernameResponse);
     }
 
+    private void updateLibraryLists(String memberId) {
+        Member member = currentGroup.groupMembers.get(memberId);
+
+        memberList.add(member.name);
+        memberListAdapter.notifyDataSetChanged();
+    }
+
+
     private void exchangeLibraries(final String memberId, Socket socket, boolean sendFirst) {
         final String newMemberUsername = currentGroup.groupMembers.get(memberId).name;
 
         File remoteLibraryFile = new File(Library.DATABASE_LOCATION, newMemberUsername);
+        if (remoteLibraryFile.exists()) {
+            remoteLibraryFile.delete();
+        }
         Library library = new Library(activity,
                 new File(Library.DATABASE_LOCATION, Library.LOCAL_DATABASE_NAME));
         Library remoteLibrary = new Library(activity, remoteLibraryFile);
@@ -263,6 +343,9 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
             currentGroup.addMember(memberId, newMemberUsername,
                     Library.DATABASE_LOCATION + "/" + newMemberUsername);
 
+            library.close();
+            remoteLibrary.close();
+
             currentGroup.groupMembers.get(memberId).dbFile = remoteLibraryFile.getAbsolutePath();
 
         } catch (IOException | JSONException e) {
@@ -277,6 +360,7 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
             return userName;
         } else if(action == NetworkService.ACTION_RAW_SOCKET) {
             exchangeLibraries(deviceId, (Socket) requestData, false);
+            updateLibraryLists(deviceId);
             EasyHandler.executeOnMainThread(new Runnable() {
                 @Override
                 public void run() {
@@ -284,6 +368,8 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
                 }
             });
             return null;
+        } else if(action == ACTION_GET_SONG) {
+            return getSongRequest((Long)requestData);
         }
 
         else return null;

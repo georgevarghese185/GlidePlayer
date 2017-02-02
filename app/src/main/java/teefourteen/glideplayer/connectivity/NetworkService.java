@@ -19,6 +19,7 @@ import android.os.Looper;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.Collection;
@@ -34,7 +35,10 @@ import teefourteen.glideplayer.connectivity.listeners.RequestListener;
 import teefourteen.glideplayer.connectivity.listeners.NewGroupListener;
 import teefourteen.glideplayer.connectivity.listeners.ResponseListener;
 import teefourteen.glideplayer.connectivity.listeners.WifiP2pBroadcastReceiver;
+
+
 //TODO: persistent notification
+//TODO: allow bigger files (right now, can't send Long for file size. fix that)
 public class NetworkService extends Service {
     private static final String RECORD_LISTEN_PORT = "listen_port";
     private static final String RECORD_USER_NAME = "user_name";
@@ -50,9 +54,12 @@ public class NetworkService extends Service {
     private static final int ACTION_NEW_CLIENT = 2622;
     public static final int ACTION_RAW_SOCKET = 2125;
     private static final String DATA_TYPE_INTEGER = "integer";
+    private static final String DATA_TYPE_LONG = "long";
     private static final String DATA_TYPE_STRING = "string";
     private static final String DATA_TYPE_OBJECT = "object";
+    private static final String DATA_TYPE_FILE = "file";
     private static final String DATA_TYPE_NULL = "null";
+    public static String FILE_SAVE_LOCATION;
 
     private final IBinder binder = new LocalBinder();
     private WifiP2pManager p2pManager;
@@ -103,7 +110,7 @@ public class NetworkService extends Service {
         @Override
         public void run() {
             try {
-                int action = con.getNextInt(1);
+                int action = con.getNextInt();
 
                 if (action == ACTION_ESTABLISH) {
                     handler.executeAsync(new Runnable() {
@@ -145,7 +152,16 @@ public class NetworkService extends Service {
                     break;
                 case DATA_TYPE_INTEGER:
                     responseData = requestListener.onNewRequest(receiverDeviceAddress, action,
-                            con.getNextInt(1));
+                            con.getNextInt());
+                    break;
+                case DATA_TYPE_LONG:
+                    responseData = requestListener.onNewRequest(receiverDeviceAddress, action,
+                            con.getNextLong());
+                    break;
+                case DATA_TYPE_FILE:
+                    int size = con.getNextInt();
+                    responseData = requestListener.onNewRequest(receiverDeviceAddress, action,
+                            con.getNextFile(getCacheDir()+"/files",size));
                     break;
                 default:
                     responseData = requestListener.onNewRequest(receiverDeviceAddress, action,
@@ -161,6 +177,14 @@ public class NetworkService extends Service {
             } else if(responseData instanceof Integer) {
                 con.sendString(DATA_TYPE_INTEGER);
                 con.sendInt((Integer) responseData);
+            } else if(responseData instanceof Long) {
+                con.sendString(DATA_TYPE_INTEGER);
+                con.sendLong((Long) responseData);
+            } else if(responseData instanceof File) {
+                con.sendString(DATA_TYPE_FILE);
+                int size = (int) (((File) responseData).length());
+                con.sendInt(size);
+                con.sendFile((File) responseData);
             } else {
                 con.sendString(DATA_TYPE_OBJECT);
                 con.sendObject(responseData);
@@ -278,6 +302,12 @@ public class NetworkService extends Service {
                     listenForRequests();
                 }
             }, THREAD_CONNECTION_LISTENER);
+
+            FILE_SAVE_LOCATION = getExternalFilesDir(null) + "/files";
+            File fileDir = new File(FILE_SAVE_LOCATION);
+            if( !(fileDir.exists()) ) {
+                fileDir.mkdir();
+            }
 
             return binder;
         } catch (IOException e) {
@@ -524,7 +554,7 @@ public class NetworkService extends Service {
                                             final String newClientDeviceAddress) {
         try {
             final InetAddress newClientInetAddress = newClientConnection.getRemoteInetAddress();
-            final int newClientPort = newClientConnection.getNextInt(1);
+            final int newClientPort = newClientConnection.getNextInt();
             newClientConnection.sendObject(clientMap);
             newClientConnection.close();
             clientMap.put(newClientDeviceAddress, new Client(newClientInetAddress, newClientPort));
@@ -633,7 +663,17 @@ public class NetworkService extends Service {
             } else if(requestData instanceof Integer) {
                 connection.sendString(DATA_TYPE_INTEGER);
                 connection.sendInt((Integer) requestData);
-            } else {
+            }else if(requestData instanceof Long) {
+                connection.sendString(DATA_TYPE_LONG);
+                connection.sendLong((Long) requestData);
+            } else if (requestData instanceof File){
+                connection.sendString(DATA_TYPE_FILE);
+                long size = ((File) requestData).length();
+                if(size > Integer.MAX_VALUE) throw new Exception("File too big");
+
+                connection.sendInt((int) size);
+                connection.sendFile((File) requestData);
+            }else {
                 connection.sendString(DATA_TYPE_OBJECT);
                 connection.sendObject(requestData);
             }
@@ -648,7 +688,15 @@ public class NetworkService extends Service {
                     responseListener.onResponseReceived(connection.getNextString());
                     break;
                 case DATA_TYPE_INTEGER:
-                    responseListener.onResponseReceived(connection.getNextInt(1));
+                    responseListener.onResponseReceived(connection.getNextInt());
+                    break;
+                case DATA_TYPE_LONG:
+                    responseListener.onResponseReceived(connection.getNextLong());
+                    break;
+                case DATA_TYPE_FILE:
+                    int size = connection.getNextInt();
+                    responseListener.onResponseReceived(
+                            connection.getNextFile(FILE_SAVE_LOCATION, size));
                     break;
                 default:
                     responseListener.onResponseReceived(connection.getNextObject());
@@ -657,7 +705,10 @@ public class NetworkService extends Service {
 
         } catch (IOException e) {
             responseListener.onRequestFailed();
-        } finally {
+        } catch (Exception e) {
+            if(e.toString().equals("File too big"))
+                responseListener.onRequestFailed();
+        }finally {
             if (connection != null) connection.close();
         }
     }

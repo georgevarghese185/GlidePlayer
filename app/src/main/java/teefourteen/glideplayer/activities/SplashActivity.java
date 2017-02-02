@@ -31,7 +31,7 @@ public class SplashActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         Library.DATABASE_LOCATION = getCacheDir().getAbsolutePath();
-        Library.REMOTE_COVERS_LOCATION = getCacheDir().getAbsolutePath() + "remote_album_covers";
+        Library.REMOTE_COVERS_LOCATION = getCacheDir().getAbsolutePath() + "/remote_album_covers";
 
         libInitCompleteReceiver = new BroadcastReceiver() {
             @Override

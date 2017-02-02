@@ -17,6 +17,7 @@ public class AlbumTable extends Table {
     }
 
     public class Columns implements BaseColumns {
+        public static final String ALBUM_ID = "album_id";
         public static final String ALBUM_NAME = MediaStore.Audio.Albums.ALBUM;
         public static final String ALBUM_ART = MediaStore.Audio.Albums.ALBUM_ART;
         public static final String ARTIST = MediaStore.Audio.Albums.ARTIST;
@@ -28,6 +29,7 @@ public class AlbumTable extends Table {
         String query = "CREATE TABLE " + TABLE_NAME + "("
                 + BaseColumns._ID + " INTEGER" + ", "
                 + BaseColumns._COUNT + " INTEGER" + ", "
+                + Columns.ALBUM_ID + " INTEGER" + ", "
                 + Columns.ALBUM_NAME + " TEXT" + ", "
                 + Columns.ALBUM_ART + " TEXT" + ", "
                 + Columns.ARTIST + " TEXT" + ", "
@@ -55,6 +57,7 @@ public class AlbumTable extends Table {
         ContentValues values = new ContentValues();
 
         values.put(Columns._ID, Library.getLong(cursor, MediaStore.Audio.Albums._ID));
+        values.put(Columns.ALBUM_ID, Library.getLong(cursor, MediaStore.Audio.Albums._ID));
         values.put(Columns.ALBUM_NAME, Library.getString(cursor, MediaStore.Audio.Albums.ALBUM));
         values.put(Columns.ALBUM_ART, Library.getString(cursor, MediaStore.Audio.Albums.ALBUM_ART));
         values.put(Columns.ARTIST, Library.getString(cursor, MediaStore.Audio.Albums.ARTIST));

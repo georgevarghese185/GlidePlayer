@@ -11,6 +11,7 @@ import teefourteen.glideplayer.connectivity.ShareGroup;
 import teefourteen.glideplayer.fragments.FragmentSwitcher;
 import teefourteen.glideplayer.fragments.connectivity.listeners.ConnectionCloseListener;
 import teefourteen.glideplayer.fragments.connectivity.listeners.ConnectivitySelectionListener;
+import teefourteen.glideplayer.fragments.library.LibraryFragment;
 
 
 public class ConnectivityFragment extends Fragment implements ConnectivitySelectionListener,
@@ -49,26 +50,30 @@ public class ConnectivityFragment extends Fragment implements ConnectivitySelect
 
     @Override
     public void OnJoinGroupSelected(String username) {
+        LibraryFragment fragment = (LibraryFragment) LibraryFragment.getInstance();
+
         joinFragment = JoinGroupFragment.newInstance(new ShareGroup(getActivity(), username,
                         new ShareGroup.ShareGroupInitListener() {
                             @Override
                             public void onShareGroupReady() {
                                 connectivityFragmentSwitcher.switchTo(joinFragment, JOIN_FRAGMENT_TAG);
                             }
-                        }),
-                this);
+                        },
+                fragment.getMemberList(), fragment.getMemberListAdapter()), this);
     }
 
     @Override
     public void OnCreateGroupSelected(String username) {
+        LibraryFragment fragment = (LibraryFragment) LibraryFragment.getInstance();
+
         createFragment = CreateGroupFragment.newInstance(new ShareGroup(getActivity(), username,
                 new ShareGroup.ShareGroupInitListener() {
                     @Override
                     public void onShareGroupReady() {
                         connectivityFragmentSwitcher.switchTo(createFragment,CREATE_FRAGMENT_TAG);
                     }
-                }),
-                this);
+                },
+                fragment.getMemberList(), fragment.getMemberListAdapter()), this);
     }
 
     @Override

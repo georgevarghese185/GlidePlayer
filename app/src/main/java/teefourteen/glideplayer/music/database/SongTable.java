@@ -12,6 +12,7 @@ public class SongTable extends Table {
     ContentResolver resolver;
 
     public class Columns implements BaseColumns {
+        public static final String SONG_ID = "song_id";
         public static final String ALBUM_ID = MediaStore.Audio.Media.ALBUM_ID;
         public static final String ARTIST_ID = MediaStore.Audio.Media.ARTIST_ID;
         public static final String BOOKMARK = MediaStore.Audio.Media.BOOKMARK;
@@ -23,6 +24,7 @@ public class SongTable extends Table {
         public static final String TITLE = MediaStore.Audio.Media.TITLE;
         public static final String TRACK = MediaStore.Audio.Media.TRACK;
         public static final String YEAR = MediaStore.Audio.Media.YEAR;
+        public static final String LIBRARY_USERNAME = "libowner";
     }
 
     SongTable(ContentResolver resolver) {
@@ -35,6 +37,7 @@ public class SongTable extends Table {
         return "CREATE TABLE " + TABLE_NAME + "("
                 + BaseColumns._ID + " INTEGER" + ", "
                 + BaseColumns._COUNT + " INTEGER" + ", "
+                + Columns.SONG_ID + " INTEGER" + ", "
                 + Columns.ALBUM_ID + " INTEGER" + ", "
                 + Columns.ARTIST_ID + " INTEGER" + ", "
                 + Columns.BOOKMARK + " INTEGER" + ", "
@@ -45,7 +48,8 @@ public class SongTable extends Table {
                 + Columns.SIZE + " INTEGER" + ", "
                 + Columns.TITLE + " TEXT" + ", "
                 + Columns.TRACK + " INTEGER" + ", "
-                + Columns.YEAR + " INTEGER" + ")";
+                + Columns.YEAR + " INTEGER" + ", "
+                + Columns.LIBRARY_USERNAME + " TEXT" + ")";
     }
 
     @Override
@@ -72,6 +76,7 @@ public class SongTable extends Table {
     public ContentValues putValues(Cursor cursor) {
         ContentValues values = new ContentValues();
         values.put(Columns._ID, Library.getLong(cursor, MediaStore.Audio.Media._ID));
+        values.put(Columns.SONG_ID, Library.getLong(cursor, MediaStore.Audio.Media._ID));
         values.put(Columns.ALBUM_ID, Library.getLong(cursor, MediaStore.Audio.Media.ALBUM_ID));
         values.put(Columns.ARTIST_ID, Library.getLong(cursor, MediaStore.Audio.Media.ARTIST_ID));
         values.put(Columns.BOOKMARK, Library.getLong(cursor, MediaStore.Audio.Media.BOOKMARK));

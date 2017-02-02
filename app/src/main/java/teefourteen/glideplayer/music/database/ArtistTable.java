@@ -11,6 +11,7 @@ public class ArtistTable extends Table {
     ContentResolver resolver;
 
     public static class Columns implements BaseColumns {
+        public static final String ARTIST_ID = "artist_id";
         public static final String ARTIST_NAME = MediaStore.Audio.Artists.ARTIST;
         public static final String NUMBER_OF_ALBUMS = MediaStore.Audio.Artists.NUMBER_OF_ALBUMS;
         public static final String NUMBER_OF_TRACKS = MediaStore.Audio.Artists.NUMBER_OF_TRACKS;
@@ -26,6 +27,7 @@ public class ArtistTable extends Table {
         String query = "CREATE TABLE " + TABLE_NAME + "("
                 + BaseColumns._ID + " INTEGER" + ", "
                 + BaseColumns._COUNT + " INTEGER" + ", "
+                + Columns.ARTIST_ID + " INTEGER" + ", "
                 + Columns.ARTIST_NAME + " TEXT" + ", "
                 + Columns.NUMBER_OF_ALBUMS + " INTEGER" + ", "
                 + Columns.NUMBER_OF_TRACKS + " INTEGER" + ")";
@@ -51,6 +53,7 @@ public class ArtistTable extends Table {
         ContentValues values = new ContentValues();
 
         values.put(Columns._ID, Library.getLong(cursor, MediaStore.Audio.Artists._ID));
+        values.put(Columns.ARTIST_ID, Library.getLong(cursor, MediaStore.Audio.Artists._ID));
         values.put(Columns.ARTIST_NAME, Library.getString(cursor, MediaStore.Audio.Artists.ARTIST));
         values.put(Columns.NUMBER_OF_ALBUMS, Library.getInt(cursor, MediaStore.Audio.Artists.NUMBER_OF_ALBUMS));
         values.put(Columns.NUMBER_OF_TRACKS, Library.getInt(cursor, MediaStore.Audio.Artists.NUMBER_OF_TRACKS));

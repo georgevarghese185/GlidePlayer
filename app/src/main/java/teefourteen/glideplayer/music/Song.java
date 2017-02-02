@@ -20,9 +20,10 @@ public class Song implements Parcelable {
     private String artist;
     private long artistId;
     private long duration;
+    private String libraryUsername = Library.LOCAL_DATABASE_NAME;
 
     public Song(long _id, String filePath, String title, String album, long albumId,
-                String albumArt, String artist, long artistId, long duration) {
+                String albumArt, String artist, long artistId, long duration, String libraryUsername) {
         this._id = _id;
         this.filePath = filePath;
         this.title = title;
@@ -32,6 +33,7 @@ public class Song implements Parcelable {
         this.artist = artist;
         this.artistId = artistId;
         this.duration = duration;
+        this.libraryUsername = libraryUsername;
     }
 
     public long get_id() {
@@ -56,6 +58,10 @@ public class Song implements Parcelable {
 
     public long getDuration() {
         return duration;
+    }
+
+    public String getLibraryUsername(){
+        return libraryUsername;
     }
 
     public String getFilePath() {
@@ -86,6 +92,7 @@ public class Song implements Parcelable {
         dest.writeString(artist);
         dest.writeLong(artistId);
         dest.writeLong(duration);
+        dest.writeString(libraryUsername);
     }
 
     static public Parcelable.Creator CREATOR = new Parcelable.Creator<Song>() {
@@ -100,7 +107,9 @@ public class Song implements Parcelable {
             String artist = source.readString();
             long artistId = source.readLong();
             long duration = source.readLong();
-            return new Song(_id, filePath, title, album, albumId, albumArt, artist, artistId,duration);
+            String libraryUsername = source.readString();
+            return new Song(_id, filePath, title, album, albumId, albumArt, artist, artistId,duration,
+                    libraryUsername);
         }
 
         @Override
@@ -110,7 +119,7 @@ public class Song implements Parcelable {
     };
 
     static public Song toSong(Cursor cursor) {
-        long _id = Library.getLong(cursor, SongTable.Columns._ID);
+        long _id = Library.getLong(cursor, SongTable.Columns.SONG_ID);
         String filePath = Library.getString(cursor, SongTable.Columns.FILE_PATH);
         String title = Library.getString(cursor, SongTable.Columns.TITLE);
         String album = Library.getString(cursor, AlbumTable.Columns.ALBUM_NAME);
@@ -119,7 +128,9 @@ public class Song implements Parcelable {
         String artist = Library.getString(cursor, ArtistTable.Columns.ARTIST_NAME);
         Long artistId = Library.getLong(cursor, SongTable.Columns.ARTIST_ID);
         Long duration = Library.getLong(cursor, SongTable.Columns.DURATION);
+        String libraryUserName = Library.getString(cursor, SongTable.Columns.LIBRARY_USERNAME);
 
-        return new Song(_id, filePath, title, album, albumId, albumArt, artist, artistId, duration);
+        return new Song(_id, filePath, title, album, albumId, albumArt, artist, artistId, duration,
+                libraryUserName);
     }
 }

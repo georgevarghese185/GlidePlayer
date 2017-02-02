@@ -1,37 +1,50 @@
 package teefourteen.glideplayer.fragments.library;
 
 import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.ListAdapter;
 import android.widget.ListView;
+import android.widget.Spinner;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collections;
 import java.util.Comparator;
 
+import javax.microedition.khronos.opengles.GL;
+
 import teefourteen.glideplayer.Global;
 import teefourteen.glideplayer.ToolbarEditor;
 import teefourteen.glideplayer.ToolbarEditor.ToolbarEditable;
 import teefourteen.glideplayer.R;
+import teefourteen.glideplayer.connectivity.ShareGroup;
 import teefourteen.glideplayer.music.*;
 import teefourteen.glideplayer.fragments.library.adapters.SongAdapter;
+import teefourteen.glideplayer.music.database.Library;
 
 public class SongsFragment extends Fragment {
     private ListAdapter songAdapter = null;
-    private ListView songList = null;
+    private ArrayList<String> memberList;
+    private ArrayAdapter<String> memberListAdapter;
+    private ListView songListView = null;
     private boolean allowMultiSelection;
+
     public interface SelectionHandler{
-        public void handleSelection(PlayQueue playQueue, int position);
+        void handleSelection(PlayQueue playQueue, int position);
     }
     SelectionHandler selectionHandler;
 
@@ -50,9 +63,74 @@ public class SongsFragment extends Fragment {
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_songs, container, false);
 
-        songList = (ListView) view.findViewById(R.id.songList);
+        songListView = (ListView) view.findViewById(R.id.songList);
         initSongList();
+
+        Spinner librarySpinner = (Spinner) view.findViewById(R.id.library_spinner);
+
+        if(memberList == null) {
+            memberList = new ArrayList<>(1);
+            memberList.add(LibraryFragment.LOCAL_LIBRARY_NAME);
+        }
+
+        if(memberListAdapter == null) {
+            memberListAdapter = new ArrayAdapter<>(getContext(),
+                    android.R.layout.simple_spinner_dropdown_item, memberList);
+        }
+
+        librarySpinner.setAdapter(memberListAdapter);
+
+        librarySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            private int lastPosition = 0;
+
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if(position == lastPosition) {
+                    return;
+                }
+                else{
+                    lastPosition = position;
+                }
+                String name = memberList.get(position);
+                File dbFile;
+                if(name.equals(LibraryFragment.LOCAL_LIBRARY_NAME)) {
+                    dbFile = new File(Library.DATABASE_LOCATION, Library.LOCAL_DATABASE_NAME);
+                } else {
+                    dbFile =  ShareGroup.getLibraryFile(name);
+                }
+
+                if(dbFile != null && dbFile.exists()) {
+                    Library library = new Library(getContext(), dbFile);
+                    SQLiteDatabase db = library.getReadableDatabase();
+
+                    Global.songCursor = Library.getSongs(db);
+
+                    ((SongAdapter) songAdapter).changeCursor(Global.songCursor);
+                    ((SongAdapter) songAdapter).notifyDataSetChanged();
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
+
+
+
         return view;
+    }
+
+    public ArrayList<String> getMemberList(){
+        return memberList;
+    }
+
+    public ArrayAdapter<String> getMemberListAdapter() {
+        return memberListAdapter;
+    }
+
+    public ListView getSongListView() {
+        return songListView;
     }
 
     @Override
@@ -71,11 +149,11 @@ public class SongsFragment extends Fragment {
     }
 
     public void initSongList() {
-        songList.setAdapter(songAdapter);
+        songListView.setAdapter(songAdapter);
         SingleSelect single = new SingleSelect();
-        songList.setOnItemClickListener(single);
+        songListView.setOnItemClickListener(single);
         if(allowMultiSelection)
-            songList.setOnItemLongClickListener(single);
+            songListView.setOnItemLongClickListener(single);
     }
 
     class SingleSelect implements AdapterView.OnItemClickListener,
@@ -149,8 +227,8 @@ public class SongsFragment extends Fragment {
 
         public void cancelMultiSelect() {
             SingleSelect single = new SingleSelect();
-            songList.setOnItemClickListener(single);
-            songList.setOnItemLongClickListener(single);
+            songListView.setOnItemClickListener(single);
+            songListView.setOnItemLongClickListener(single);
             selected = null;
             selectionList = null;
             selectionListHandler = null;

@@ -2,157 +2,149 @@ package teefourteen.glideplayer.services;
 
 import android.app.Service;
 import android.content.Intent;
-import android.os.Binder;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.IBinder;
+import android.os.Looper;
+import android.os.Message;
 
 import teefourteen.glideplayer.Global;
-import teefourteen.glideplayer.EasyHandler;
 import teefourteen.glideplayer.music.MusicPlayer;
 import teefourteen.glideplayer.music.PlayQueue;
 
 import static teefourteen.glideplayer.Global.playQueue;
+import static teefourteen.glideplayer.fragments.player.PlayerFragment.playerFragmentHandler;
 
 public class PlayerService extends Service {
 
     //TODO: All stuff in media player guide
-    private MusicPlayer player=null;
-    private EasyHandler handler;
-    private final IBinder binder = new PlayerServiceBinder();
-    private SongListener listener;
+    static final public String EXTRA_SONG_COMMAND="song_command";
+    static final public String EXTRA_SONG_INDEX ="song_index";
+    static final public String EXTRA_PLAY_QUEUE ="play_queue";
+    MusicPlayer player=null;
+    private HandlerThread playerHandlerThread;
+    private PlayerHandler playerHandler;
     private static final String PLAYER_HANDLER_THREAD_NAME = "player_handler_thread";
-
-    public interface SongListener {
-        void onSongStarted();
-        void onSongPlaybackFailed();
+    public enum Command {
+        CHANGE_TRACK, PLAY_NEXT, PLAY_PREV,
+        NEW_QUEUE, PLAY, PAUSE, CHECK_IS_PLAYING
     }
+    public static final int MESSAGE_SONG_STARTED = 1;
+    public static final int MESSAGE_PLAYBACK_FAILED = 2;
 
-    public class PlayerServiceBinder extends Binder {
-        private final PlayerService service = PlayerService.this;
-
-        public void registerSongListener(final SongListener listener) {
-            service.listener = listener;
+    public class PlayerHandler extends Handler {
+        PlayerHandler(Looper looper) {
+            super(looper);
         }
 
-        public void unregisterSongListener() {
-            listener = null;
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
         }
 
-        public void play(){
-            Runnable r = new Runnable() {
-                @Override
-                public void run() {
-                    service.play();
-                }
-            };
-            handler.executeAsync(r, PLAYER_HANDLER_THREAD_NAME);
+        private void play() {
+            if(player.playSong(playQueue.getCurrentPlaying()))
+                notifyPlayerActivity(MESSAGE_SONG_STARTED);
+            else
+                notifyPlayerActivity(MESSAGE_PLAYBACK_FAILED);
         }
 
-        public void pause(){
-            Runnable r = new Runnable() {
-                @Override
-                public void run() {
-                    service.pause();
-                }
-            };
-            handler.executeAsync(r, PLAYER_HANDLER_THREAD_NAME);
+        private void pause() {
+            player.pauseSong();
         }
 
-        public void next() {
-            Runnable r = new Runnable() {
-                @Override
-                public void run() {
-                    service.next();
-                }
-            };
-            handler.executeAsync(r, PLAYER_HANDLER_THREAD_NAME);
+        private void next() {
+            player.reset();
+            playQueue.next();
+            play();
         }
 
-        public void prev() {
-            Runnable r = new Runnable() {
-                @Override
-                public void run() {
-                    service.prev();
-                }
-            };
-            handler.executeAsync(r, PLAYER_HANDLER_THREAD_NAME);
+        private void prev() {
+            player.reset();
+            playQueue.prev();
+            play();
         }
 
-        public void changeTrack(final int songIndex) {
-            Runnable r = new Runnable() {
-                @Override
-                public void run() {
-                    service.changeTrack(songIndex);
-                }
-            };
-            handler.executeAsync(r, PLAYER_HANDLER_THREAD_NAME);
+        private void changeTrack(int songIndex) {
+            player.reset();
+            playQueue.changeTrack(songIndex);
+            play();
         }
 
-        public void newQueue(final PlayQueue queue) {
-            Runnable r = new Runnable() {
-                @Override
-                public void run() {
-                    service.newQueue(queue);
-                }
-            };
-            handler.executeAsync(r, PLAYER_HANDLER_THREAD_NAME);
+        private void newQueue(PlayQueue playQueue){
+            player.reset();
+            Global.playQueue = playQueue;
+            play();
         }
 
-        public boolean isPlaying() {
-            return player.isPlaying();
+        void notifyPlayerActivity(int messageContent) {
+            if(playerFragmentHandler !=null) {
+                Message message = obtainMessage();
+                message.arg1 = messageContent;
+                playerFragmentHandler.sendMessage(message);
+            }
         }
-    }
 
-
-    public void play(){
-        boolean playbackSuccessful = player.playSong(playQueue.getCurrentPlaying());
-
-        if(listener != null) {
-            if(playbackSuccessful) listener.onSongStarted();
-            else listener.onSongPlaybackFailed();
+        void checkIsPlaying() {
+            if(player.isPlaying())
+                notifyPlayerActivity(MESSAGE_SONG_STARTED);
         }
-    }
-
-    public void pause(){ player.pauseSong(); }
-
-    public void next() {
-        player.reset();
-        playQueue.next();
-        play();
-    }
-
-    public void prev() {
-        player.reset();
-        playQueue.prev();
-        play();
-    }
-
-    public void changeTrack(int songIndex) {
-        player.reset();
-        playQueue.changeTrack(songIndex);
-        play();
-    }
-
-    public void newQueue(PlayQueue queue) {
-        player.reset();
-        Global.playQueue = queue;
-        play();
     }
 
     @Override
     public void onCreate() {
         player = new MusicPlayer(getApplicationContext());
-        handler = new EasyHandler();
-        handler.createHandler(PLAYER_HANDLER_THREAD_NAME);
+        playerHandlerThread = new HandlerThread(PLAYER_HANDLER_THREAD_NAME);
+        playerHandlerThread.start();
+        playerHandler = new PlayerHandler(playerHandlerThread.getLooper());
     }
 
     @Override
-    public void onDestroy() {
-        super.onDestroy();
-        handler.closeAllHandlers();
+    public int onStartCommand(final Intent intent, int flags, int startId) {
+        final Command command = (Command) intent.getSerializableExtra(EXTRA_SONG_COMMAND);
+        playerHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                switch (command) {
+                    case PLAY:
+                        playerHandler.play();
+                        break;
+
+                    case PAUSE:
+                        playerHandler.pause();
+                        break;
+
+                    case PLAY_NEXT:
+                        playerHandler.next();
+                        break;
+
+                    case PLAY_PREV:
+                        playerHandler.prev();
+                        break;
+
+                    case CHANGE_TRACK:
+                        playerHandler.changeTrack(intent.getIntExtra(EXTRA_SONG_INDEX, 0));
+                        break;
+
+                    case NEW_QUEUE:
+                        playerHandler.newQueue(
+                                (PlayQueue)intent.getParcelableExtra(EXTRA_PLAY_QUEUE));
+                        break;
+                    case CHECK_IS_PLAYING:
+                        playerHandler.checkIsPlaying();
+                        break;
+                }
+            }
+        });
+
+        return START_NOT_STICKY;
     }
+
+
 
     @Override
     public IBinder onBind(Intent intent) {
-        return binder;
+        return null;
     }
+
 }

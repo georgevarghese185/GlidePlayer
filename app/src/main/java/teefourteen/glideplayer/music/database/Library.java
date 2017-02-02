@@ -23,9 +23,15 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.util.Iterator;
 
+import teefourteen.glideplayer.music.Song;
+
 
 public class Library {
+    //TODO: separate directory for remote library DBs
+
+
     public static final String LOCAL_DATABASE_NAME = "music_library.db";
+    public static final String REMOTE_SONG_MISSING_PATH = "@missing_remote_song@";
     private File dbFile;
     public static String DATABASE_LOCATION;
     public static String REMOTE_COVERS_LOCATION;
@@ -70,7 +76,7 @@ public class Library {
 
 
     public SQLiteDatabase getReadableDatabase() {
-        return openHelper.getReadableDatabase();
+        return new LibraryDbOpenHelper(context, dbFile).getReadableDatabase();
     }
 
 
@@ -80,6 +86,10 @@ public class Library {
         for(Table table : tables) {
             table.initialize(libraryDb);
         }
+
+        ContentValues values = new ContentValues(1);
+        values.put(SongTable.Columns.LIBRARY_USERNAME, LOCAL_DATABASE_NAME);
+        libraryDb.update(SongTable.TABLE_NAME, values, null, null);
 
         libraryDb.setTransactionSuccessful();
         libraryDb.endTransaction();
@@ -93,8 +103,14 @@ public class Library {
         return querySongs(libraryDb, null, null);
     }
 
+    public static Cursor getSong(SQLiteDatabase libraryDb, long songId) {
+        return querySongs(libraryDb,
+                " WHERE " + SongTable.TABLE_NAME + "." + SongTable.Columns.SONG_ID + "=?"
+                , new String[]{String.valueOf(songId)});
+    }
+
     public static Cursor getAlbumSongs(long albumId, SQLiteDatabase libraryDb) {
-        String selection = "WHERE song." + SongTable.Columns.ALBUM_ID + "=?";
+        String selection = " WHERE " + SongTable.TABLE_NAME + "." + SongTable.Columns.ALBUM_ID + "=?";
         String[] selectionArgs = {String.valueOf(albumId)};
 
         return querySongs(libraryDb, selection, selectionArgs);
@@ -103,12 +119,12 @@ public class Library {
     public static Cursor querySongs(SQLiteDatabase libraryDb, String selection,
                                     String[] selectionArgs) {
         String query = "SELECT * FROM "
-                + SongTable.TABLE_NAME + " song LEFT JOIN " + AlbumTable.TABLE_NAME + " album"
-                + " ON " + "song." + SongTable.Columns.ALBUM_ID + "=" + "album." + AlbumTable.Columns._ID
-                + " LEFT JOIN " + ArtistTable.TABLE_NAME + " artist"
-                + " ON " + "song." + SongTable.Columns.ARTIST_ID + "=" + "artist." + ArtistTable.Columns._ID
+                + SongTable.TABLE_NAME + " LEFT JOIN " + AlbumTable.TABLE_NAME
+                + " ON " + SongTable.TABLE_NAME + "." + SongTable.Columns.ALBUM_ID + "=" + AlbumTable.TABLE_NAME + "." + AlbumTable.Columns.ALBUM_ID
+                + " LEFT JOIN " + ArtistTable.TABLE_NAME
+                + " ON " + SongTable.TABLE_NAME + "." + SongTable.Columns.ARTIST_ID + "=" + ArtistTable.TABLE_NAME + "." + ArtistTable.Columns.ARTIST_ID
                 + ((selection==null)? "" : selection)
-                + " ORDER BY " + SongTable.Columns.TITLE;
+                + " ORDER BY " + SongTable.TABLE_NAME + "." + SongTable.Columns.TITLE;
 
 
         return libraryDb.rawQuery(query,selectionArgs);
@@ -258,11 +274,18 @@ public class Library {
         libraryDb.setTransactionSuccessful();
         libraryDb.endTransaction();
 
+
+
         libraryDb.beginTransaction();
 
         ContentValues v = new ContentValues();
         v.put(AlbumTable.Columns.ALBUM_ART, "");
         libraryDb.update(AlbumTable.TABLE_NAME, v, null, null);
+
+        v = new ContentValues();
+        v.put(SongTable.Columns.FILE_PATH, REMOTE_SONG_MISSING_PATH);
+        v.put(SongTable.Columns.LIBRARY_USERNAME, dbFile.getName());
+        libraryDb.update(SongTable.TABLE_NAME,v, null, null);
 
 
 
@@ -296,7 +319,6 @@ public class Library {
             DataInputStream dataIn = new DataInputStream(in);
             FileOutputStream fileOut = new FileOutputStream(file);
             byte[] buffer = new byte[8096];
-            int readBytes=0;
 
             printWriter.println("ready"); //ready to receive
             //get file

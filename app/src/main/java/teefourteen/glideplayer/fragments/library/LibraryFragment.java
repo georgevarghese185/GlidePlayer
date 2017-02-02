@@ -7,7 +7,11 @@ import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
 import android.widget.TabHost;
+
+import java.util.ArrayList;
 
 import teefourteen.glideplayer.R;
 import teefourteen.glideplayer.activities.PlayerActivity;
@@ -18,15 +22,21 @@ import teefourteen.glideplayer.fragments.library.adapters.SongAdapter;
 
 public class LibraryFragment extends Fragment {
     private TabHost tabHost;
+    private static Fragment instance;
     private FragmentSwitcher songFragmentSwitcher;
     private SongsFragment songsFragment;
     private FragmentSwitcher albumFragmentSwitcher;
     private AlbumsFragment albumsFragment;
     private static final String SONGS_FRAGMENT_TAG = "songs_fragment";
     private static final String ALBUMS_FRAGMENT_TAG = "albums_fragment";
+    public static final String LOCAL_LIBRARY_NAME = "Local library";
 
     public LibraryFragment() {
-        // Required empty public constructor
+        instance = this;
+    }
+
+    public static Fragment getInstance() {
+        return instance;
     }
 
 
@@ -81,5 +91,17 @@ public class LibraryFragment extends Fragment {
         }
 
         return view;
+    }
+
+    public ArrayList<String> getMemberList() {
+        return songsFragment.getMemberList();
+    }
+
+    public ArrayAdapter<String> getMemberListAdapter() {
+        return songsFragment.getMemberListAdapter();
+    }
+
+    public ListView getSongList() {
+        return songsFragment.getSongListView();
     }
 }

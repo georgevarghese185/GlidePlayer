@@ -18,14 +18,12 @@ import teefourteen.glideplayer.music.database.Library;
 import teefourteen.glideplayer.music.Song;
 import teefourteen.glideplayer.music.database.SongTable;
 
-/**
- * Created by george on 14/10/16.
- */
+
 public class SongAdapter extends CursorAdapter {
     private SelectionChecker checker;
 
     public interface SelectionChecker {
-        public boolean isSelected(int position);
+        boolean isSelected(int position);
     }
 
     public void setChecker(SelectionChecker checker){this.checker = checker;}
@@ -69,6 +67,12 @@ public class SongAdapter extends CursorAdapter {
         else
             view.setBackgroundColor(ContextCompat.getColor(context, R.color.track_unselected));
     }
+
+    @Override
+    public void changeCursor(Cursor cursor) {
+        super.changeCursor(cursor);
+    }
+
 
     @Override
     public Object getItem(int position) {

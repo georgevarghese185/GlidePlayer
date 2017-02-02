@@ -2,6 +2,11 @@ package teefourteen.glideplayer.connectivity;
 
 import java.io.BufferedReader;
 import java.io.Closeable;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
@@ -15,6 +20,8 @@ import java.net.SocketException;
 public class Connection implements Closeable {
     private Socket clientSocket;
     private TransmissionType lastTransmission = null;
+    private int sessionFileName = 0;
+    private int maxFiles = 5;
 
     private enum TransmissionType {
         READ,
@@ -70,10 +77,14 @@ public class Connection implements Closeable {
     }
 
 
-    int getNextInt(int numberOfInts)throws IOException {
+    int getNextInt()throws IOException {
+        return (int) getNextLong();
+    }
+
+    long getNextLong()throws IOException {
         readyWait(TransmissionType.READ);
         BufferedReader reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-        return Integer.parseInt(reader.readLine());
+        return Long.parseLong(reader.readLine());
     }
 
     String getNextString()throws IOException {
@@ -94,7 +105,38 @@ public class Connection implements Closeable {
         }
     }
 
+    File getNextFile(String saveLocation, int size)throws IOException {
+        File file = new File(saveLocation, String.valueOf(sessionFileName));
+        if(file.exists()) {
+            file.delete();
+        }
+        file.createNewFile();
+
+        int count;
+        DataInputStream dataIn = new DataInputStream(clientSocket.getInputStream());
+        FileOutputStream fileOut = new FileOutputStream(file);
+        byte[] buffer = new byte[8096];
+
+        readyWait(TransmissionType.READ);
+
+        for(;size > 0; size -= count) {
+            count = dataIn.read(buffer,0,buffer.length);
+            fileOut.write(buffer, 0, count);
+        }
+
+        fileOut.close();
+        sessionFileName = (sessionFileName + 1) % maxFiles;
+
+        return file;
+    }
+
     void sendInt(int n)throws IOException {
+        readyWait(TransmissionType.WRITE);
+        PrintWriter pw = new PrintWriter(clientSocket.getOutputStream(), true);
+        pw.println(n);
+    }
+
+    void sendLong(long n)throws IOException {
         readyWait(TransmissionType.WRITE);
         PrintWriter pw = new PrintWriter(clientSocket.getOutputStream(), true);
         pw.println(n);
@@ -110,6 +152,20 @@ public class Connection implements Closeable {
         readyWait(TransmissionType.WRITE);
         ObjectOutputStream output = new ObjectOutputStream(clientSocket.getOutputStream());
         output.writeObject(obj);
+    }
+
+    void sendFile(File file) throws IOException {
+        FileInputStream fin = new FileInputStream(file);
+        byte[] buffer = new byte[8096];
+        DataOutputStream dataOut = new DataOutputStream(clientSocket.getOutputStream());
+        int count;
+
+        readyWait(TransmissionType.WRITE);
+        while ((count = fin.read(buffer, 0, buffer.length)) > 0) {
+            dataOut.write(buffer, 0, count);
+        }
+
+        fin.close();
     }
 
     InetAddress getRemoteInetAddress()throws IOException {
