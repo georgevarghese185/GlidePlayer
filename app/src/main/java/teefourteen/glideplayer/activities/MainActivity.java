@@ -12,6 +12,7 @@ import android.view.MenuItem;
 
 import teefourteen.glideplayer.ToolbarEditor;
 import teefourteen.glideplayer.fragments.FragmentSwitcher;
+import teefourteen.glideplayer.fragments.connectivity.ConnectivityFragment;
 import teefourteen.glideplayer.fragments.library.LibraryFragment;
 import teefourteen.glideplayer.R;
 
@@ -19,7 +20,9 @@ public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, ToolbarEditor.ToolbarEditable {
 
     private LibraryFragment libraryFragment;
-    private String LIBRARY_FRAGMENT_TAG ="SONGS";
+    private ConnectivityFragment connectivityFragment;
+    private static final String LIBRARY_FRAGMENT_TAG ="songs";
+    private static final String CONNECTIVITY_FRAGMENT_TAG = "connectivity";
     private FragmentSwitcher mainFragmentSwitcher;
     private ToolbarEditor toolbarEditor;
 
@@ -49,6 +52,7 @@ public class MainActivity extends AppCompatActivity
 
         mainFragmentSwitcher = new FragmentSwitcher(getSupportFragmentManager(), R.id.main_container);
         libraryFragment = new LibraryFragment();
+        connectivityFragment = new ConnectivityFragment();
 
         mainFragmentSwitcher.switchTo(libraryFragment, LIBRARY_FRAGMENT_TAG);
     }
@@ -108,7 +112,9 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
 
         if (id == R.id.nav_library) {
-
+            mainFragmentSwitcher.switchTo(libraryFragment, LIBRARY_FRAGMENT_TAG);
+        } else if (id == R.id.connectivity){
+            mainFragmentSwitcher.switchTo(connectivityFragment, CONNECTIVITY_FRAGMENT_TAG);
         } else if (id == R.id.nav_settings) {
 
         }

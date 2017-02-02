@@ -31,7 +31,7 @@ public class PlayerService extends Service {
     }
     public static final int MESSAGE_SONG_STARTED = 1;
     public static final int MESSAGE_PLAYBACK_FAILED = 2;
-    
+
     public class PlayerHandler extends Handler {
         PlayerHandler(Looper looper) {
             super(looper);
@@ -140,7 +140,7 @@ public class PlayerService extends Service {
         return START_NOT_STICKY;
     }
 
-    
+
 
     @Override
     public IBinder onBind(Intent intent) {

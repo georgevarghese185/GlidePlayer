@@ -7,7 +7,7 @@
 
     <ImageView
         android:layout_width="match_parent"
-        app:srcCompat="@drawable/record"
+        app:srcCompat="@drawable/ic_album_black_24dp"
         android:id="@+id/album_art"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"

@@ -14,6 +14,7 @@ import teefourteen.glideplayer.music.PlayQueue;
 import static teefourteen.glideplayer.Global.playQueue;
 
 public class PlayerActivity extends AppCompatActivity {
+    //TODO: user interfaces instead of handler
     public static final String EXTRA_PLAY_QUEUE = "play_queue";
     public static final String EXTRA_CHANGE_TRACK = "change_track";
     private static final String PLAYER_FRAGMENT_TAG = "player_fragment";
@@ -68,7 +69,7 @@ public class PlayerActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        if(playerFragmentSwitcher.getCurrentlyVisible() == playerFragment)
+        if(playerFragmentSwitcher.getCurrentFragment() == playerFragment)
             super.onBackPressed();
         else {
             Message msg = new Message();

@@ -11,7 +11,7 @@ import android.view.ViewGroup;
 import android.widget.ListView;
 
 import teefourteen.glideplayer.R;
-import teefourteen.glideplayer.music.adapters.AlbumAdapter;
+import teefourteen.glideplayer.fragments.library.adapters.AlbumAdapter;
 
 public class AlbumsFragment extends Fragment {
     public static Cursor albumCursor;

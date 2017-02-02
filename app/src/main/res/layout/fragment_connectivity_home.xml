@@ -1,0 +1,67 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="teefourteen.glideplayer.fragments.connectivity.ConnectivityFragment">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+
+        <ImageView
+            android:layout_height="100dp"
+            android:layout_width="100dp"
+            app:srcCompat="@drawable/ic_account_circle_grey_24dp"
+            android:id="@+id/user_picture"
+            android:layout_marginTop="0dp"/>
+
+        <TextView
+            android:text="Name that other devices see"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/username_caption"
+            android:textSize="18sp"
+            android:gravity="center_vertical"
+            android:textColor="@android:color/black"
+            android:layout_marginTop="30dp"
+            android:layout_toRightOf="@+id/user_picture"/>
+
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textPersonName"
+            android:ems="10"
+            android:id="@+id/username"
+            android:hint="Enter a name"
+            android:textSize="22sp"
+            android:layout_toRightOf="@id/user_picture"
+            android:layout_alignBottom="@id/user_picture"/>
+
+        <Button
+            android:text="Create A Group"
+            android:layout_width="match_parent"
+            android:layout_height="80dp"
+            android:id="@+id/create_group_button"
+            android:textSize="30sp"
+            android:layout_below="@+id/user_picture"
+            android:layout_marginTop="100dp"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"/>
+
+        <Button
+            android:text="Join A Group"
+            android:layout_width="match_parent"
+            android:layout_height="80dp"
+            android:id="@+id/join_group_button"
+            android:textSize="30sp"
+            android:layout_marginTop="60dp"
+            android:layout_below="@+id/create_group_button"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true" />
+
+    </RelativeLayout>
+
+</LinearLayout>

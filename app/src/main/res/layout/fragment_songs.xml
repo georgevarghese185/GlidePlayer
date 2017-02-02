@@ -4,12 +4,18 @@
     android:layout_height="match_parent"
     tools:context="teefourteen.glideplayer.fragments.library.SongsFragment">
 
+    <Spinner
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/library_spinner" />
+
     <ListView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:choiceMode="multipleChoice"
         android:id="@+id/songList"
-        android:layout_alignParentTop="true"
+        android:layout_below="@id/library_spinner"
         android:layout_alignParentStart="true"
         android:layout_alignParentLeft="true"/>
+
 </RelativeLayout>

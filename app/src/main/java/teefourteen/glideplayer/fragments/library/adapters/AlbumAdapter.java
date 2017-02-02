@@ -1,9 +1,8 @@
-package teefourteen.glideplayer.music.adapters;
+package teefourteen.glideplayer.fragments.library.adapters;
 
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.drawable.Drawable;
-import android.provider.MediaStore;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,7 +11,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import teefourteen.glideplayer.R;
-import teefourteen.glideplayer.music.Library;
+import teefourteen.glideplayer.music.database.AlbumTable;
+import teefourteen.glideplayer.music.database.Library;
 
 /**
  * Created by george on 2/11/16.
@@ -36,12 +36,12 @@ public class AlbumAdapter extends CursorAdapter {
 
         ImageView albumArt = (ImageView) view.findViewById(R.id.album_art);
 
-        albumName.setText(Library.getString(cursor, MediaStore.Audio.Albums.ALBUM));
-        artistName.setText(Library.getString(cursor, MediaStore.Audio.Albums.ARTIST));
-        String path = Library.getString(cursor, MediaStore.Audio.Albums.ALBUM_ART);
+        albumName.setText(Library.getString(cursor, AlbumTable.Columns.ALBUM_NAME));
+        artistName.setText(Library.getString(cursor, AlbumTable.Columns.ARTIST));
+        String path = Library.getString(cursor, AlbumTable.Columns.ALBUM_ART);
         if(path!=null)
             albumArt.setImageDrawable(Drawable.createFromPath(path));
         else
-            albumArt.setImageResource(R.drawable.record);
+            albumArt.setImageResource(R.drawable.ic_album_black_24dp);
     }
 }

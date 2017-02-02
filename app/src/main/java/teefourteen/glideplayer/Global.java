@@ -2,6 +2,7 @@ package teefourteen.glideplayer;
 
 import android.database.Cursor;
 
+import teefourteen.glideplayer.connectivity.ShareGroup;
 import teefourteen.glideplayer.music.PlayQueue;
 
 /**

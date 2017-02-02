@@ -6,6 +6,11 @@
             android:id="@+id/nav_library"
             android:icon="@drawable/ic_menu_slideshow"
             android:title="Music Library" />
+        <item
+            android:id="@+id/connectivity"
+            android:icon="@drawable/ic_swap_horiz_black_24dp"
+            android:title="Connectivity"/>
+
     </group>
 
     <item android:title="Options">
