@@ -19,9 +19,14 @@ import android.os.Looper;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -39,6 +44,7 @@ import teefourteen.glideplayer.connectivity.listeners.WifiP2pBroadcastReceiver;
 
 //TODO: persistent notification
 //TODO: allow bigger files (right now, can't send Long for file size. fix that)
+//TODO: set some sort of time out on sent and received requests to back off.
 public class NetworkService extends Service {
     private static final String RECORD_LISTEN_PORT = "listen_port";
     private static final String RECORD_USER_NAME = "user_name";
@@ -93,6 +99,38 @@ public class NetworkService extends Service {
         Client(InetAddress inetAddress, int port){
             this.inetAddress = inetAddress;
             this.port = port;
+        }
+
+        Client(JSONObject jsonObject)throws JSONException, UnknownHostException {
+            this.inetAddress = InetAddress.getByName(jsonObject.getString("inetAddress"));
+            this.port = jsonObject.getInt("port");
+        }
+
+        public JSONObject toJson()throws JSONException {
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("inetAddress", inetAddress.getHostAddress());
+            jsonObject.put("port", port);
+            return jsonObject;
+        }
+    }
+
+    private void sendClientMap(Connection connection) throws IOException, JSONException {
+        connection.sendInt(clientMap.entrySet().size());
+
+        for(String deviceId : clientMap.keySet()) {
+            connection.sendString(deviceId);
+            JSONObject jsonObject = clientMap.get(deviceId).toJson();
+            connection.sendString(jsonObject.toString());
+        }
+    }
+
+    private void getClientMap(Connection connection)throws IOException, JSONException {
+        int size = connection.getNextInt();
+
+        for(; size>0; size--) {
+            String deviceId = connection.getNextString();
+            JSONObject jsonObject = new JSONObject(connection.getNextString());
+            clientMap.put(deviceId, new Client(jsonObject));
         }
     }
 
@@ -504,7 +542,7 @@ public class NetworkService extends Service {
 
                                     establish(ownerAddress, ownerPort);
                                     stopDiscovery();
-                                } catch (IOException e) {
+                                } catch (IOException  | JSONException e) {
                                     groupConnectionListener.onConnectionFailed("IOException at establish");
                                 }
                             }
@@ -513,7 +551,6 @@ public class NetworkService extends Service {
                     }
                 });
 
-        //TODO: register listener for disconnect from group
 
         p2pManager.connect(channel, config, new WifiP2pManager.ActionListener() {
             @Override
@@ -555,7 +592,7 @@ public class NetworkService extends Service {
         try {
             final InetAddress newClientInetAddress = newClientConnection.getRemoteInetAddress();
             final int newClientPort = newClientConnection.getNextInt();
-            newClientConnection.sendObject(clientMap);
+            sendClientMap(newClientConnection);
             newClientConnection.close();
             clientMap.put(newClientDeviceAddress, new Client(newClientInetAddress, newClientPort));
 
@@ -572,10 +609,11 @@ public class NetworkService extends Service {
                             connection.sendString(p2pBroadcastReceiver.myDevice.deviceAddress);
                             connection.sendInt(ACTION_NEW_CLIENT);
                             connection.sendString(newClientDeviceAddress);
-                            connection.sendObject(new Client(newClientInetAddress, newClientPort));
+                            connection.sendString(
+                                    clientMap.get(newClientDeviceAddress).toJson().toString());
                             connection.close();
-                        } catch (IOException e) {
-                            //TODO: handle
+                        } catch (IOException | JSONException e) {
+                            Log.d("notifying new client", e.toString());
                         }
                     }
                 };
@@ -583,34 +621,31 @@ public class NetworkService extends Service {
             }
 
             groupMemberListener.onNewMemberJoined(newClientDeviceAddress, null);
-        } catch (IOException e) {
-            //TODO: handle
+        } catch (IOException | JSONException e) {
+            Log.d("Incoming establish", e.toString());
         }
     }
 
-    private void establish(InetAddress inetAddress, int port)throws IOException {
+    private void establish(InetAddress inetAddress, int port)throws IOException, JSONException {
         Connection ownerCon = new Connection(inetAddress, port);
-        HashMap<String, Client> hashMap;
         ownerCon.sendString(p2pBroadcastReceiver.myDevice.deviceAddress);
 
         ownerCon.sendInt(ACTION_ESTABLISH);
         ownerCon.sendInt(server.getPort());
-        hashMap = (HashMap) ownerCon.getNextObject();
+        getClientMap(ownerCon);
 
         ownerCon.close();
-
-        clientMap.putAll(hashMap);
     }
 
     private void newClient(Connection connection){
         try {
             String newClientDeviceAddress = connection.getNextString();
-            Client newClient = (Client) connection.getNextObject();
-            clientMap.put(newClientDeviceAddress, newClient);
+            JSONObject jsonObject = new JSONObject(connection.getNextString());
             connection.close();
+            clientMap.put(newClientDeviceAddress, new Client(jsonObject));
             groupMemberListener.onNewMemberJoined(newClientDeviceAddress, null);
-        } catch (IOException e) {
-            //TODO: handle
+        } catch (IOException | JSONException e) {
+            Log.d("new client", e.toString());
         }
     }
 
