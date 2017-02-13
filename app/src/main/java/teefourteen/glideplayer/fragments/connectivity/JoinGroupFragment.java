@@ -1,6 +1,7 @@
 package teefourteen.glideplayer.fragments.connectivity;
 
 
+import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -8,6 +9,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -26,6 +28,15 @@ public class JoinGroupFragment extends Fragment implements GroupConnectionListen
     private ShareGroup group;
     private GroupAdapter groupAdapter;
     private ConnectionCloseListener closeListener;
+    private enum ConnectionStatus {
+        NOT_CONNECTED,
+        FINDING_GROUPS,
+        CONNECTING,
+        EXCHANGING_INFO,
+        CONNECTED
+    }
+    ConnectionStatus connectionStatus = ConnectionStatus.NOT_CONNECTED;
+    String connectedGroup;
 
     public JoinGroupFragment() {
         // Required empty public constructor
@@ -43,7 +54,26 @@ public class JoinGroupFragment extends Fragment implements GroupConnectionListen
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         rootView = inflater.inflate(R.layout.fragment_join_group, container, false);
-        setupGroupList();
+        switch (connectionStatus) {
+            case CONNECTED:
+                onConnectionSuccess(connectedGroup);
+                break;
+            case CONNECTING:
+                setStatusConnecting();
+                break;
+            case NOT_CONNECTED:
+                groupAdapter = new GroupAdapter(getContext(), group.getGroupList());
+                setupGroupList();
+                group.findGroups(groupAdapter);
+                connectionStatus = ConnectionStatus.FINDING_GROUPS;
+                break;
+            case FINDING_GROUPS:
+                setupGroupList();
+                break;
+            case EXCHANGING_INFO:
+                onExchangingInfo();
+                break;
+        }
 
         rootView.findViewById(R.id.close_connection).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -56,7 +86,6 @@ public class JoinGroupFragment extends Fragment implements GroupConnectionListen
     }
 
     private void setupGroupList() {
-        groupAdapter = new GroupAdapter(getContext(), group.getGroupList());
         ListView groupList = (ListView) rootView.findViewById(R.id.group_list);
         groupList.setAdapter(groupAdapter);
         final JoinGroupFragment fragment = this;
@@ -64,17 +93,15 @@ public class JoinGroupFragment extends Fragment implements GroupConnectionListen
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 group.connectToGroup(position, fragment, fragment);
-                TextView connectionStatus = (TextView)rootView.findViewById(R.id.connection_status);
-                connectionStatus.setText("Connecting");
-                connectionStatus.setTextColor(Color.parseColor("#FF00506B"));
-                rootView.findViewById(R.id.creating_group_progress_bar).setVisibility(View.VISIBLE);
+                setStatusConnecting();
+                connectionStatus = ConnectionStatus.CONNECTING;
             }
         });
-        group.findGroups(groupAdapter);
     }
 
     private void closeConnection() {
         group.stopFindingGroups();
+        group.deleteGroup();
         group.close();
         group = null;
         closeListener.onConnectionClose();
@@ -87,23 +114,44 @@ public class JoinGroupFragment extends Fragment implements GroupConnectionListen
 
     @Override
     public void onConnectionSuccess(String connectedGroup) {
+        this.connectedGroup = connectedGroup;
         ((ListView)rootView.findViewById(R.id.group_list)).setOnItemClickListener(null);
+        setStatusConnected();
+        connectionStatus = ConnectionStatus.CONNECTED;
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(getContext(),
+                android.R.layout.simple_list_item_1,
+                ShareGroup.shareGroupWeakReference.get().getMemberList());
+        ((ListView)rootView.findViewById(R.id.group_list)).setAdapter(adapter);
+        ((TextView) rootView.findViewById(R.id.group_members_caption)).setText("Group Members");
+    }
+
+    private void setStatusConnected() {
+        rootView.findViewById(R.id.creating_group_progress_bar).setVisibility(View.INVISIBLE);
+        Toast.makeText(getContext(), "Connected to " + connectedGroup,
+                Toast.LENGTH_LONG).show();
         TextView connectionStatus = (TextView)rootView.findViewById(R.id.connection_status);
         connectionStatus.setText("Connected to " + connectedGroup);
         connectionStatus.setTextColor(Color.parseColor("#FF0A5900"));
-        rootView.findViewById(R.id.creating_group_progress_bar).setVisibility(View.INVISIBLE);
-        Toast.makeText(getContext(),"Connected to " + connectedGroup + " successfully",
-                Toast.LENGTH_LONG).show();
+    }
+
+    private void setStatusConnecting() {
+        TextView connectionStatus = (TextView)rootView.findViewById(R.id.connection_status);
+        connectionStatus.setText("Connecting");
+        connectionStatus.setTextColor(Color.parseColor("#FF00506B"));
+        rootView.findViewById(R.id.creating_group_progress_bar).setVisibility(View.VISIBLE);
     }
 
     @Override
     public void onMemberLeft(String member) {
-
+        ((ArrayAdapter) ((ListView) rootView.findViewById(R.id.group_list))
+                .getAdapter()).notifyDataSetChanged();
     }
 
     @Override
     public void onNewMemberJoined(String memberId, String memberName) {
         Toast.makeText(getContext(), memberName + " connected", Toast.LENGTH_LONG).show();
+        ((ArrayAdapter) ((ListView) rootView.findViewById(R.id.group_list))
+                .getAdapter()).notifyDataSetChanged();
     }
 
     @Override

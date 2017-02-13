@@ -30,6 +30,7 @@ public class AlbumsFragment extends Fragment {
         ListView albumList = (ListView) view.findViewById(R.id.albumList);
 
         AlbumAdapter albumAdapter = new AlbumAdapter(getActivity(), albumCursor);
+        albumAdapter.setForRecycling(albumList);
         albumList.setAdapter(albumAdapter);
 
         return view;

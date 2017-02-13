@@ -17,6 +17,7 @@ import org.json.JSONException;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -29,6 +30,7 @@ import teefourteen.glideplayer.connectivity.listeners.GroupMemberListener;
 import teefourteen.glideplayer.connectivity.listeners.NewGroupListener;
 import teefourteen.glideplayer.connectivity.listeners.RequestListener;
 import teefourteen.glideplayer.connectivity.listeners.ResponseListener;
+import teefourteen.glideplayer.fragments.library.LibraryFragment;
 import teefourteen.glideplayer.music.Song;
 import teefourteen.glideplayer.music.database.Library;
 
@@ -38,17 +40,17 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
 
     private static final int ACTION_GET_USERNAME = 1000;
     private static final int ACTION_GET_SONG = 1002;
-    public static ShareGroup instance;  //TODO: find memory leak work around
-    private NetworkService.LocalBinder netManager;
-    private String userName;
+    private static int sessionId = 0;
+    public static WeakReference<ShareGroup> shareGroupWeakReference;
+    private NetworkService.LocalBinder netService;
+    public static String userName;
     private static GlidePlayerGroup currentGroup;
     private ArrayList<GlidePlayerGroup> foundGroups;
     private Activity activity;
     private ArrayAdapter groupListAdapter;
     private ArrayList<String> memberList;
-    private ArrayAdapter<String> memberListAdapter;
     private GroupConnectionListener groupConnectionListener;
-    private GroupMemberListener groupMemberListener;
+    private ArrayList<GroupMemberListener> groupMemberListenerList = new ArrayList<>();
     private ShareGroupInitListener shareGroupInitListener;
     private EasyHandler handler;
 
@@ -85,7 +87,6 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
     }
 
 
-
     public class Member{
         public  final String name;
         public  final String deviceName;
@@ -113,7 +114,7 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
     private ServiceConnection serviceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
-            netManager = (NetworkService.LocalBinder) service;
+            netService = (NetworkService.LocalBinder) service;
             shareGroupInitListener.onShareGroupReady();
             //TODO: listener notify ready
         }
@@ -149,7 +150,9 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
             }
         }
 
-        instance.netManager.sendRequest(memberId, ACTION_GET_SONG, songId,
+        ShareGroup group = ShareGroup.shareGroupWeakReference.get();
+
+        group.netService.sendRequest(memberId, ACTION_GET_SONG, songId,
                 new ResponseListener() {
                     @Override
                     public void onResponseReceived(Object responseData) {
@@ -176,17 +179,16 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
         }
     }
 
-    public ShareGroup(Activity activity, String userName, ShareGroupInitListener listener,
-                      ArrayList<String> memberList, ArrayAdapter<String> memberListAdapter){
-        instance = this;
+    public ShareGroup(Activity activity, String userName, ShareGroupInitListener listener){
+        shareGroupWeakReference = new WeakReference<ShareGroup>(this);
+        sessionId++;
+
         this.activity = activity;
         this.userName = userName;
         this.shareGroupInitListener = listener;
 
-        this.memberList = memberList;
-
-        this.memberListAdapter = memberListAdapter;
-        memberListAdapter.notifyDataSetChanged();
+        memberList = new ArrayList<>();
+        memberList.add(userName);
 
         handler = new EasyHandler();
         foundGroups = new ArrayList<>();
@@ -203,12 +205,12 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
     public void createGroup(final String groupName, final GroupCreationListener groupCreationListener,
                             GroupMemberListener groupMemberListener) {
         currentGroup = new GlidePlayerGroup(null,null,groupName, 1);
-        netManager.createGroup(userName, groupName, groupCreationListener, this, this);
-        this.groupMemberListener = groupMemberListener;
+        netService.createGroup(userName, groupName, groupCreationListener, this, this);
+        registerGroupMemberListener(groupMemberListener);
     }
 
     public void deleteGroup() {
-        netManager.deleteGroup();
+        netService.deleteGroup();
     }
 
     public ArrayList<GlidePlayerGroup> getGroupList() {
@@ -217,13 +219,14 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
 
     public void findGroups(ArrayAdapter groupListAdapter) {
         this.groupListAdapter = groupListAdapter;
-        netManager.discoverGroups(this, this);
+        netService.discoverGroups(this, this);
     }
 
     public void stopFindingGroups() {
-        netManager.stopDiscovery();
+        netService.stopDiscovery();
+        foundGroups.clear();
         groupListAdapter = null;
-        foundGroups = null;
+        foundGroups = new ArrayList<>();
     }
 
     public void connectToGroup(int groupListIndex, final GroupConnectionListener connectionListener,
@@ -252,16 +255,32 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
             }
         };
 
-        groupMemberListener = memberListener;
+        registerGroupMemberListener(memberListener);
 
-        netManager.connectToGroup(groupId, connectionListener2, this, this);
+        netService.connectToGroup(groupId, connectionListener2, this, this);
+    }
+
+    public ArrayList<String> getMemberList() {
+        return memberList;
+    }
+
+    public void registerGroupMemberListener(GroupMemberListener listener) {
+        groupMemberListenerList.add(listener);
+    }
+
+    public void unregisterGroupMeberListener(GroupMemberListener listener) {
+        groupMemberListenerList.remove(listener);
+    }
+
+    public int getSessionId() {
+        return sessionId;
     }
 
     @Override
     public void close() {
         activity.unbindService(serviceConnection);
         handler.closeAllHandlers();
-        instance = null;
+        shareGroupWeakReference = null;
     }
 
     @Override
@@ -288,8 +307,6 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
                     @Override
                     public void onResponseReceived(Object responseData) {
                         exchangeLibraries(memberId, (Socket) responseData, true);
-                        groupMemberListener.onNewMemberJoined(memberId,
-                                newMemberUsername);
 
                         updateLibraryLists(memberId);
                     }
@@ -301,20 +318,28 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
                 };
 
                 //exchange libraries
-                netManager.getRawSocket(memberId, getLibrary);
+                netService.getRawSocket(memberId, getLibrary);
             }
             @Override
             public void onRequestFailed() {}
         };
 
-        netManager.sendRequest(memberId, ACTION_GET_USERNAME, userName, usernameResponse);
+        netService.sendRequest(memberId, ACTION_GET_USERNAME, userName, usernameResponse);
     }
 
     private void updateLibraryLists(String memberId) {
-        Member member = currentGroup.groupMembers.get(memberId);
+        final Member member = currentGroup.groupMembers.get(memberId);
 
         memberList.add(member.name);
-        memberListAdapter.notifyDataSetChanged();
+
+        for(final GroupMemberListener listener : groupMemberListenerList) {
+            EasyHandler.executeOnMainThread(new Runnable() {
+                @Override
+                public void run() {
+                    listener.onNewMemberJoined(null, member.name);
+                }
+            });
+        }
     }
 
 

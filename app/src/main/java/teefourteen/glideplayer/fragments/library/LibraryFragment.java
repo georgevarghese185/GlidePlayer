@@ -29,7 +29,6 @@ public class LibraryFragment extends Fragment {
     private AlbumsFragment albumsFragment;
     private static final String SONGS_FRAGMENT_TAG = "songs_fragment";
     private static final String ALBUMS_FRAGMENT_TAG = "albums_fragment";
-    public static final String LOCAL_LIBRARY_NAME = "Local library";
 
     public LibraryFragment() {
         instance = this;
@@ -91,17 +90,5 @@ public class LibraryFragment extends Fragment {
         }
 
         return view;
-    }
-
-    public ArrayList<String> getMemberList() {
-        return songsFragment.getMemberList();
-    }
-
-    public ArrayAdapter<String> getMemberListAdapter() {
-        return songsFragment.getMemberListAdapter();
-    }
-
-    public ListView getSongList() {
-        return songsFragment.getSongListView();
     }
 }

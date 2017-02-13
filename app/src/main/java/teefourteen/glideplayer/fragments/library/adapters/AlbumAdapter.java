@@ -6,10 +6,13 @@ import android.graphics.drawable.Drawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AbsListView;
 import android.widget.CursorAdapter;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.TextView;
 
+import teefourteen.glideplayer.AsyncImageLoader;
 import teefourteen.glideplayer.R;
 import teefourteen.glideplayer.music.database.AlbumTable;
 import teefourteen.glideplayer.music.database.Library;
@@ -19,6 +22,7 @@ import teefourteen.glideplayer.music.database.Library;
  */
 
 public class AlbumAdapter extends CursorAdapter {
+    AsyncImageLoader asyncImageLoader = new AsyncImageLoader(2);
 
     public AlbumAdapter(Context context, Cursor cursor) {
         super(context, cursor, 0);
@@ -27,6 +31,17 @@ public class AlbumAdapter extends CursorAdapter {
     @Override
     public View newView(Context context, Cursor cursor, ViewGroup parent) {
         return LayoutInflater.from(context).inflate(R.layout.album, parent, false);
+    }
+
+    public void setForRecycling(ListView listView) {
+        listView.setRecyclerListener(new AbsListView.RecyclerListener() {
+            @Override
+            public void onMovedToScrapHeap(View view) {
+                if(view.getTag() != null) {
+                    asyncImageLoader.cancelTask((AsyncImageLoader.LoadTask) view.getTag());
+                }
+            }
+        });
     }
 
     @Override
@@ -38,10 +53,17 @@ public class AlbumAdapter extends CursorAdapter {
 
         albumName.setText(Library.getString(cursor, AlbumTable.Columns.ALBUM_NAME));
         artistName.setText(Library.getString(cursor, AlbumTable.Columns.ARTIST));
+
+        albumArt.setImageResource(R.drawable.ic_album_black_24dp);
+
         String path = Library.getString(cursor, AlbumTable.Columns.ALBUM_ART);
-        if(path!=null)
-            albumArt.setImageDrawable(Drawable.createFromPath(path));
-        else
-            albumArt.setImageResource(R.drawable.ic_album_black_24dp);
+        if(path!=null) {
+            AsyncImageLoader.LoadTask task = new AsyncImageLoader.LoadTask(albumArt, path);
+            if(view.getTag() != null) {
+                asyncImageLoader.cancelTask((AsyncImageLoader.LoadTask) view.getTag());
+            }
+            view.setTag(task);
+            asyncImageLoader.loadAsync(task);
+        }
     }
 }

@@ -3,14 +3,18 @@ package teefourteen.glideplayer.fragments.library.adapters;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.drawable.Drawable;
+import android.os.AsyncTask;
 import android.support.v4.content.ContextCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AbsListView;
 import android.widget.CursorAdapter;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.TextView;
 
+import teefourteen.glideplayer.AsyncImageLoader;
 import teefourteen.glideplayer.R;
 import teefourteen.glideplayer.music.database.AlbumTable;
 import teefourteen.glideplayer.music.database.ArtistTable;
@@ -21,6 +25,7 @@ import teefourteen.glideplayer.music.database.SongTable;
 
 public class SongAdapter extends CursorAdapter {
     private SelectionChecker checker;
+    private AsyncImageLoader asyncImageLoader = new AsyncImageLoader(1);
 
     public interface SelectionChecker {
         boolean isSelected(int position);
@@ -32,6 +37,18 @@ public class SongAdapter extends CursorAdapter {
         super(context, cursor, 0);
         this.checker = checker;
     }
+
+    public void setForRecycling(ListView listView) {
+        listView.setRecyclerListener(new AbsListView.RecyclerListener() {
+            @Override
+            public void onMovedToScrapHeap(View view) {
+                if(view.getTag() != null) {
+                    asyncImageLoader.cancelTask((AsyncImageLoader.LoadTask) view.getTag());
+                }
+            }
+        });
+    }
+
 
     @Override
     public View newView(Context context, Cursor cursor, ViewGroup parent) {
@@ -54,12 +71,18 @@ public class SongAdapter extends CursorAdapter {
         else trackArtist.setText(R.string.track_artist);
         trackTitle.setText(Library.getString(cursor, SongTable.Columns.TITLE));
 
-        Drawable albumArt = Drawable.createFromPath(
-                Library.getString(cursor, AlbumTable.Columns.ALBUM_ART));
-        if(albumArt!=null)
-            trackAlbumArt.setImageDrawable(albumArt);
-        else trackAlbumArt.setImageResource(R.drawable.ic_album_black_24dp);
-}
+        trackAlbumArt.setImageResource(R.drawable.ic_album_black_24dp);
+
+        String path = Library.getString(cursor, AlbumTable.Columns.ALBUM_ART);
+        if(path != null) {
+            AsyncImageLoader.LoadTask task = new AsyncImageLoader.LoadTask(trackAlbumArt, path);
+            if(view.getTag() != null) {
+                asyncImageLoader.cancelTask((AsyncImageLoader.LoadTask) view.getTag());
+            }
+            view.setTag(task);
+            asyncImageLoader.loadAsync(task);
+        }
+    }
 
     public void colorBackground(View view, Context context, int position) {
         if(checker!=null && checker.isSelected(position))

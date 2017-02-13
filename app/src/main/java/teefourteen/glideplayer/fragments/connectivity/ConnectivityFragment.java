@@ -58,8 +58,7 @@ public class ConnectivityFragment extends Fragment implements ConnectivitySelect
                             public void onShareGroupReady() {
                                 connectivityFragmentSwitcher.switchTo(joinFragment, JOIN_FRAGMENT_TAG);
                             }
-                        },
-                fragment.getMemberList(), fragment.getMemberListAdapter()), this);
+                        }), this);
     }
 
     @Override
@@ -72,8 +71,7 @@ public class ConnectivityFragment extends Fragment implements ConnectivitySelect
                     public void onShareGroupReady() {
                         connectivityFragmentSwitcher.switchTo(createFragment,CREATE_FRAGMENT_TAG);
                     }
-                },
-                fragment.getMemberList(), fragment.getMemberListAdapter()), this);
+                }), this);
     }
 
     @Override

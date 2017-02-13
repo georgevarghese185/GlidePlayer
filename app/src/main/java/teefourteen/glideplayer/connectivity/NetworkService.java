@@ -489,7 +489,6 @@ public class NetworkService extends Service {
             p2pManager.clearLocalServices(channel, null); //TODO: add action listener
             discoveryRequest = null;
             discoveredP2pGroups.clear();
-            discoveredP2pGroups = null;
         }
     }
 

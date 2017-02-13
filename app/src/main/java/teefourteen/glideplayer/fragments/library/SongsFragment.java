@@ -32,11 +32,15 @@ import teefourteen.glideplayer.ToolbarEditor;
 import teefourteen.glideplayer.ToolbarEditor.ToolbarEditable;
 import teefourteen.glideplayer.R;
 import teefourteen.glideplayer.connectivity.ShareGroup;
+import teefourteen.glideplayer.connectivity.listeners.GroupMemberListener;
 import teefourteen.glideplayer.music.*;
 import teefourteen.glideplayer.fragments.library.adapters.SongAdapter;
 import teefourteen.glideplayer.music.database.Library;
 
-public class SongsFragment extends Fragment {
+import static teefourteen.glideplayer.connectivity.ShareGroup.shareGroupWeakReference;
+
+public class SongsFragment extends Fragment implements GroupMemberListener {
+    int connectivitySession = -1;
     private ListAdapter songAdapter = null;
     private ArrayList<String> memberList;
     private ArrayAdapter<String> memberListAdapter;
@@ -68,69 +72,62 @@ public class SongsFragment extends Fragment {
 
         Spinner librarySpinner = (Spinner) view.findViewById(R.id.library_spinner);
 
-        if(memberList == null) {
-            memberList = new ArrayList<>(1);
-            memberList.add(LibraryFragment.LOCAL_LIBRARY_NAME);
-        }
+        if(shareGroupWeakReference != null
+            && shareGroupWeakReference.get() != null) {
+            ShareGroup group = shareGroupWeakReference.get();
 
-        if(memberListAdapter == null) {
-            memberListAdapter = new ArrayAdapter<>(getContext(),
-                    android.R.layout.simple_spinner_dropdown_item, memberList);
-        }
+            if(connectivitySession != group.getSessionId()) {
+                connectivitySession = group.getSessionId();
+                memberList = group.getMemberList();
 
-        librarySpinner.setAdapter(memberListAdapter);
+                memberListAdapter = new ArrayAdapter<>(getContext(),
+                        android.R.layout.simple_spinner_dropdown_item, memberList);
 
-        librarySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            private int lastPosition = 0;
-
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                if(position == lastPosition) {
-                    return;
-                }
-                else{
-                    lastPosition = position;
-                }
-                String name = memberList.get(position);
-                File dbFile;
-                if(name.equals(LibraryFragment.LOCAL_LIBRARY_NAME)) {
-                    dbFile = new File(Library.DATABASE_LOCATION, Library.LOCAL_DATABASE_NAME);
-                } else {
-                    dbFile =  ShareGroup.getLibraryFile(name);
-                }
-
-                if(dbFile != null && dbFile.exists()) {
-                    Library library = new Library(getContext(), dbFile);
-                    SQLiteDatabase db = library.getReadableDatabase();
-
-                    Global.songCursor = Library.getSongs(db);
-
-                    ((SongAdapter) songAdapter).changeCursor(Global.songCursor);
-                    ((SongAdapter) songAdapter).notifyDataSetChanged();
-                }
+                group.registerGroupMemberListener(this);
             }
 
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
+            librarySpinner.setAdapter(memberListAdapter);
 
-            }
-        });
+            librarySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                private int lastPosition = 0;
 
+                @Override
+                public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                    if(position == lastPosition) {
+                        return;
+                    }
+                    else{
+                        lastPosition = position;
+                    }
+                    String name = memberList.get(position);
+                    File dbFile;
+                    if(name.equals(ShareGroup.userName)) {
+                        dbFile = new File(Library.DATABASE_LOCATION, Library.LOCAL_DATABASE_NAME);
+                    } else {
+                        dbFile =  ShareGroup.getLibraryFile(name);
+                    }
 
+                    if(dbFile != null && dbFile.exists()) {
+                        Library library = new Library(getContext(), dbFile);
+                        SQLiteDatabase db = library.getReadableDatabase();
+
+                        Global.songCursor = Library.getSongs(db);
+
+                        ((SongAdapter) songAdapter).changeCursor(Global.songCursor);
+                        ((SongAdapter) songAdapter).notifyDataSetChanged();
+                    }
+                }
+
+                @Override
+                public void onNothingSelected(AdapterView<?> parent) {}
+            });
+        } else {
+            ((ViewGroup) view).removeView(librarySpinner);
+            memberList = null;
+            memberListAdapter = null;
+        }
 
         return view;
-    }
-
-    public ArrayList<String> getMemberList(){
-        return memberList;
-    }
-
-    public ArrayAdapter<String> getMemberListAdapter() {
-        return memberListAdapter;
-    }
-
-    public ListView getSongListView() {
-        return songListView;
     }
 
     @Override
@@ -149,6 +146,9 @@ public class SongsFragment extends Fragment {
     }
 
     public void initSongList() {
+        if(songAdapter instanceof SongAdapter) {
+            ((SongAdapter) songAdapter).setForRecycling(songListView);
+        }
         songListView.setAdapter(songAdapter);
         SingleSelect single = new SingleSelect();
         songListView.setOnItemClickListener(single);
@@ -269,6 +269,27 @@ public class SongsFragment extends Fragment {
                 if(o1<o2) return -1;
                 else if(o1.equals(o2)) return 0;
                 else return 1;
+            }
+        }
+    }
+
+    @Override
+    public void onMemberLeft(String member) {
+        memberListAdapter.notifyDataSetChanged();
+    }
+
+    @Override
+    public void onNewMemberJoined(String memberId, String member) {
+        memberListAdapter.notifyDataSetChanged();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if(shareGroupWeakReference != null) {
+            ShareGroup group = shareGroupWeakReference.get();
+            if (group != null) {
+                group.unregisterGroupMeberListener(this);
             }
         }
     }

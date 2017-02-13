@@ -30,7 +30,7 @@ public class EasyHandler {
      * Creates a new HandlerThread, starts it and assigns it to a new handler (if not already
      * created).
      */
-    public void createHandler(String handlerName){
+    synchronized public void createHandler(String handlerName){
         if(!handlerMap.containsKey(handlerName)) {
             HandlerThread handlerThread = new HandlerThread(handlerName);
             handlerThread.start();
@@ -92,7 +92,7 @@ public class EasyHandler {
      * is posted onto that thread's queue itself so that any remaining tasks finish first (since
      * quitSafely() is unavailable below sdk 18).
      */
-    public void closeHandler(final String handlerName) {
+    synchronized public void closeHandler(final String handlerName) {
         final Handler handler = handlerMap.get(handlerName);
         if(handler != null) {
             handlerMap.remove(handlerName);
@@ -102,6 +102,14 @@ public class EasyHandler {
                     handler.getLooper().quit();
                 }
             });
+        }
+    }
+
+    synchronized public void killHandler(final String handlerName) {
+        Handler handler = handlerMap.get(handlerName);
+        if(handler != null) {
+            handlerMap.remove(handlerName);
+            handler.getLooper().quit();
         }
     }
 
@@ -119,6 +127,26 @@ public class EasyHandler {
                     }
                 });
             }
+        }
+    }
+
+    public void executeWhenIdle(String handlerName, final Runnable r, final boolean executeOnce) {
+        final MessageQueue.IdleHandler idleHandler = new MessageQueue.IdleHandler() {
+            @Override
+            public boolean queueIdle() {
+                r.run();
+                return !executeOnce;
+            }
+        };
+
+        Handler handler = handlerMap.get(handlerName);
+        if(handler != null) {
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    Looper.myQueue().addIdleHandler(idleHandler);
+                }
+            });
         }
     }
 }

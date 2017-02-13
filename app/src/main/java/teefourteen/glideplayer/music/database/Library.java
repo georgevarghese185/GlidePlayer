@@ -279,7 +279,7 @@ public class Library {
         libraryDb.beginTransaction();
 
         ContentValues v = new ContentValues();
-        v.put(AlbumTable.Columns.ALBUM_ART, "");
+        v.putNull(AlbumTable.Columns.ALBUM_ART);
         libraryDb.update(AlbumTable.TABLE_NAME, v, null, null);
 
         v = new ContentValues();

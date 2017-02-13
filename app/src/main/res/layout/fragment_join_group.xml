@@ -11,14 +11,6 @@
         layout="@layout/close_connection_button"
         android:id="@id/close_connection"/>
 
-    <TextView
-        android:text="Nearby groups"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/close_connection"
-        android:id="@+id/group_members_caption"
-        android:textSize="20sp" />
-
     <ListView
         android:layout_width="match_parent"
         android:layout_height="350dp"
@@ -51,5 +43,15 @@
             android:visibility="invisible"
             android:layout_weight="1" />
     </LinearLayout>
+
+    <TextView
+        android:text="Nearby groups"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/group_members_caption"
+        android:textSize="20sp"
+        android:layout_below="@+id/close_connection"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
 
 </RelativeLayout>
