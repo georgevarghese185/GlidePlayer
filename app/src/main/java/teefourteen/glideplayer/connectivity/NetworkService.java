@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.net.wifi.WpsInfo;
 import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pDevice;
+import android.net.wifi.p2p.WifiP2pGroup;
 import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.net.wifi.p2p.WifiP2pManager.DnsSdTxtRecordListener;
@@ -24,9 +25,9 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -383,12 +384,14 @@ public class NetworkService extends Service {
         this.requestListener = requestListener; //for any incoming requests
 
         //to check if a member left the group
-//        p2pBroadcastReceiver.registerGroupInfoListener(new WifiP2pManager.GroupInfoListener() {
-//            @Override
-//            public void onGroupInfoAvailable(final WifiP2pGroup group) {
-//                updateLostClients(group.getClientList(), groupMemberListener);
-//            }
-//        });
+        p2pBroadcastReceiver.registerGroupInfoListener(new WifiP2pManager.GroupInfoListener() {
+            @Override
+            public void onGroupInfoAvailable(final WifiP2pGroup group) {
+                if(group != null) {
+                    updateLostClients(group.getClientList(), groupMemberListener);
+                }
+            }
+        });
 
         //TODO: register connection info listener instead for group creation success
 
@@ -505,24 +508,15 @@ public class NetworkService extends Service {
         this.groupMemberListener = groupMemberListener;
         this.requestListener = requestListener;
 
-//        p2pBroadcastReceiver.registerGroupInfoListener(new WifiP2pManager.GroupInfoListener() {
-//            @Override
-//            public void onGroupInfoAvailable(final WifiP2pGroup group) {
-//                Runnable r = new Runnable() {
-//                    @Override
-//                    public void run() {
-//                        updateLostClients(group.getClientList(), groupMemberListener);
-//                    }
-//                };
-//                handler.executeAsync(r, THREAD_CLIENT_HANDLER);
-//            }
-//        });
-
         p2pBroadcastReceiver.registerConnectionInfoListener(
                 new WifiP2pManager.ConnectionInfoListener() {
                     @Override
                     public void onConnectionInfoAvailable(WifiP2pInfo info) {
-                        p2pBroadcastReceiver.clearConnectionInfoListener(); //TODO: register a new one for unexpected disconnection
+                        if(!info.groupFormed) {
+                            groupConnectionListener.onConnectionFailed("Connection failed");
+                            return;
+                        }
+                        p2pBroadcastReceiver.clearConnectionInfoListener(); //TODO: register a new one for disconnection
 
                         final int ownerPort = Integer.parseInt(
                                 discoveredP2pGroups.get(groupId).record.get(RECORD_LISTEN_PORT));
@@ -547,6 +541,30 @@ public class NetworkService extends Service {
                             }
                         };
                         handler.executeAsync(establish, THREAD_NETWORK_MANAGER);
+
+                        p2pBroadcastReceiver.registerGroupInfoListener(new WifiP2pManager.GroupInfoListener() {
+                            @Override
+                            public void onGroupInfoAvailable(final WifiP2pGroup group) {
+                                Runnable r = new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        if(group != null) {
+                                            updateLostClients(group.getClientList(), groupMemberListener);
+                                        }
+                                    }
+                                };
+                                handler.executeAsync(r, THREAD_CLIENT_HANDLER);
+                            }
+                        });
+
+                        p2pBroadcastReceiver.registerConnectionInfoListener(new WifiP2pManager.ConnectionInfoListener() {
+                            @Override
+                            public void onConnectionInfoAvailable(WifiP2pInfo info) {
+                                if(!info.groupFormed) {
+                                    groupConnectionListener.onOwnerDisconnected();
+                                }
+                            }
+                        });
                     }
                 });
 
@@ -654,12 +672,18 @@ public class NetworkService extends Service {
             return;
         }
         //check only if any established clients left
+
+        ArrayList<String> devicesToRemove = new ArrayList<>();
         outerLoop:
         for(String deviceAddress : clientMap.keySet()){
             for(WifiP2pDevice device : newClientList) {
                 if(deviceAddress.equals(device.deviceAddress)) continue outerLoop;
             }
             groupMemberListener.onMemberLeft(deviceAddress);
+            devicesToRemove.add(deviceAddress);
+        }
+
+        for(String deviceAddress : devicesToRemove) {
             clientMap.remove(deviceAddress);
         }
     }

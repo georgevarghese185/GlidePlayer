@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.net.Socket;
+import java.security.acl.Group;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -40,7 +41,9 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
 
     private static final int ACTION_GET_USERNAME = 1000;
     private static final int ACTION_GET_SONG = 1002;
+    private static final int ACTION_NOTIFY_USERNAME_TAKEN = 1005;
     private static int sessionId = 0;
+    private boolean isOwner = false;
     public static WeakReference<ShareGroup> shareGroupWeakReference;
     private NetworkService.LocalBinder netService;
     public static String userName;
@@ -49,8 +52,8 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
     private Activity activity;
     private ArrayAdapter groupListAdapter;
     private ArrayList<String> memberList;
-    private GroupConnectionListener groupConnectionListener;
     private ArrayList<GroupMemberListener> groupMemberListenerList = new ArrayList<>();
+    private ArrayList<GroupConnectionListener> groupConnectionListenerList  = new ArrayList<>();
     private ShareGroupInitListener shareGroupInitListener;
     private EasyHandler handler;
 
@@ -83,6 +86,32 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
         synchronized void removeMember(String deviceId) {
             groupMembers.remove(deviceId);
             memberCount--;
+        }
+
+        public Member getMemberFromUsername(String username) {
+            for(Member member : groupMembers.values()) {
+                if(member.name.equals(username)) {
+                    return member;
+                }
+            }
+            return null;
+        }
+
+        public String getMemberId(String memberName) {
+            String memberId = null;
+            for(String id : currentGroup.groupMembers.keySet()) {
+                Member member = currentGroup.groupMembers.get(id);
+                if(member.name.equals(memberName)) {
+                    memberId = id;
+                    break;
+                }
+            }
+
+            return memberId;
+        }
+
+        public boolean isOwner() {
+            return owner.name.equals(userName);
         }
     }
 
@@ -127,28 +156,17 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
 
 
     public static File getLibraryFile(String memberName) {
-        //TODO: change key value of groupMembers to username itself (after implementing username conflict check)
-        for(String memberId : currentGroup.groupMembers.keySet()){
-            Member member = currentGroup.groupMembers.get(memberId);
-            if(member.name.equals(memberName)) {
-                return new File(member.dbFile);
-            }
+        Member member = currentGroup.getMemberFromUsername(memberName);
+        if(member != null) {
+            return new File(member.dbFile);
+        } else {
+            return null;
         }
-
-        return null;
     }
 
     public static void getSong(String memberName, long songId,
                                  final GetSongListener getSongListener) {
-        //TODO: update the SongTable's filepath column to avoid having to re download each time
-        String memberId = null;
-        for(String id : currentGroup.groupMembers.keySet()) {
-            Member member = currentGroup.groupMembers.get(id);
-            if(member.name.equals(memberName)) {
-                memberId = id;
-                break;
-            }
-        }
+        String memberId = currentGroup.getMemberId(memberName);
 
         ShareGroup group = ShareGroup.shareGroupWeakReference.get();
 
@@ -192,6 +210,7 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
 
         handler = new EasyHandler();
         foundGroups = new ArrayList<>();
+        currentGroup = null;
         startService();
     }
 
@@ -202,8 +221,13 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
         activity.bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
     }
 
+    public boolean isConnected() {
+        return (currentGroup != null);
+    }
+
     public void createGroup(final String groupName, final GroupCreationListener groupCreationListener,
                             GroupMemberListener groupMemberListener) {
+        isOwner = true;
         currentGroup = new GlidePlayerGroup(null,null,groupName, 1);
         netService.createGroup(userName, groupName, groupCreationListener, this, this);
         registerGroupMemberListener(groupMemberListener);
@@ -232,8 +256,9 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
     public void connectToGroup(int groupListIndex, final GroupConnectionListener connectionListener,
                                final GroupMemberListener memberListener) {
         //TODO: check if anyone else in the group has the same username
+        isOwner = false;
         String groupId = foundGroups.get(groupListIndex).ownerId;
-        this.groupConnectionListener = connectionListener;
+        registerGroupConnectionListener(connectionListener);
         GroupConnectionListener connectionListener2 = new GroupConnectionListener() {
             @Override
             public void onConnectionSuccess(String connectedGroup) {
@@ -245,13 +270,29 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
                 }
                 stopFindingGroups();
                 currentGroup.connected();
-                groupConnectionListener.onExchangingInfo();
+                for(GroupConnectionListener listener : groupConnectionListenerList) {
+                    listener.onExchangingInfo();
+                }
             }
             @Override
             public void onExchangingInfo() {} //never called
             @Override
-            public void onConnectionFailed(String failureMessage) {
-                connectionListener.onConnectionFailed(failureMessage);
+            public void onConnectionFailed(final String failureMessage) {
+                EasyHandler.executeOnMainThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        for(GroupConnectionListener listener : groupConnectionListenerList) {
+                            listener.onConnectionFailed(failureMessage);
+                        }
+                    }
+                });
+            }
+
+            @Override
+            public void onOwnerDisconnected() {
+                for(GroupConnectionListener listener : groupConnectionListenerList) {
+                    listener.onOwnerDisconnected();
+                }
             }
         };
 
@@ -268,8 +309,16 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
         groupMemberListenerList.add(listener);
     }
 
-    public void unregisterGroupMeberListener(GroupMemberListener listener) {
+    public void unregisterGroupMemberListener(GroupMemberListener listener) {
         groupMemberListenerList.remove(listener);
+    }
+
+    public void registerGroupConnectionListener(GroupConnectionListener listener) {
+        groupConnectionListenerList.add(listener);
+    }
+
+    public void unregisterGroupConnectionListener(GroupConnectionListener listener) {
+        groupConnectionListenerList.remove(listener);
     }
 
     public int getSessionId() {
@@ -290,8 +339,24 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
     }
 
     @Override
-    public void onMemberLeft(String member) {
+    public void onMemberLeft(final String member) {
+        memberList.remove(currentGroup.groupMembers.get(member).name);
+        for(final GroupMemberListener listener : groupMemberListenerList) {
+            EasyHandler.executeOnMainThread(new Runnable() {
+                @Override
+                public void run() {
+                    listener.onMemberLeft(currentGroup.groupMembers.get(member).name);
+                }
+            });
+        }
 
+        //since above executeOnMainThread()'s could still be running and accessing currentGroup, removeMember() is also called on main thread
+        EasyHandler.executeOnMainThread(new Runnable() {
+            @Override
+            public void run() {
+                currentGroup.removeMember(member);
+            }
+        });
     }
 
     @Override //always called on a client-handling specific thread. Don't try to prevent blocking.
@@ -301,24 +366,36 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
             @Override
             public void onResponseReceived(Object responseData) {
                 final String newMemberUsername = (String) responseData;
-                currentGroup.addMember(memberId, newMemberUsername, null);
 
-                ResponseListener getLibrary = new ResponseListener() {
-                    @Override
-                    public void onResponseReceived(Object responseData) {
-                        exchangeLibraries(memberId, (Socket) responseData, true);
+                //check if username taken
+                if(userName.equals(newMemberUsername)
+                        || currentGroup.getMemberFromUsername(newMemberUsername) != null) {
+                    //check if this is group owner
 
-                        updateLibraryLists(memberId);
+                    if(isOwner) {
+                        netService.sendRequest(memberId, ACTION_NOTIFY_USERNAME_TAKEN, null, null);
                     }
+                } else {
 
-                    @Override
-                    public void onRequestFailed() {
-                        currentGroup.removeMember(memberId);
-                    }
-                };
+                    currentGroup.addMember(memberId, newMemberUsername, null);
 
-                //exchange libraries
-                netService.getRawSocket(memberId, getLibrary);
+                    ResponseListener getLibrary = new ResponseListener() {
+                        @Override
+                        public void onResponseReceived(Object responseData) {
+                            exchangeLibraries(memberId, (Socket) responseData, true);
+
+                            updateLibraryLists(memberId);
+                        }
+
+                        @Override
+                        public void onRequestFailed() {
+                            currentGroup.removeMember(memberId);
+                        }
+                    };
+
+                    //exchange libraries
+                    netService.getRawSocket(memberId, getLibrary);
+                }
             }
             @Override
             public void onRequestFailed() {}
@@ -389,12 +466,26 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
             EasyHandler.executeOnMainThread(new Runnable() {
                 @Override
                 public void run() {
-                    groupConnectionListener.onConnectionSuccess(currentGroup.groupName);
+                    for(GroupConnectionListener listener : groupConnectionListenerList) {
+                        listener.onConnectionSuccess(currentGroup.groupName);
+                    }
                 }
             });
             return null;
         } else if(action == ACTION_GET_SONG) {
             return getSongRequest((Long)requestData);
+        } else if(action == ACTION_NOTIFY_USERNAME_TAKEN) {
+            EasyHandler.executeOnMainThread(new Runnable() {
+                @Override
+                public void run() {
+                    for(GroupConnectionListener listener : groupConnectionListenerList) {
+                        listener.onConnectionFailed("Username already taken");
+                    }
+                }
+            });
+            deleteGroup();
+            currentGroup.removeMember(deviceId);
+            return null;
         }
 
         else return null;

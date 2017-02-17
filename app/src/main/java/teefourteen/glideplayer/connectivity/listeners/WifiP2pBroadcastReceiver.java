@@ -37,7 +37,7 @@ public class WifiP2pBroadcastReceiver extends BroadcastReceiver {
                 && p2pManager != null) {
             NetworkInfo networkInfo = intent.getParcelableExtra(WifiP2pManager.EXTRA_NETWORK_INFO);
 
-            if(networkInfo.isConnected() && connectionInfoListener != null) {
+            if(connectionInfoListener != null) {
                 p2pManager.requestConnectionInfo(channel, connectionInfoListener);
             }
 

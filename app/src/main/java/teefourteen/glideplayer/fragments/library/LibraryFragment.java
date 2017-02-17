@@ -91,4 +91,12 @@ public class LibraryFragment extends Fragment {
 
         return view;
     }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+
+        songsFragment.onDestroyView();
+        albumsFragment.onDestroyView();
+    }
 }

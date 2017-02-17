@@ -1,5 +1,7 @@
 package teefourteen.glideplayer.fragments.connectivity;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
@@ -16,6 +18,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import teefourteen.glideplayer.Global;
 import teefourteen.glideplayer.R;
 import teefourteen.glideplayer.connectivity.Connection;
 import teefourteen.glideplayer.connectivity.ShareGroup;
@@ -70,6 +73,15 @@ public class CreateGroupFragment extends Fragment implements GroupCreationListen
                 break;
         }
 
+        SharedPreferences preferences =
+                getContext().getSharedPreferences(Global.SHARED_PREFS_NAME, Context.MODE_PRIVATE);
+
+        String lastGroupName = preferences.getString(ConnectivityFragment.LAST_USED_GROUP_NAME_KEY, null);
+
+        if(lastGroupName != null) {
+            ((EditText) rootView.findViewById(R.id.group_name)).setText(lastGroupName);
+        }
+
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(getContext(),
                 android.R.layout.simple_list_item_1,
                 ShareGroup.shareGroupWeakReference.get().getMemberList());
@@ -92,6 +104,11 @@ public class CreateGroupFragment extends Fragment implements GroupCreationListen
             textView.setHint("Cannot be empty!");
             textView.setHintTextColor(Color.RED);
         } else {
+            SharedPreferences.Editor editor = getContext()
+                    .getSharedPreferences(Global.SHARED_PREFS_NAME, Context.MODE_PRIVATE).edit();
+            editor.putString(ConnectivityFragment.LAST_USED_GROUP_NAME_KEY, groupName);
+            editor.apply();
+
             group.createGroup(groupName, this, this);
             groupConnectionStatus = ConnectionStatus.GROUP_WAITING_FOR_CREATION;
             onWaitingForGroupCreation();

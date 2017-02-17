@@ -2,6 +2,7 @@ package teefourteen.glideplayer.fragments.connectivity;
 
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -13,6 +14,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import teefourteen.glideplayer.Global;
 import teefourteen.glideplayer.R;
 import teefourteen.glideplayer.fragments.connectivity.listeners.ConnectivitySelectionListener;
 
@@ -43,6 +45,16 @@ public class ConnectivityHomeFragment extends Fragment {
                 createGroup(v);
             }
         });
+
+        SharedPreferences preferences =
+                getContext().getSharedPreferences(Global.SHARED_PREFS_NAME, Context.MODE_PRIVATE);
+
+        String lastUsername = preferences.getString(ConnectivityFragment.LAST_USED_USERNAME_KEY, null);
+
+        if(lastUsername != null) {
+            ((EditText) parentView.findViewById(R.id.username)).setText(lastUsername);
+        }
+
         return parentView;
     }
 
@@ -73,6 +85,12 @@ public class ConnectivityHomeFragment extends Fragment {
             return null;
         } else {
             hideKeyboard();
+            SharedPreferences.Editor editor = getActivity()
+                    .getSharedPreferences(Global.SHARED_PREFS_NAME, Context.MODE_PRIVATE).edit();
+
+            editor.putString(ConnectivityFragment.LAST_USED_USERNAME_KEY, username);
+            editor.apply();
+
             return username;
         }
     }

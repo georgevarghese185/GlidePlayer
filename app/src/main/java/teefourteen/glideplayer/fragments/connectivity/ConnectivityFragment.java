@@ -16,11 +16,13 @@ import teefourteen.glideplayer.fragments.library.LibraryFragment;
 
 public class ConnectivityFragment extends Fragment implements ConnectivitySelectionListener,
         ConnectionCloseListener{
+    public static final String LAST_USED_USERNAME_KEY = "last_used_username";
+    public static final String LAST_USED_GROUP_NAME_KEY = "last_used_group_name";
+
     private FragmentSwitcher connectivityFragmentSwitcher;
     private ConnectivityHomeFragment homeFragment;
     private JoinGroupFragment joinFragment;
     private CreateGroupFragment createFragment;
-    private ShareGroup group;
     private static final String JOIN_FRAGMENT_TAG="join_fragment";
     private static final String CREATE_FRAGMENT_TAG="create_fragment";
     private static final String HOME_FRAGMENT_TAG="home_fragment";

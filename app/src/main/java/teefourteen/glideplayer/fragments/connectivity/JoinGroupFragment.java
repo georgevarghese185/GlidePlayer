@@ -1,7 +1,6 @@
 package teefourteen.glideplayer.fragments.connectivity;
 
 
-import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -30,13 +29,14 @@ public class JoinGroupFragment extends Fragment implements GroupConnectionListen
     private ConnectionCloseListener closeListener;
     private enum ConnectionStatus {
         NOT_CONNECTED,
+        RECENTLY_DISCONNECTED,
         FINDING_GROUPS,
         CONNECTING,
         EXCHANGING_INFO,
         CONNECTED
     }
     ConnectionStatus connectionStatus = ConnectionStatus.NOT_CONNECTED;
-    String connectedGroup;
+    String connectedGroupName;
 
     public JoinGroupFragment() {
         // Required empty public constructor
@@ -54,13 +54,29 @@ public class JoinGroupFragment extends Fragment implements GroupConnectionListen
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         rootView = inflater.inflate(R.layout.fragment_join_group, container, false);
+        initializeViews();
+
+        rootView.findViewById(R.id.close_connection).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                closeConnection();
+            }
+        });
+
+        return rootView;
+    }
+
+    private void initializeViews() {
         switch (connectionStatus) {
             case CONNECTED:
-                onConnectionSuccess(connectedGroup);
+                onConnectionSuccess(connectedGroupName);
                 break;
             case CONNECTING:
                 setStatusConnecting();
                 break;
+            case RECENTLY_DISCONNECTED:
+                ((TextView)rootView.findViewById(R.id.connection_status))
+                        .setText("Disconnected from " + connectedGroupName + ". Owner closed the group");
             case NOT_CONNECTED:
                 groupAdapter = new GroupAdapter(getContext(), group.getGroupList());
                 setupGroupList();
@@ -74,15 +90,6 @@ public class JoinGroupFragment extends Fragment implements GroupConnectionListen
                 onExchangingInfo();
                 break;
         }
-
-        rootView.findViewById(R.id.close_connection).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                closeConnection();
-            }
-        });
-
-        return rootView;
     }
 
     private void setupGroupList() {
@@ -110,11 +117,17 @@ public class JoinGroupFragment extends Fragment implements GroupConnectionListen
     @Override
     public void onConnectionFailed(String failureMessage) {
         Toast.makeText(getContext(), failureMessage, Toast.LENGTH_LONG).show();
+        rootView.findViewById(R.id.creating_group_progress_bar).setVisibility(View.INVISIBLE);
+        TextView connectionStatus = (TextView)rootView.findViewById(R.id.connection_status);
+        connectionStatus.setText("Not Connected");
+        connectionStatus.setTextColor(Color.parseColor("#0a5900"));
+        this.connectionStatus = ConnectionStatus.NOT_CONNECTED;
+        initializeViews();
     }
 
     @Override
     public void onConnectionSuccess(String connectedGroup) {
-        this.connectedGroup = connectedGroup;
+        this.connectedGroupName = connectedGroup;
         ((ListView)rootView.findViewById(R.id.group_list)).setOnItemClickListener(null);
         setStatusConnected();
         connectionStatus = ConnectionStatus.CONNECTED;
@@ -127,10 +140,10 @@ public class JoinGroupFragment extends Fragment implements GroupConnectionListen
 
     private void setStatusConnected() {
         rootView.findViewById(R.id.creating_group_progress_bar).setVisibility(View.INVISIBLE);
-        Toast.makeText(getContext(), "Connected to " + connectedGroup,
+        Toast.makeText(getContext(), "Connected to " + connectedGroupName,
                 Toast.LENGTH_LONG).show();
         TextView connectionStatus = (TextView)rootView.findViewById(R.id.connection_status);
-        connectionStatus.setText("Connected to " + connectedGroup);
+        connectionStatus.setText("Connected to " + connectedGroupName);
         connectionStatus.setTextColor(Color.parseColor("#FF0A5900"));
     }
 
@@ -158,5 +171,12 @@ public class JoinGroupFragment extends Fragment implements GroupConnectionListen
     public void onExchangingInfo() {
         TextView connectionStatus = (TextView)rootView.findViewById(R.id.connection_status);
         connectionStatus.setText("exchanging libraries");
+    }
+
+    @Override
+    public void onOwnerDisconnected() {
+        Toast.makeText(getContext(), "Owner disconnected. Group closed", Toast.LENGTH_LONG).show();
+        connectionStatus = ConnectionStatus.RECENTLY_DISCONNECTED;
+        initializeViews();
     }
 }
