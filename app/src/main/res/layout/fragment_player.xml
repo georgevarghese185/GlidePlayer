@@ -91,4 +91,11 @@
             android:layout_below="@+id/player_track_title"
             android:layout_centerHorizontal="true" />
 
+        <SeekBar
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_above="@+id/player_play_button"
+            android:layout_centerHorizontal="true"
+            android:id="@+id/player_track_seek" />
+
 </RelativeLayout>

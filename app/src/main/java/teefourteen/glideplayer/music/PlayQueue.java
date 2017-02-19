@@ -105,6 +105,10 @@ public class PlayQueue implements Parcelable {
         }
     }
 
+    public boolean isAtLastSong() {
+        return (currentPlaying == queue.size()-1);
+    }
+
     @Override
     public int describeContents() {
         return 0;
