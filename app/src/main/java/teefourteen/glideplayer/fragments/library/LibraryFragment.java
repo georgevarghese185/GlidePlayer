@@ -66,7 +66,7 @@ public class LibraryFragment extends Fragment {
 
         if(songsFragment == null) {
             songsFragment = new SongsFragment();
-            songsFragment.setupList(new SongAdapter(getActivity(), Global.songCursor,null), true,
+            songsFragment.setupList(new SongAdapter(getActivity(), Global.songCursor,null),
                     new SongsFragment.SelectionHandler() {
                         @Override
                         public void handleSelection(PlayQueue playQueue, int position) {

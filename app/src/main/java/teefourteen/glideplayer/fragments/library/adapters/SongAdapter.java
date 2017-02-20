@@ -25,7 +25,7 @@ import teefourteen.glideplayer.music.database.SongTable;
 
 public class SongAdapter extends CursorAdapter {
     private SelectionChecker checker;
-    private AsyncImageLoader asyncImageLoader = new AsyncImageLoader(1);
+    private AsyncImageLoader asyncImageLoader = new AsyncImageLoader(2);
 
     public interface SelectionChecker {
         boolean isSelected(int position);
@@ -38,17 +38,11 @@ public class SongAdapter extends CursorAdapter {
         this.checker = checker;
     }
 
-    public void setForRecycling(ListView listView) {
-        listView.setRecyclerListener(new AbsListView.RecyclerListener() {
-            @Override
-            public void onMovedToScrapHeap(View view) {
-                if(view.getTag() != null) {
-                    asyncImageLoader.cancelTask((AsyncImageLoader.LoadTask) view.getTag());
-                }
-            }
-        });
+    public void cancelImageLoad(View view) {
+        if(view.getTag() != null) {
+            asyncImageLoader.cancelTask((AsyncImageLoader.LoadTask) view.getTag());
+        }
     }
-
 
     @Override
     public View newView(Context context, Cursor cursor, ViewGroup parent) {

@@ -15,8 +15,8 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 
+import teefourteen.glideplayer.AsyncImageLoader;
 import teefourteen.glideplayer.R;
-import teefourteen.glideplayer.fragments.library.AlbumsFragment;
 
 /**
  * Created by george on 15/10/16.
@@ -139,9 +139,17 @@ public class PlayQueue implements Parcelable {
         return new SongListAdapter(context, queue);
     }
 
-    private class SongListAdapter extends ArrayAdapter<Song> {
+    public class SongListAdapter extends ArrayAdapter<Song> {
+        private AsyncImageLoader asyncImageLoader = new AsyncImageLoader(2);
+
         public SongListAdapter(Context context, ArrayList<Song> songs) {
             super(context, 0, songs);
+        }
+
+        public void cancelImageLoad(View view) {
+            if(view.getTag() != null) {
+                asyncImageLoader.cancelTask((AsyncImageLoader.LoadTask) view.getTag());
+            }
         }
 
         @NonNull
@@ -166,11 +174,17 @@ public class PlayQueue implements Parcelable {
             else trackArtist.setText(R.string.track_artist);
             trackTitle.setText(song.getTitle());
 
-            Drawable albumArt = Drawable.createFromPath(
-                    song.getAlbumArt());
-            if(albumArt!=null)
-                trackAlbumArt.setImageDrawable(albumArt);
-            else trackAlbumArt.setImageResource(R.drawable.ic_album_white_24dp);
+            trackAlbumArt.setImageResource(R.drawable.ic_album_black_24dp);
+
+            String path = song.getAlbumArt();
+            if(path != null) {
+                AsyncImageLoader.LoadTask task = new AsyncImageLoader.LoadTask(trackAlbumArt, path);
+                if(convertView.getTag() != null) {
+                    asyncImageLoader.cancelTask((AsyncImageLoader.LoadTask) convertView.getTag());
+                }
+                convertView.setTag(task);
+                asyncImageLoader.loadAsync(task);
+            }
 
             return convertView;
         }

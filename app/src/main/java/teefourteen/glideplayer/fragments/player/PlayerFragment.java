@@ -36,6 +36,13 @@ public class PlayerFragment extends Fragment implements PlayerService.SongListen
     private View rootView;
     SeekBar seekBar;
     private boolean userSeeking = false;
+    private PlayerActivity.Navigator navigator;
+
+    public static PlayerFragment newInstance(PlayerActivity.Navigator navigator) {
+        PlayerFragment fragment = new PlayerFragment();
+        fragment.navigator = navigator;
+        return fragment;
+    }
 
     public PlayerFragment() {
         // Required empty public constructor
@@ -68,9 +75,7 @@ public class PlayerFragment extends Fragment implements PlayerService.SongListen
         view.findViewById(R.id.player_queue_button).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Message msg = new Message();
-                msg.arg1 = PlayerActivity.MESSAGE_SHOW_QUEUE;
-                PlayerActivity.playerActivityHandler.dispatchMessage(msg);
+                navigator.showQueue();
             }
         });
 
@@ -138,8 +143,8 @@ public class PlayerFragment extends Fragment implements PlayerService.SongListen
             binder.newQueue(playQueue);
             changeSongInfo(playQueue.getCurrentPlaying(), rootView);
         } else if(intent.hasExtra(PlayerActivity.EXTRA_CHANGE_TRACK)) {
-            intent.removeExtra(PlayerActivity.EXTRA_CHANGE_TRACK);
             int index = intent.getIntExtra(PlayerActivity.EXTRA_CHANGE_TRACK, 0);
+            intent.removeExtra(PlayerActivity.EXTRA_CHANGE_TRACK);
             changeTrack(index);
             changeSongInfo(Global.playQueue.getSongAt(index), rootView);
         } else {

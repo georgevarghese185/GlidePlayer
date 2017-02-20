@@ -11,6 +11,7 @@ import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListAdapter;
@@ -44,21 +45,24 @@ public class SongsFragment extends Fragment implements GroupMemberListener,
     private ArrayAdapter<String> memberListAdapter;
     private Spinner librarySpinner;
     private ListView songListView = null;
-    private boolean allowMultiSelection;
+    private AdapterView.OnItemClickListener externalOnItemClickListener = null;
 
     public interface SelectionHandler{
         void handleSelection(PlayQueue playQueue, int position);
     }
-    SelectionHandler selectionHandler;
+    SelectionHandler selectionHandler = null;
 
     public SongsFragment() {
     }
 
-    public void setupList(ListAdapter adapter, boolean allowMultiSelection,
-                          SelectionHandler handler){
+    public void setupList(ListAdapter adapter, SelectionHandler handler){
         songAdapter = adapter;
-        this.allowMultiSelection = allowMultiSelection;
         selectionHandler = handler;
+    }
+
+    public void setupList(ListAdapter adapter, AdapterView.OnItemClickListener listener) {
+        songAdapter = adapter;
+        externalOnItemClickListener = listener;
     }
 
     @Override
@@ -110,18 +114,30 @@ public class SongsFragment extends Fragment implements GroupMemberListener,
     }
 
     public void initSongList() {
-        if(songAdapter instanceof SongAdapter) {
-            ((SongAdapter) songAdapter).setForRecycling(songListView);
-        }
+        songListView.setRecyclerListener(new AbsListView.RecyclerListener() {
+            @Override
+            public void onMovedToScrapHeap(View view) {
+                if(songAdapter instanceof SongAdapter) {
+                    ((SongAdapter) songAdapter).cancelImageLoad(view);
+                } else if(songAdapter instanceof PlayQueue.SongListAdapter) {
+                    ((PlayQueue.SongListAdapter) songAdapter).cancelImageLoad(view);
+                }
+            }
+        });
+
         songListView.setAdapter(songAdapter);
-        SingleSelect single = new SingleSelect();
-        songListView.setOnItemClickListener(single);
-        if(allowMultiSelection)
+
+        if(externalOnItemClickListener != null) {
+            songListView.setOnItemClickListener(externalOnItemClickListener);
+        } else {
+            SingleSelect single = new SingleSelect();
+            songListView.setOnItemClickListener(single);
             songListView.setOnItemLongClickListener(single);
+        }
     }
 
     private void initSpinner(Spinner librarySpinner, final ArrayList<String> memberList) {
-        if(((ViewGroup) rootView).findViewById(R.id.library_spinner) == null) {
+        if(rootView.findViewById(R.id.library_spinner) == null) {
             ((ViewGroup) rootView).addView(librarySpinner);
         }
 
