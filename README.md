@@ -22,6 +22,6 @@ This project is both a way of implementing an idea of mine and also to learn And
 
 ### Current progress
 What the app can do so far
-* Play local songs like a simple music player. (No track seeking yet)
+* Play local songs like a simple music player.
 * Connect to other devices over a Wifi-Direct group
-* Two devices running the app and joining a WifiDirect netowork together can share their music libraries with each other and play any song from each other's phone. Very bare bones feature working right now with quite a lot of bugs.
+* Two and more devices running the app and joining a WifiDirect netowork together can share their music libraries with each other and play any song from each other's phone. Very bare bones feature working right now with quite a lot of bugs.
