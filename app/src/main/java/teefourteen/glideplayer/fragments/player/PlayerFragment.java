@@ -179,7 +179,7 @@ public class PlayerFragment extends Fragment implements PlayerService.SongListen
 
     private void showPlay() {
         ImageView playButton = (ImageView) rootView.findViewById(R.id.player_play_button);
-        playButton.setImageResource(R.drawable.ic_play_arrow_white_24dp);
+        playButton.setImageResource(R.drawable.glideplayer_play_white);
 
         playButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -191,7 +191,7 @@ public class PlayerFragment extends Fragment implements PlayerService.SongListen
 
     private void showPause() {
         ImageView playButton = (ImageView) rootView.findViewById(R.id.player_play_button);
-        playButton.setImageResource(R.drawable.ic_pause_white_24dp);
+        playButton.setImageResource(R.drawable.glideplayer_pause_white);
 
         playButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -202,8 +202,6 @@ public class PlayerFragment extends Fragment implements PlayerService.SongListen
     }
 
     private void changeSongInfo(Song song, View rootView) {
-        seekBar.setProgress(0);
-
         TextView textView = (TextView) (rootView.findViewById(R.id.player_track_title));
         textView.setText(song.getTitle());
         textView = (TextView) (rootView.findViewById(R.id.player_track_album));

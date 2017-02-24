@@ -27,10 +27,18 @@ public class Song implements Parcelable {
         this._id = _id;
         this.filePath = filePath;
         this.title = title;
-        this.album = album;
+        if(album!=null && album.equals("<unknown>")) {
+            this.album = "Unknown Album";
+        } else {
+            this.album = album;
+        }
         this.albumId = albumId;
         this.albumArt = albumArt;
-        this.artist = artist;
+        if(artist!=null && artist.equals("<unknown>")) {
+            this.artist = "Unknown Artist";
+        } else {
+            this.artist = artist;
+        }
         this.artistId = artistId;
         this.duration = duration;
         this.libraryUsername = libraryUsername;

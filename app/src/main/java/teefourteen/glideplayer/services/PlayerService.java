@@ -173,21 +173,25 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
 
     public void next() {
         player.reset();
+        onSeekUpdated(0);
         playQueue.next();
     }
 
     public void prev() {
         player.reset();
+        onSeekUpdated(0);
         playQueue.prev();
     }
 
     public void changeTrack(int songIndex) {
         player.reset();
+        onSeekUpdated(0);
         playQueue.changeTrack(songIndex);
     }
 
     public void newQueue(PlayQueue queue) {
         player.reset();
+        onSeekUpdated(0);
         Global.playQueue = queue;
         play();
     }

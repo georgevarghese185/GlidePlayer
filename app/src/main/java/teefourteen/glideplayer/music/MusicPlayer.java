@@ -4,6 +4,7 @@ import android.content.Context;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.PowerManager;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -32,7 +33,7 @@ public class MusicPlayer {
 
     public interface SeekListener {
         /** newSeek between 0 and MAX_SEEK_VALUE inclusive */
-        public void onSeekUpdated(int newSeek);
+        void onSeekUpdated(int newSeek);
     }
 
     public void registerOnCompletionListener(MediaPlayer.OnCompletionListener listener) {
@@ -61,13 +62,23 @@ public class MusicPlayer {
         seekListenerList.remove(listener);
     }
 
+    private void play() {
+        mediaPlayer.setWakeMode(context, PowerManager.PARTIAL_WAKE_LOCK);
+        mediaPlayer.start();
+        startSeekMonitor();
+    }
+
     public boolean playSong(Song song) {
         try {
             if (!prepared)
-                prepareSong(song);
-            if(!mediaPlayer.isPlaying()) {
-                mediaPlayer.start();
-                startSeekMonitor();
+                prepareSong(song, new MediaPlayer.OnPreparedListener() {
+                    @Override
+                    public void onPrepared(MediaPlayer mp) {
+                        play();
+                    }
+                });
+            else if(!mediaPlayer.isPlaying()) {
+                play();
             }
         }
         catch (IOException e) {
@@ -107,14 +118,16 @@ public class MusicPlayer {
         callSeekListeners();
 
         if(prepared) {
-            mediaPlayer.reset();
+            mediaPlayer.release();
+            mediaPlayer = null;
             prepared = false;
         }
     }
 
     //TODO: use listener for remote song, or return a different value for "downloading" instead of boolean.
     //TODO: or, try wait() notify()
-    private void prepareSong(final Song song) throws IOException {
+    private void prepareSong(final Song song,
+                             final MediaPlayer.OnPreparedListener preparedListener) throws IOException {
         mediaPlayer = new MediaPlayer();
         mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
 
@@ -127,11 +140,10 @@ public class MusicPlayer {
                         mediaPlayer.setDataSource(context, Uri.parse(songFilePath));
                         mediaPlayer.prepare();
                         prepared = true;
-                        mediaPlayer.start();
+                        preparedListener.onPrepared(mediaPlayer);
                     } catch (IOException e) {
                         //TODO: redo this logic
                     }
-                    prepared = true;
                 }
 
                 @Override
@@ -141,13 +153,19 @@ public class MusicPlayer {
             });
         } else {
             mediaPlayer.setDataSource(context, Uri.parse(song.getFilePath()));
-            mediaPlayer.prepare();
-            prepared = true;
+            mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                @Override
+                public void onPrepared(MediaPlayer mp) {
+                    prepared = true;
+                    preparedListener.onPrepared(mp);
+                }
+            });
+            mediaPlayer.prepareAsync();
         }
     }
 
     private void callSeekListeners() {
-        if(mediaPlayer != null) {
+        if(mediaPlayer != null && prepared) {
             int currentPos = mediaPlayer.getCurrentPosition();
 
             for (SeekListener listener : seekListenerList) {
