@@ -60,20 +60,17 @@ public class PlayerFragment extends Fragment implements PlayerService.SongListen
         //Set listeners for buttons
         rootView.findViewById(R.id.player_play_button).setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
-                play(v);
+            public void onClick(View v) {play(v);
             }
         });
         rootView.findViewById(R.id.player_next_button).setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
-                next(v);
+            public void onClick(View v) {next(v);
             }
         });
         rootView.findViewById(R.id.player_prev_button).setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
-                prev(v);
+            public void onClick(View v) {prev(v);
             }
         });
         rootView.findViewById(R.id.player_queue_button).setOnClickListener(new View.OnClickListener() {
