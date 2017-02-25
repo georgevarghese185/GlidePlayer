@@ -72,41 +72,40 @@
 
     </LinearLayout>
 
-    <LinearLayout
-        android:orientation="horizontal"
-        android:id="@+id/notification_expanded_track_actions"
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:layout_below="@id/notification_expanded_group_name"
         android:layout_toRightOf="@id/notification_expanded_album_art"
         android:layout_alignBottom="@id/notification_expanded_album_art">
 
         <ImageView
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            app:srcCompat="@drawable/glideplayer_skip_prev_white"
-            android:id="@+id/notification_expanded_prev"
-            android:layout_marginRight="10dp"
-            android:layout_weight="1"
-            android:layout_gravity="center_vertical" />
-
-        <ImageView
-            android:layout_width="45dp"
-            android:layout_height="45dp"
+            android:layout_height="match_parent"
+            android:layout_width="64dp"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
             app:srcCompat="@drawable/glideplayer_play_white"
             android:id="@+id/notification_expanded_play_pause"
-            android:layout_weight="1"
-            android:layout_gravity="center_vertical"/>
+            android:layout_centerHorizontal="true" />
 
         <ImageView
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_marginLeft="10dp"
-            android:gravity="center_vertical"
+            android:layout_width="54dp"
+            android:layout_height="match_parent"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
             app:srcCompat="@drawable/glideplayer_skip_next_white"
             android:id="@+id/notification_expanded_next"
-            android:layout_weight="1"
-            android:layout_gravity="center_vertical"/>
-    </LinearLayout>
+            android:layout_toRightOf="@id/notification_expanded_play_pause"/>
+
+
+        <ImageView
+            android:layout_width="54dp"
+            android:layout_height="match_parent"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            app:srcCompat="@drawable/glideplayer_skip_prev_white"
+            android:id="@+id/notification_expanded_prev"
+            android:layout_toLeftOf="@id/notification_expanded_play_pause"/>
+    </RelativeLayout>
 
 </RelativeLayout>

@@ -12,47 +12,42 @@
         app:srcCompat="@drawable/ic_album_white_24dp"
         android:id="@+id/notification_album_art"/>
 
-    <LinearLayout
-        android:orientation="horizontal"
-        android:id="@+id/notification_track_actions"
-        android:layout_width="wrap_content"
+    <ImageView
+        android:layout_width="34dp"
         android:layout_height="match_parent"
-        android:layout_alignParentRight="true">
+        android:gravity="center_vertical"
+        app:srcCompat="@drawable/glideplayer_skip_next_white"
+        android:id="@+id/notification_next"
+        android:layout_alignParentRight="true"
+        android:paddingLeft="7dp"
+        android:paddingRight="7dp"
+        android:layout_gravity="center_vertical"/>
 
-        <ImageView
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            app:srcCompat="@drawable/glideplayer_skip_prev_white"
-            android:id="@+id/notification_prev"
-            android:layout_marginRight="15dp"
-            android:layout_weight="1"
-            android:layout_gravity="center_vertical" />
+    <ImageView
+        android:layout_height="match_parent"
+        app:srcCompat="@drawable/glideplayer_play_white"
+        android:id="@+id/notification_play_pause"
+        android:layout_toLeftOf="@id/notification_next"
+        android:paddingLeft="7dp"
+        android:paddingRight="7dp"
+        android:layout_width="44dp" />
 
-        <ImageView
-            android:layout_width="30dp"
-            android:layout_height="30dp"
-            app:srcCompat="@drawable/glideplayer_play_white"
-            android:id="@+id/notification_play_pause"
-            android:layout_weight="1"
-            android:layout_gravity="center_vertical"/>
+    <ImageView
+        android:layout_width="34dp"
+        android:layout_height="match_parent"
+        app:srcCompat="@drawable/glideplayer_skip_prev_white"
+        android:id="@+id/notification_prev"
+        android:paddingLeft="7dp"
+        android:paddingRight="7dp"
+        android:layout_toLeftOf="@id/notification_play_pause"/>
 
-        <ImageView
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:layout_marginLeft="15dp"
-            android:gravity="center_vertical"
-            app:srcCompat="@drawable/glideplayer_skip_next_white"
-            android:id="@+id/notification_next"
-            android:layout_weight="1"
-            android:layout_gravity="center_vertical"/>
-    </LinearLayout>
 
     <LinearLayout
         android:orientation="vertical"
         android:id="@+id/notification_track_info"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
-        android:layout_toLeftOf="@id/notification_track_actions"
+        android:layout_toLeftOf="@id/notification_prev"
         android:layout_toRightOf="@id/notification_album_art"
         android:layout_marginLeft="5dp">
 

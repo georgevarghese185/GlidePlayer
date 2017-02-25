@@ -4,16 +4,17 @@ import android.app.Service;
 import android.content.Intent;
 import android.media.MediaPlayer;
 import android.os.Binder;
+import android.os.Build;
 import android.os.IBinder;
-import android.widget.ArrayAdapter;
 
-import java.io.PrintWriter;
 import java.util.ArrayList;
 
+import teefourteen.glideplayer.AppNotification;
 import teefourteen.glideplayer.Global;
 import teefourteen.glideplayer.EasyHandler;
 import teefourteen.glideplayer.music.MusicPlayer;
 import teefourteen.glideplayer.music.PlayQueue;
+import teefourteen.glideplayer.music.Song;
 
 import static teefourteen.glideplayer.Global.playQueue;
 
@@ -24,11 +25,19 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
     private MusicPlayer player=null;
     private EasyHandler handler;
     private final IBinder binder = new PlayerServiceBinder();
+    private boolean isBound = false;
     private ArrayList<SongListener> songListenerList = new ArrayList<>();
     private static final String PLAYER_HANDLER_THREAD_NAME = "player_handler_thread";
+    private AppNotification playerNotification = AppNotification.getInstance(this);
+
+    public final static String EXTRA_PLAY_CONTROL = "play_control";
+    public final static String PLAY = "play";
+    public final static String PAUSE = "pause";
+    public final static String NEXT = "next";
+    public final static String PREV = "prev";
 
     public interface SongListener {
-        void onSongStarted();
+        void onSongStarted(Song song);
         void onSongPlaybackFailed();
         void onTrackAutoChanged();
         void onSongStopped();
@@ -135,16 +144,50 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
     }
 
 
+    @Override
+    public void onCreate() {
+        player = new MusicPlayer(getApplicationContext());
+        handler = new EasyHandler();
+        handler.createHandler(PLAYER_HANDLER_THREAD_NAME);
+        player.registerOnCompletionListener(this);
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        if(intent != null && intent.hasExtra(EXTRA_PLAY_CONTROL)) {
+            String extraPlayControl = intent.getStringExtra(EXTRA_PLAY_CONTROL);
+
+            switch (extraPlayControl) {
+                case PLAY:
+                    ((PlayerServiceBinder)binder).play();
+                    break;
+                case PAUSE:
+                    ((PlayerServiceBinder)binder).pause();
+                    break;
+                case NEXT:
+                    ((PlayerServiceBinder)binder).next();
+                    break;
+                case PREV:
+                    ((PlayerServiceBinder)binder).prev();
+                    break;
+            }
+        }
+
+        return START_STICKY;
+    }
+
     public void play(){
         boolean playbackSuccessful = player.playSong(playQueue.getCurrentPlaying());
 
+        startForeground(AppNotification.getPlayerNotificationId(),
+                playerNotification.getPlayerNotification(playQueue.getCurrentPlaying(), true));
 
         if(playbackSuccessful) {
             for(final SongListener listener : songListenerList) {
                 EasyHandler.executeOnMainThread(new Runnable() {
                     @Override
                     public void run() {
-                        listener.onSongStarted();
+                        listener.onSongStarted(playQueue.getCurrentPlaying());
                     }
                 });
             }
@@ -160,16 +203,23 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
         }
     }
 
-    @Override
-    public void onCreate() {
-        player = new MusicPlayer(getApplicationContext());
-        handler = new EasyHandler();
-        handler.createHandler(PLAYER_HANDLER_THREAD_NAME);
-        player.registerOnCompletionListener(this);
+    public void pause(){
+        player.pauseSong();
+        playerNotification.updatePlayerNotification(playQueue.getCurrentPlaying(), false);
+
+        for(final SongListener listener : songListenerList) {
+            EasyHandler.executeOnMainThread(new Runnable() {
+                @Override
+                public void run() {
+                    listener.onSongStopped();
+                }
+            });
+        }
+
+        if(!isBound) {
+            endService(false);
+        }
     }
-
-
-    public void pause(){ player.pauseSong(); }
 
     public void next() {
         player.reset();
@@ -193,11 +243,23 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
         player.reset();
         onSeekUpdated(0);
         Global.playQueue = queue;
-        play();
     }
 
     public void seek(int seek){
         player.seek(seek);
+    }
+
+    private void endService(boolean dismissNotification) {
+        if(dismissNotification) {
+            stopForeground(false);
+            playerNotification.dismissPlayerNotification();
+        } else if (Build.VERSION.SDK_INT >= 24) {
+            stopForeground(STOP_FOREGROUND_DETACH);
+        } else {
+            stopForeground(false);
+            playerNotification.detachPlayerNotification();
+        }
+        stopSelf();
     }
 
     @Override
@@ -221,8 +283,13 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
                     @Override
                     public void run() {
                         listener.onSongStopped();
+                        listener.onSeekUpdate(0);
                     }
                 });
+            }
+
+            if(!isBound) {
+                endService(false);
             }
         }
     }
@@ -243,10 +310,26 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
     public void onDestroy() {
         super.onDestroy();
         handler.closeAllHandlers();
+        stopForeground(false);
     }
 
     @Override
     public IBinder onBind(Intent intent) {
+        isBound = true;
         return binder;
+    }
+
+    @Override
+    public void onRebind(Intent intent) {
+        isBound = true;
+    }
+
+    @Override
+    public boolean onUnbind(Intent intent) {
+        if(!player.isPlaying()) {
+            endService(true);
+        }
+        isBound = false;
+        return true;
     }
 }

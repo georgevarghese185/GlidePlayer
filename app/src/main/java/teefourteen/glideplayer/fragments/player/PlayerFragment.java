@@ -34,8 +34,10 @@ public class PlayerFragment extends Fragment implements PlayerService.SongListen
     private static PlayerService.PlayerServiceBinder binder;
     private ImageView albumArtView;
     private View rootView;
-    SeekBar seekBar;
+    private SeekBar seekBar;
     private boolean userSeeking = false;
+    private ServiceConnection serviceConnection = null;
+    private Song currentSong = null;
     private PlayerActivity.Navigator navigator;
 
     public static PlayerFragment newInstance(PlayerActivity.Navigator navigator) {
@@ -51,45 +53,38 @@ public class PlayerFragment extends Fragment implements PlayerService.SongListen
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_player, container, false);
-        albumArtView = (ImageView) view.findViewById(R.id.player_album_art);
+        //inflate view
+        rootView = inflater.inflate(R.layout.fragment_player, container, false);
+        albumArtView = (ImageView) rootView.findViewById(R.id.player_album_art);
 
-        view.findViewById(R.id.player_play_button).setOnClickListener(new View.OnClickListener() {
+        //Set listeners for buttons
+        rootView.findViewById(R.id.player_play_button).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 play(v);
             }
         });
-        view.findViewById(R.id.player_next_button).setOnClickListener(new View.OnClickListener() {
+        rootView.findViewById(R.id.player_next_button).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 next(v);
             }
         });
-        view.findViewById(R.id.player_prev_button).setOnClickListener(new View.OnClickListener() {
+        rootView.findViewById(R.id.player_prev_button).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 prev(v);
             }
         });
-        view.findViewById(R.id.player_queue_button).setOnClickListener(new View.OnClickListener() {
+        rootView.findViewById(R.id.player_queue_button).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 navigator.showQueue();
             }
         });
 
-
-        // Inflate the layout for this fragment
-        rootView = view;
-        return view;
-    }
-
-    @Override
-    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-
-        seekBar = (SeekBar)rootView.findViewById(R.id.player_track_seek);
+        //Set up seekBar variable to SeekBar in view
+        seekBar = (SeekBar) this.rootView.findViewById(R.id.player_track_seek);
         seekBar.setMax(MusicPlayer.MAX_SEEK_VALUE);
 
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -114,7 +109,8 @@ public class PlayerFragment extends Fragment implements PlayerService.SongListen
             }
         });
 
-        ServiceConnection connection = new ServiceConnection() {
+        //Initialize serviceConnection for binding
+        serviceConnection = new ServiceConnection() {
             @Override
             public void onServiceConnected(ComponentName name, IBinder service) {
                 binder = (PlayerService.PlayerServiceBinder) service;
@@ -122,15 +118,12 @@ public class PlayerFragment extends Fragment implements PlayerService.SongListen
             }
 
             @Override
-            public void onServiceDisconnected(ComponentName name) {/*TODO: handle*/}
+            public void onServiceDisconnected(ComponentName name) {
+
+            }
         };
 
-        if(binder == null) {
-            Intent intent = new Intent(getActivity(), PlayerService.class);
-            getActivity().bindService(intent, connection, Context.BIND_AUTO_CREATE);
-        } else {
-            initializePlayer();
-        }
+        return rootView;
     }
 
     private void initializePlayer(){
@@ -141,12 +134,10 @@ public class PlayerFragment extends Fragment implements PlayerService.SongListen
             PlayQueue playQueue = intent.getParcelableExtra(PlayerActivity.EXTRA_PLAY_QUEUE);
             intent.removeExtra(PlayerActivity.EXTRA_PLAY_QUEUE);
             binder.newQueue(playQueue);
-            changeSongInfo(playQueue.getCurrentPlaying(), rootView);
         } else if(intent.hasExtra(PlayerActivity.EXTRA_CHANGE_TRACK)) {
             int index = intent.getIntExtra(PlayerActivity.EXTRA_CHANGE_TRACK, 0);
             intent.removeExtra(PlayerActivity.EXTRA_CHANGE_TRACK);
             changeTrack(index);
-            changeSongInfo(Global.playQueue.getSongAt(index), rootView);
         } else {
             changeSongInfo(Global.playQueue.getCurrentPlaying(), rootView);
             if(binder.isPlaying()) { showPause(); }
@@ -154,27 +145,33 @@ public class PlayerFragment extends Fragment implements PlayerService.SongListen
     }
 
     public void play(View view) {
-        binder.play();
+        if(binder != null) {
+            binder.play();
+        }
     }
 
     public void pause(View view) {
-        binder.pause();
-        showPlay();
+        if(binder != null) {
+			binder.pause();
+        }
     }
 
     public void next(View view) {
-        changeSongInfo(playQueue.getNext(), rootView);
-        binder.next();
+        if(binder != null) {
+			binder.next();
+        }
     }
 
     public void prev(View view) {
-        changeSongInfo(playQueue.getPrev(), rootView);
-        binder.prev();
+        if(binder != null) {
+			binder.prev();
+        }
     }
 
     public void changeTrack(int songIndex){
-        showPlay();
-        binder.changeTrack(songIndex);
+        if(binder != null) {
+			binder.changeTrack(songIndex);
+        }
     }
 
     private void showPlay() {
@@ -216,8 +213,12 @@ public class PlayerFragment extends Fragment implements PlayerService.SongListen
     }
 
     @Override
-    public void onSongStarted() {
+    public void onSongStarted(Song song) {
         showPause();
+        if(song != currentSong) {
+            currentSong = song;
+            changeSongInfo(song, rootView);
+        }
     }
 
     @Override
@@ -235,7 +236,6 @@ public class PlayerFragment extends Fragment implements PlayerService.SongListen
     @Override
     public void onSongStopped() {
         showPlay();
-        seekBar.setProgress(0);
     }
 
     @Override
@@ -248,9 +248,13 @@ public class PlayerFragment extends Fragment implements PlayerService.SongListen
     @Override
     public void onResume() {
         super.onResume();
-        if(binder != null) {
-            binder.registerSongListener(this);
-        }
+
+        //start PlayerService
+        Intent intent = new Intent(getContext(), PlayerService.class);
+        getContext().startService(intent);
+
+        intent = new Intent(getActivity(), PlayerService.class);
+        getActivity().bindService(intent, serviceConnection, Context.BIND_ABOVE_CLIENT);
     }
 
     @Override
@@ -259,5 +263,7 @@ public class PlayerFragment extends Fragment implements PlayerService.SongListen
         if(binder != null) {
             binder.unregisterSongListener(this);
         }
+        binder = null;
+        getContext().unbindService(serviceConnection);
     }
 }

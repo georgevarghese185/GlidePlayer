@@ -204,6 +204,10 @@ public class MusicPlayer {
     }
 
     public boolean isPlaying() {
-        return mediaPlayer.isPlaying();
+        if(mediaPlayer == null) {
+            return false;
+        } else {
+            return mediaPlayer.isPlaying();
+        }
     }
 }
