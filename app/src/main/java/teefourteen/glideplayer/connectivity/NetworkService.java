@@ -59,7 +59,9 @@ public class NetworkService extends Service {
     private final static String THREAD_CLIENT_HANDLER = "new_client_handler_thread"; //new clients or leaving clients are handled in order on this one thread to avoid asynchronous issues
     private static final int ACTION_ESTABLISH =2226;
     private static final int ACTION_NEW_CLIENT = 2622;
+    private static final int ACTION_CLIENT_LEFT = 2104;
     public static final int ACTION_RAW_SOCKET = 2125;
+    public static final int ACTION_PEACEOUT = 2100;
     private static final String DATA_TYPE_INTEGER = "integer";
     private static final String DATA_TYPE_LONG = "long";
     private static final String DATA_TYPE_STRING = "string";
@@ -68,15 +70,17 @@ public class NetworkService extends Service {
     private static final String DATA_TYPE_NULL = "null";
     public static String FILE_SAVE_LOCATION;
 
-    private final IBinder binder = new LocalBinder();
+    private final IBinder binder = new ServiceBinder();
     private WifiP2pManager p2pManager;
     private WifiP2pManager.Channel channel;
+    private String ownerDeviceAddress;
     private Connection.ListenServer server;
     private  WifiP2pDnsSdServiceRequest discoveryRequest;
     private WifiP2pBroadcastReceiver p2pBroadcastReceiver;
     private HashMap<String, AvailableGroup> discoveredP2pGroups;
     private HashMap<String, Client> clientMap;
     private GroupMemberListener groupMemberListener;
+    private GroupConnectionListener groupConnectionListener;
     private RequestListener requestListener;
     private EasyHandler handler;
     private int session = 0;
@@ -139,11 +143,11 @@ public class NetworkService extends Service {
 
     private class RequestHandler implements Runnable{
         private Connection con;
-        private String receiverDeviceAddress;
+        private String senderDeviceAddress;
 
-        RequestHandler(Connection requestCon, String receiverDeviceAddress) {
+        RequestHandler(Connection requestCon, String senderDeviceAddress) {
             con = requestCon;
-            this.receiverDeviceAddress = receiverDeviceAddress;
+            this.senderDeviceAddress = senderDeviceAddress;
         }
 
         @Override
@@ -155,7 +159,7 @@ public class NetworkService extends Service {
                     handler.executeAsync(new Runnable() {
                         @Override
                         public void run() {
-                            incomingEstablishRequested(con, receiverDeviceAddress);
+                            incomingEstablishRequested(con, senderDeviceAddress);
                         }
                     }, THREAD_CLIENT_HANDLER, true);
                 } else if (action == ACTION_NEW_CLIENT) {
@@ -165,8 +169,28 @@ public class NetworkService extends Service {
                             newClient(con);
                         }
                     }, THREAD_CLIENT_HANDLER, true);
+                } else if(action == ACTION_CLIENT_LEFT) {
+                    handler.executeAsync(new Runnable() {
+                        @Override
+                        public void run() {
+                            clientLeftNotification(con);
+                        }
+                    }, THREAD_CLIENT_HANDLER);
+                } else if(action == ACTION_PEACEOUT) {
+                    handler.executeAsync(new Runnable() {
+                        @Override
+                        public void run() {
+                            clientMap.remove(senderDeviceAddress);
+                            if(senderDeviceAddress.equals(ownerDeviceAddress)) {
+                                groupConnectionListener.onOwnerDisconnected();
+                            } else {
+                                groupMemberListener.onMemberLeft(senderDeviceAddress);
+                            }
+                            con.close();
+                        }
+                    }, THREAD_CLIENT_HANDLER);
                 } else if(action == ACTION_RAW_SOCKET) {
-                    requestListener.onNewRequest(receiverDeviceAddress, ACTION_RAW_SOCKET,
+                    requestListener.onNewRequest(senderDeviceAddress, ACTION_RAW_SOCKET,
                             con.getSocket());
                 } else {
                     handleRequest(action);
@@ -183,27 +207,27 @@ public class NetworkService extends Service {
             switch (requestType) {
                 case DATA_TYPE_NULL:
                     responseData =
-                            requestListener.onNewRequest(receiverDeviceAddress, action, null);
+                            requestListener.onNewRequest(senderDeviceAddress, action, null);
                     break;
                 case DATA_TYPE_STRING:
-                    responseData = requestListener.onNewRequest(receiverDeviceAddress, action,
+                    responseData = requestListener.onNewRequest(senderDeviceAddress, action,
                             con.getNextString());
                     break;
                 case DATA_TYPE_INTEGER:
-                    responseData = requestListener.onNewRequest(receiverDeviceAddress, action,
+                    responseData = requestListener.onNewRequest(senderDeviceAddress, action,
                             con.getNextInt());
                     break;
                 case DATA_TYPE_LONG:
-                    responseData = requestListener.onNewRequest(receiverDeviceAddress, action,
+                    responseData = requestListener.onNewRequest(senderDeviceAddress, action,
                             con.getNextLong());
                     break;
                 case DATA_TYPE_FILE:
                     int size = con.getNextInt();
-                    responseData = requestListener.onNewRequest(receiverDeviceAddress, action,
+                    responseData = requestListener.onNewRequest(senderDeviceAddress, action,
                             con.getNextFile(getCacheDir()+"/files",size));
                     break;
                 default:
-                    responseData = requestListener.onNewRequest(receiverDeviceAddress, action,
+                    responseData = requestListener.onNewRequest(senderDeviceAddress, action,
                             con.getNextObject());
                     break;
             }
@@ -235,7 +259,7 @@ public class NetworkService extends Service {
 
 
 
-    public class LocalBinder extends Binder {
+    public class ServiceBinder extends Binder {
         private NetworkService service = NetworkService.this;
 
         void createGroup(final String username, final String groupName,
@@ -401,6 +425,7 @@ public class NetworkService extends Service {
             public void onSuccess() {
                 Log.d(LOG_TAG,"create group initiated");
                 groupCreationListener.onGroupCreated();
+                ownerDeviceAddress = p2pBroadcastReceiver.myDevice.deviceAddress;
             }
 
             @Override
@@ -412,7 +437,23 @@ public class NetworkService extends Service {
         });
     }
 
-    public void deleteGroup(){
+    public void deleteGroup()  {
+        for(Client client : clientMap.values()) {
+            Connection connection = null;
+            try {
+                connection = new Connection(client.inetAddress, client.port);
+                connection.sendString(p2pBroadcastReceiver.myDevice.deviceAddress);
+                connection.sendInt(ACTION_PEACEOUT);
+                Log.d("deleteGroup","notified "+client.inetAddress);
+            } catch (IOException e) {
+                Log.d("deleteGroup", "failed to inform "+client.inetAddress+"\n"+e.toString());
+            } finally {
+                if(connection != null) {
+                    connection.close();
+                }
+            }
+        }
+
         p2pManager.removeGroup(channel, null);
         p2pManager.clearLocalServices(channel, null);
         server.close();
@@ -506,6 +547,7 @@ public class NetworkService extends Service {
         config.wps.setup = WpsInfo.PBC;
 
         this.groupMemberListener = groupMemberListener;
+        this.groupConnectionListener = groupConnectionListener;
         this.requestListener = requestListener;
 
         p2pBroadcastReceiver.registerConnectionInfoListener(
@@ -518,6 +560,7 @@ public class NetworkService extends Service {
                         }
                         p2pBroadcastReceiver.clearConnectionInfoListener(); //TODO: register a new one for disconnection
 
+                        ownerDeviceAddress = groupId;
                         final int ownerPort = Integer.parseInt(
                                 discoveredP2pGroups.get(groupId).record.get(RECORD_LISTEN_PORT));
                         final InetAddress ownerAddress = info.groupOwnerAddress;
@@ -674,6 +717,7 @@ public class NetworkService extends Service {
         //check only if any established clients left
 
         ArrayList<String> devicesToRemove = new ArrayList<>();
+
         outerLoop:
         for(String deviceAddress : clientMap.keySet()){
             for(WifiP2pDevice device : newClientList) {
@@ -685,6 +729,46 @@ public class NetworkService extends Service {
 
         for(String deviceAddress : devicesToRemove) {
             clientMap.remove(deviceAddress);
+        }
+
+        for(final String leftClientAddress : devicesToRemove) {
+            handler.executeAsync(new Runnable() {
+                @Override
+                public void run() {
+                    sendClientLeftNotification(leftClientAddress);
+                }
+            }, THREAD_CLIENT_HANDLER);
+        }
+    }
+
+    private void sendClientLeftNotification(String leftClientAddress) {
+        Connection connection = null;
+
+        for(String deviceAddress : clientMap.keySet()) {
+            try {
+                Client client = clientMap.get(deviceAddress);
+                connection = new Connection(client.inetAddress, client.port);
+                connection.sendString(deviceAddress);
+                connection.sendInt(ACTION_CLIENT_LEFT);
+                connection.sendString(leftClientAddress);
+            } catch (IOException e) {
+                Log.d("sendClientNotification", e.toString());
+            } finally {
+                if(connection != null) {
+                    connection.close();
+                }
+            }
+        }
+    }
+
+    private void clientLeftNotification(Connection connection) {
+        try {
+            String leftClientAddress = connection.getNextString();
+            connection.close();
+            clientMap.remove(leftClientAddress);
+            groupMemberListener.onMemberLeft(leftClientAddress);
+        } catch (IOException e) {
+            //TODO: handle
         }
     }
 

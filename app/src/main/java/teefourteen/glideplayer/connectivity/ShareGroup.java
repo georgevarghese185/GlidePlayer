@@ -19,7 +19,6 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.net.Socket;
-import java.security.acl.Group;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -31,7 +30,6 @@ import teefourteen.glideplayer.connectivity.listeners.GroupMemberListener;
 import teefourteen.glideplayer.connectivity.listeners.NewGroupListener;
 import teefourteen.glideplayer.connectivity.listeners.RequestListener;
 import teefourteen.glideplayer.connectivity.listeners.ResponseListener;
-import teefourteen.glideplayer.fragments.library.LibraryFragment;
 import teefourteen.glideplayer.music.Song;
 import teefourteen.glideplayer.music.database.Library;
 
@@ -45,7 +43,7 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
     private static int sessionId = 0;
     private boolean isOwner = false;
     public static WeakReference<ShareGroup> shareGroupWeakReference;
-    private NetworkService.LocalBinder netService;
+    private NetworkService.ServiceBinder netService;
     public static String userName;
     private static GlidePlayerGroup currentGroup;
     private ArrayList<GlidePlayerGroup> foundGroups;
@@ -143,7 +141,7 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
     private ServiceConnection serviceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
-            netService = (NetworkService.LocalBinder) service;
+            netService = (NetworkService.ServiceBinder) service;
             shareGroupInitListener.onShareGroupReady();
             //TODO: listener notify ready
         }
@@ -290,8 +288,13 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
 
             @Override
             public void onOwnerDisconnected() {
-                for(GroupConnectionListener listener : groupConnectionListenerList) {
-                    listener.onOwnerDisconnected();
+                for(final GroupConnectionListener listener : groupConnectionListenerList) {
+                    EasyHandler.executeOnMainThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            listener.onOwnerDisconnected();
+                        }
+                    });
                 }
             }
         };
@@ -340,6 +343,10 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
 
     @Override
     public void onMemberLeft(final String member) {
+        if(currentGroup.groupMembers.get(member) == null) {
+            return;
+        }
+
         memberList.remove(currentGroup.groupMembers.get(member).name);
         for(final GroupMemberListener listener : groupMemberListenerList) {
             EasyHandler.executeOnMainThread(new Runnable() {
