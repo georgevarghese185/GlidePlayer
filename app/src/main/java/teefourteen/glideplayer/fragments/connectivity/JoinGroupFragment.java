@@ -81,7 +81,6 @@ public class JoinGroupFragment extends Fragment implements GroupConnectionListen
                 groupAdapter = new GroupAdapter(getContext(), group.getGroupList());
                 setupGroupList();
                 group.findGroups(groupAdapter);
-                connectionStatus = ConnectionStatus.FINDING_GROUPS;
                 break;
             case FINDING_GROUPS:
                 setupGroupList();

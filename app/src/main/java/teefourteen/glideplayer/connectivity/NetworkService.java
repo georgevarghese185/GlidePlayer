@@ -179,7 +179,7 @@ public class NetworkService extends Service {
                 } else if(action == ACTION_PEACEOUT) {
                     handler.executeAsync(new Runnable() {
                         @Override
-                        public void run() {
+                        synchronized public void run() {
                             clientMap.remove(senderDeviceAddress);
                             if(senderDeviceAddress.equals(ownerDeviceAddress)) {
                                 groupConnectionListener.onOwnerDisconnected();
@@ -602,7 +602,7 @@ public class NetworkService extends Service {
 
                         p2pBroadcastReceiver.registerConnectionInfoListener(new WifiP2pManager.ConnectionInfoListener() {
                             @Override
-                            public void onConnectionInfoAvailable(WifiP2pInfo info) {
+                            synchronized public void onConnectionInfoAvailable(WifiP2pInfo info) {
                                 if(!info.groupFormed) {
                                     groupConnectionListener.onOwnerDisconnected();
                                 }

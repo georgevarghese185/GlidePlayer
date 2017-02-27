@@ -62,12 +62,20 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
         private HashMap<String, Member> groupMembers;
         private int memberCount;
 
+        @Override
+        public boolean equals(Object obj) {
+            return (obj instanceof GlidePlayerGroup
+                    && (this.ownerId.equals(((GlidePlayerGroup) obj).ownerId)));
+        }
+
         GlidePlayerGroup(String ownerId, Member owner, String groupName, int memberCount) {
             this.ownerId = ownerId;
             this.owner = owner;
             this.groupName = groupName;
             this.memberCount = memberCount;
             groupMembers = new HashMap<>();
+
+
         }
 
         synchronized public int getMemberCount() {
@@ -200,14 +208,14 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
         sessionId++;
 
         this.activity = activity;
-        this.userName = userName;
+        ShareGroup.userName = userName;
         this.shareGroupInitListener = listener;
 
         memberList = new ArrayList<>();
         memberList.add(userName);
 
         handler = new EasyHandler();
-        foundGroups = new ArrayList<>();
+        foundGroups = new ArrayList<GlidePlayerGroup>();
         currentGroup = null;
         startService();
     }
@@ -247,8 +255,7 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
     public void stopFindingGroups() {
         netService.stopDiscovery();
         foundGroups.clear();
-        groupListAdapter = null;
-        foundGroups = new ArrayList<>();
+        groupListAdapter.clear();
     }
 
     public void connectToGroup(int groupListIndex, final GroupConnectionListener connectionListener,
@@ -288,6 +295,11 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
 
             @Override
             public void onOwnerDisconnected() {
+                if(currentGroup == null) return;
+                memberList.clear();
+                memberList.add(userName);
+                currentGroup = null;
+                stopFindingGroups();
                 for(final GroupConnectionListener listener : groupConnectionListenerList) {
                     EasyHandler.executeOnMainThread(new Runnable() {
                         @Override
@@ -309,7 +321,9 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
     }
 
     public void registerGroupMemberListener(GroupMemberListener listener) {
-        groupMemberListenerList.add(listener);
+        if(!groupMemberListenerList.contains(listener)) {
+            groupMemberListenerList.add(listener);
+        }
     }
 
     public void unregisterGroupMemberListener(GroupMemberListener listener) {
@@ -317,7 +331,9 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
     }
 
     public void registerGroupConnectionListener(GroupConnectionListener listener) {
-        groupConnectionListenerList.add(listener);
+        if(!groupConnectionListenerList.contains(listener)) {
+            groupConnectionListenerList.add(listener);
+        }
     }
 
     public void unregisterGroupConnectionListener(GroupConnectionListener listener) {
@@ -337,8 +353,16 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
 
     @Override
     public void newGroupFound(String Id, String groupName, String ownerName, String deviceName, int memberCount) {
-        foundGroups.add(new GlidePlayerGroup(Id,new Member(ownerName, deviceName, null),groupName,memberCount));
-        groupListAdapter.notifyDataSetChanged();
+        GlidePlayerGroup newGroup = new GlidePlayerGroup(
+                Id,
+                new Member(ownerName, deviceName, null),
+                groupName,
+                memberCount);
+
+        if(!foundGroups.contains(newGroup)) {
+            foundGroups.add(newGroup);
+            groupListAdapter.notifyDataSetChanged();
+        }
     }
 
     @Override

@@ -75,12 +75,9 @@ public class SongsFragment extends Fragment implements GroupMemberListener,
             && shareGroupWeakReference.get() != null) {
             ShareGroup group = shareGroupWeakReference.get();
 
-            if(connectivitySession != group.getSessionId()) {
-                connectivitySession = group.getSessionId();
-
                 group.registerGroupMemberListener(this);
                 group.registerGroupConnectionListener(this);
-            }
+                group.registerGroupConnectionListener(onlyDisconnectionListener);
 
             if(group.isConnected()) {
                 initSpinner(librarySpinner, group.getMemberList());
@@ -89,6 +86,7 @@ public class SongsFragment extends Fragment implements GroupMemberListener,
             }
         } else {
             ((ViewGroup) rootView).removeView(librarySpinner);
+            changeLibraryDb(new File(Library.DATABASE_LOCATION, Library.LOCAL_DATABASE_NAME));
         }
 
         return rootView;
@@ -149,13 +147,7 @@ public class SongsFragment extends Fragment implements GroupMemberListener,
                 }
 
                 if (dbFile != null && dbFile.exists()) {
-                    Library library = new Library(getContext(), dbFile);
-                    SQLiteDatabase db = library.getReadableDatabase();
-
-                    Global.songCursor = Library.getSongs(db);
-
-                    ((SongAdapter) songAdapter).changeCursor(Global.songCursor);
-                    ((SongAdapter) songAdapter).notifyDataSetChanged();
+                    changeLibraryDb(dbFile);
                 }
             }
 
@@ -163,6 +155,16 @@ public class SongsFragment extends Fragment implements GroupMemberListener,
             public void onNothingSelected(AdapterView<?> parent) {
             }
         });
+    }
+
+    private void changeLibraryDb(File dbFile) {
+        Library library = new Library(getContext(), dbFile);
+        SQLiteDatabase db = library.getReadableDatabase();
+
+        Global.songCursor = Library.getSongs(db);
+
+        ((SongAdapter) songAdapter).changeCursor(Global.songCursor);
+        ((SongAdapter) songAdapter).notifyDataSetChanged();
     }
 
     class SingleSelect implements AdapterView.OnItemClickListener,
@@ -303,13 +305,24 @@ public class SongsFragment extends Fragment implements GroupMemberListener,
         initSpinner(librarySpinner, shareGroupWeakReference.get().getMemberList());
     }
 
+    //blank because onlyDisconnectionListener will handle disconnections.
     @Override
-    public void onOwnerDisconnected() {
-        librarySpinner.setSelection(0);
-        librarySpinner.performClick();
-        Spinner librarySpinner = (Spinner) rootView.findViewById(R.id.library_spinner);
-        ((ViewGroup) rootView).removeView(librarySpinner);
-    }
+    public void onOwnerDisconnected() {}
+
+    //this listener stays registered at all times. Even when fragment detached.
+    GroupConnectionListener onlyDisconnectionListener = new GroupConnectionListener() {
+        @Override
+        public void onExchangingInfo() {}
+        @Override
+        public void onConnectionSuccess(String connectedGroup) {}
+        @Override
+        public void onConnectionFailed(String failureMessage) {}
+        @Override
+        public void onOwnerDisconnected() {
+            changeLibraryDb(new File(Library.DATABASE_LOCATION,Library.LOCAL_DATABASE_NAME));
+            librarySpinner.setSelection(0);
+        }
+    };
 
     public void onDestroyView() {
         super.onDestroyView();
