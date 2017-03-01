@@ -348,7 +348,30 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
     public void close() {
         activity.unbindService(serviceConnection);
         handler.closeAllHandlers();
+        deleteFiles();
         shareGroupWeakReference = null;
+    }
+
+    private void deleteFiles() {
+        File file = new File(Library.REMOTE_DATABASE_LOCATION);
+        clearDir(file);
+
+        file = new File(Library.FILE_SAVE_LOCATION);
+        clearDir(file);
+
+        file = new File(Library.REMOTE_COVERS_LOCATION);
+        clearDir(file);
+    }
+
+    private void clearDir(File dir) {
+        for(File file : dir.listFiles()) {
+            if(file.isDirectory()) {
+                clearDir(file);
+                file.delete();
+            } else {
+                file.delete();
+            }
+        }
     }
 
     @Override
@@ -454,7 +477,7 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
     private void exchangeLibraries(final String memberId, Socket socket, boolean sendFirst) {
         final String newMemberUsername = currentGroup.groupMembers.get(memberId).name;
 
-        File remoteLibraryFile = new File(Library.DATABASE_LOCATION, newMemberUsername);
+        File remoteLibraryFile = new File(Library.REMOTE_DATABASE_LOCATION, newMemberUsername);
         if (remoteLibraryFile.exists()) {
             remoteLibraryFile.delete();
         }

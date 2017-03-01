@@ -163,8 +163,10 @@ public class SongsFragment extends Fragment implements GroupMemberListener,
 
         Global.songCursor = Library.getSongs(db);
 
-        ((SongAdapter) songAdapter).changeCursor(Global.songCursor);
-        ((SongAdapter) songAdapter).notifyDataSetChanged();
+        if(songAdapter instanceof SongAdapter) {
+            ((SongAdapter) songAdapter).changeCursor(Global.songCursor);
+            ((SongAdapter) songAdapter).notifyDataSetChanged();
+        }
     }
 
     class SingleSelect implements AdapterView.OnItemClickListener,

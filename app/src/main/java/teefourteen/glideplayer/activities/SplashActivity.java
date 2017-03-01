@@ -12,8 +12,11 @@ import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
+import android.util.Log;
+import android.widget.Toast;
+
+import java.io.File;
+import java.io.IOException;
 
 import teefourteen.glideplayer.dialogs.NeedPermissionsDialog;
 import teefourteen.glideplayer.R;
@@ -29,9 +32,6 @@ public class SplashActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        Library.DATABASE_LOCATION = getCacheDir().getAbsolutePath();
-        Library.REMOTE_COVERS_LOCATION = getCacheDir().getAbsolutePath() + "/remote_album_covers";
 
         libInitCompleteReceiver = new BroadcastReceiver() {
             @Override
@@ -61,15 +61,19 @@ public class SplashActivity extends AppCompatActivity {
                     REQUEST_READ_EXTERNAL_STORAGE);
             return false;
         }
-        else
+        else {
+            createFiles();
             return true;
+        }
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
             if(requestCode==REQUEST_READ_EXTERNAL_STORAGE && grantResults.length>0
-                    && grantResults[0]==PackageManager.PERMISSION_GRANTED)
+                    && grantResults[0]==PackageManager.PERMISSION_GRANTED) {
+                createFiles();
                 startService(new Intent(this, LibraryService.class));
+            }
             else {
                 new Thread(new Runnable() {
                     @Override
@@ -81,7 +85,33 @@ public class SplashActivity extends AppCompatActivity {
                     }
                 }).start();
             }
+    }
+
+    private void createFiles() {
+        Library.DATABASE_LOCATION = getExternalCacheDir() + "/libraries";
+        Library.REMOTE_DATABASE_LOCATION = Library.DATABASE_LOCATION + "/remote_libraries";
+        //before changing covers location, remember that the file move action in RemoteAlbumCoverLoader can only move files on the same mount point
+        Library.REMOTE_COVERS_LOCATION = getExternalCacheDir() + "/remote_album_covers";
+        Library.FILE_SAVE_LOCATION = getExternalCacheDir() + "/files";
+
+        try{
+            createDir(Library.DATABASE_LOCATION);
+            createDir(Library.REMOTE_DATABASE_LOCATION);
+            createDir(Library.REMOTE_COVERS_LOCATION);
+            createDir(Library.FILE_SAVE_LOCATION);
+        } catch (IOException e) {
+            Toast.makeText(this,"Failed to create directory", Toast.LENGTH_LONG).show();
+            Log.d("splash fail", e.toString());
+            finishAffinity();
         }
+    }
+
+    private void createDir(String dirPath)throws IOException {
+        File file = new File(dirPath);
+        if(!file.exists()) {
+            if(!file.mkdir()) throw new IOException("failed to create " + dirPath);
+        }
+    }
 
     @Override
     protected void onDestroy() {

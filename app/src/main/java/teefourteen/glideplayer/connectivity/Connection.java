@@ -20,8 +20,8 @@ import java.net.SocketException;
 public class Connection implements Closeable {
     private Socket clientSocket;
     private TransmissionType lastTransmission = null;
-    private int sessionFileName = 0;
-    private int maxFiles = 5;
+    private static int sessionFileName = 0;
+    private int maxFiles = 300;
 
     private enum TransmissionType {
         READ,

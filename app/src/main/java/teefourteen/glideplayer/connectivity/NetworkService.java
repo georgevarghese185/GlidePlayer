@@ -41,6 +41,7 @@ import teefourteen.glideplayer.connectivity.listeners.RequestListener;
 import teefourteen.glideplayer.connectivity.listeners.NewGroupListener;
 import teefourteen.glideplayer.connectivity.listeners.ResponseListener;
 import teefourteen.glideplayer.connectivity.listeners.WifiP2pBroadcastReceiver;
+import teefourteen.glideplayer.music.database.Library;
 
 
 //TODO: persistent notification
@@ -366,8 +367,7 @@ public class NetworkService extends Service {
                 }
             }, THREAD_CONNECTION_LISTENER);
 
-            FILE_SAVE_LOCATION = getExternalFilesDir(null) + "/files";
-            File fileDir = new File(FILE_SAVE_LOCATION);
+            File fileDir = new File(Library.FILE_SAVE_LOCATION);
             if( !(fileDir.exists()) ) {
                 fileDir.mkdir();
             }
@@ -838,7 +838,7 @@ public class NetworkService extends Service {
                 case DATA_TYPE_FILE:
                     int size = connection.getNextInt();
                     responseListener.onResponseReceived(
-                            connection.getNextFile(FILE_SAVE_LOCATION, size));
+                            connection.getNextFile(Library.FILE_SAVE_LOCATION, size));
                     break;
                 default:
                     responseListener.onResponseReceived(connection.getNextObject());

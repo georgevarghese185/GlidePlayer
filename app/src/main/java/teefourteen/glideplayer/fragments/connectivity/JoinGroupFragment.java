@@ -176,6 +176,7 @@ public class JoinGroupFragment extends Fragment implements GroupConnectionListen
     public void onOwnerDisconnected() {
         Toast.makeText(getContext(), "Owner disconnected. Group closed", Toast.LENGTH_LONG).show();
         connectionStatus = ConnectionStatus.RECENTLY_DISCONNECTED;
+        ((TextView) rootView.findViewById(R.id.group_members_caption)).setText("Nearby Groups");
         initializeViews();
     }
 }
