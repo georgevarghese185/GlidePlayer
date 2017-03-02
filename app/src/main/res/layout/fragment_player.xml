@@ -14,7 +14,8 @@
             android:layout_centerHorizontal="true"
             android:layout_marginTop="10dp"
             app:srcCompat="@drawable/ic_album_white_24dp"
-            android:contentDescription="@string/album_art_description"/>
+            android:contentDescription="@string/album_art_description"
+            android:background="@color/album_art_background" />
 
         <TextView
             android:layout_width="match_parent"
@@ -42,32 +43,36 @@
             android:layout_marginTop="20dp" />
 
         <ImageView
-            android:layout_width="70dp"
-            android:layout_height="70dp"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
             android:id="@+id/player_play_button"
             android:layout_marginBottom="49dp"
             android:layout_alignParentBottom="true"
             android:layout_centerHorizontal="true"
-            app:srcCompat="@drawable/ic_play_arrow_white_24dp"
+            app:srcCompat="@drawable/glideplayer_play_white"
+            android:clickable="true"
+            android:foreground="?attr/selectableItemBackground"
             android:onClick="play" />
 
         <ImageView
-            android:layout_width="70dp"
-            android:layout_height="70dp"
+            android:layout_width="45dp"
+            android:layout_height="45dp"
             android:id="@+id/player_prev_button"
             android:layout_alignTop="@+id/player_play_button"
-            app:srcCompat="@drawable/ic_skip_previous_white_24dp"
+            app:srcCompat="@drawable/glideplayer_skip_prev_white"
             android:layout_toLeftOf="@+id/player_play_button"
-            android:layout_marginRight="20dp"/>
+            android:layout_marginRight="30dp"
+            android:layout_marginTop="7dp"/>
 
         <ImageView
-            android:layout_width="70dp"
-            android:layout_height="70dp"
+            android:layout_width="45dp"
+            android:layout_height="45dp"
             android:id="@+id/player_next_button"
             android:layout_alignTop="@+id/player_play_button"
             android:layout_toRightOf="@+id/player_play_button"
-            android:layout_marginLeft="20dp"
-            app:srcCompat="@drawable/ic_skip_next_white_24dp"/>
+            android:layout_marginLeft="30dp"
+            app:srcCompat="@drawable/glideplayer_skip_next_white"
+            android:layout_marginTop="7dp"/>
 
         <Button
             style="?android:attr/buttonStyleSmall"
@@ -90,5 +95,12 @@
             android:layout_marginTop="21dp"
             android:layout_below="@+id/player_track_title"
             android:layout_centerHorizontal="true" />
+
+        <SeekBar
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_above="@+id/player_play_button"
+            android:layout_centerHorizontal="true"
+            android:id="@+id/player_track_seek" />
 
 </RelativeLayout>

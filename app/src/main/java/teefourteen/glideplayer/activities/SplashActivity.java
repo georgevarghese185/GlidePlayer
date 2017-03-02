@@ -48,8 +48,6 @@ public class SplashActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_splash);
 
-        findViewById(R.id.splashContainer).getWidth();
-
         if(readPermissionGranted())
                     startService(new Intent(getApplicationContext(), LibraryService.class));
     }
