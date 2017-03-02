@@ -15,7 +15,6 @@ import teefourteen.glideplayer.fragments.library.adapters.AlbumAdapter;
 
 public class AlbumsFragment extends Fragment {
     public static Cursor albumCursor;
-    public static SQLiteDatabase albumArtDb = null;
 
     public AlbumsFragment() {
         // Required empty public constructor

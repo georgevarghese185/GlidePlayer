@@ -22,6 +22,9 @@ public class LibraryService extends IntentService {
     @Override
     protected void onHandleIntent(final Intent intent) {
         File file = new File(Library.DATABASE_LOCATION, Library.LOCAL_DATABASE_NAME);
+        if(file.exists()) {
+            file.delete();
+        }
 
         Library library = new Library(this, file);
 

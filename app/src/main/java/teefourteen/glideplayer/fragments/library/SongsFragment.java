@@ -1,10 +1,12 @@
 package teefourteen.glideplayer.fragments.library;
 
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -38,7 +40,6 @@ import static teefourteen.glideplayer.connectivity.ShareGroup.shareGroupWeakRefe
 
 public class SongsFragment extends Fragment implements GroupMemberListener,
         GroupConnectionListener {
-    int connectivitySession = -1;
     private ListAdapter songAdapter = null;
     private View rootView;
     private ArrayAdapter<String> memberListAdapter;

@@ -2,8 +2,6 @@ package teefourteen.glideplayer.fragments.library.adapters;
 
 import android.content.Context;
 import android.database.Cursor;
-import android.graphics.drawable.Drawable;
-import android.os.AsyncTask;
 import android.support.v4.content.ContextCompat;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,8 +12,13 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import java.io.File;
+
 import teefourteen.glideplayer.AsyncImageLoader;
+import teefourteen.glideplayer.CancellableAsyncTaskHandler;
 import teefourteen.glideplayer.R;
+import teefourteen.glideplayer.connectivity.ShareGroup;
+import teefourteen.glideplayer.connectivity.RemoteAlbumCoverLoader;
 import teefourteen.glideplayer.music.database.AlbumTable;
 import teefourteen.glideplayer.music.database.ArtistTable;
 import teefourteen.glideplayer.music.database.Library;
@@ -26,6 +29,7 @@ import teefourteen.glideplayer.music.database.SongTable;
 public class SongAdapter extends CursorAdapter {
     private SelectionChecker checker;
     private AsyncImageLoader asyncImageLoader = new AsyncImageLoader(1);
+    private RemoteAlbumCoverLoader remoteCoverLoader = new RemoteAlbumCoverLoader(1, asyncImageLoader);
 
     public interface SelectionChecker {
         boolean isSelected(int position);
@@ -42,11 +46,20 @@ public class SongAdapter extends CursorAdapter {
         listView.setRecyclerListener(new AbsListView.RecyclerListener() {
             @Override
             public void onMovedToScrapHeap(View view) {
-                if(view.getTag() != null) {
-                    asyncImageLoader.cancelTask((AsyncImageLoader.LoadTask) view.getTag());
-                }
+                Object tag = view.getTag();
+                cancelAlbumArt(tag);
             }
         });
+    }
+
+    private void cancelAlbumArt(Object tag) {
+        if(tag != null) {
+            if(tag instanceof AsyncImageLoader.ImageLoadTask) {
+                asyncImageLoader.cancelTask((CancellableAsyncTaskHandler.Task) tag);
+            } else if(tag instanceof RemoteAlbumCoverLoader.RemoteCoverTask) {
+                remoteCoverLoader.cancelTask((CancellableAsyncTaskHandler.Task) tag);
+            }
+        }
     }
 
 
@@ -66,7 +79,7 @@ public class SongAdapter extends CursorAdapter {
 
         trackAlbum.setText(Library.getString(cursor, AlbumTable.Columns.ALBUM_NAME));
         String string = Library.getString(cursor, ArtistTable.Columns.ARTIST_NAME);
-        if(string!=null && !string.equals("<unknown>"))
+        if (string != null && !string.equals("<unknown>"))
             trackArtist.setText(string);
         else trackArtist.setText(R.string.track_artist);
         trackTitle.setText(Library.getString(cursor, SongTable.Columns.TITLE));
@@ -74,14 +87,37 @@ public class SongAdapter extends CursorAdapter {
         trackAlbumArt.setImageResource(R.drawable.ic_album_black_24dp);
 
         String path = Library.getString(cursor, AlbumTable.Columns.ALBUM_ART);
-        if(path != null) {
-            AsyncImageLoader.LoadTask task = new AsyncImageLoader.LoadTask(trackAlbumArt, path);
-            if(view.getTag() != null) {
-                asyncImageLoader.cancelTask((AsyncImageLoader.LoadTask) view.getTag());
+        if (path != null && new File(path).exists()) {
+            AsyncImageLoader.ImageLoadTask imageLoadTask =
+                    asyncImageLoader.loadImageAsync(trackAlbumArt, path);
+
+            if (view.getTag() != null) {
+                asyncImageLoader.cancelTask((AsyncImageLoader.ImageLoadTask) view.getTag());
             }
-            view.setTag(task);
-            asyncImageLoader.loadAsync(task);
+            view.setTag(imageLoadTask);
+        } else if (isRemoteSong(cursor)) {
+            fetchRemoteCover(cursor, trackAlbumArt);
         }
+    }
+
+    private boolean isRemoteSong(Cursor cursor) {
+        return (ShareGroup.shareGroupWeakReference != null
+                && ShareGroup.shareGroupWeakReference.get() != null
+                && (Library.getInt(cursor, SongTable.Columns.IS_REMOTE) == 1));
+    }
+
+    private void fetchRemoteCover(Cursor cursor, ImageView imageView) {
+        String username = Library.getString(cursor, SongTable.Columns.REMOTE_USERNAME);
+        long albumId = Library.getLong(cursor, AlbumTable.Columns.ALBUM_ID);
+        String path = (Library.getString(cursor, AlbumTable.Columns.ALBUM_ART));
+
+        if (imageView.getTag() != null) {
+            cancelAlbumArt(imageView.getTag());
+        }
+
+        RemoteAlbumCoverLoader.RemoteCoverTask task =
+                remoteCoverLoader.loadRemoteCover(imageView, username, albumId, path);
+        imageView.setTag(task);
     }
 
     public void colorBackground(View view, Context context, int position) {

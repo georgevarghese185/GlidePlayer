@@ -24,7 +24,8 @@ public class SongTable extends Table {
         public static final String TITLE = MediaStore.Audio.Media.TITLE;
         public static final String TRACK = MediaStore.Audio.Media.TRACK;
         public static final String YEAR = MediaStore.Audio.Media.YEAR;
-        public static final String LIBRARY_USERNAME = "libowner";
+        public static final String IS_REMOTE = "is_remote";
+        public static final String REMOTE_USERNAME = "libowner";
     }
 
     SongTable(ContentResolver resolver) {
@@ -49,7 +50,8 @@ public class SongTable extends Table {
                 + Columns.TITLE + " TEXT" + ", "
                 + Columns.TRACK + " INTEGER" + ", "
                 + Columns.YEAR + " INTEGER" + ", "
-                + Columns.LIBRARY_USERNAME + " TEXT" + ")";
+                + Columns.IS_REMOTE + " INTEGER" + ", "
+                + Columns.REMOTE_USERNAME + " TEXT" + ")";
     }
 
     @Override
@@ -88,6 +90,7 @@ public class SongTable extends Table {
         values.put(Columns.TITLE, Library.getString(cursor, MediaStore.Audio.Media.TITLE));
         values.put(Columns.TRACK, Library.getInt(cursor, MediaStore.Audio.Media.TRACK));
         values.put(Columns.YEAR, Library.getInt(cursor, MediaStore.Audio.Media.YEAR));
+        values.put(Columns.IS_REMOTE, 0);
 
         return values;
     }

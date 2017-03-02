@@ -5,7 +5,6 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.util.Log;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -19,6 +18,7 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.util.Iterator;
 
+import teefourteen.glideplayer.music.Song;
 
 
 public class Library {
@@ -81,10 +81,6 @@ public class Library {
         for(Table table : tables) {
             table.initialize(libraryDb);
         }
-
-        ContentValues values = new ContentValues(1);
-        values.put(SongTable.Columns.LIBRARY_USERNAME, LOCAL_DATABASE_NAME);
-        libraryDb.update(SongTable.TABLE_NAME, values, null, null);
 
         libraryDb.setTransactionSuccessful();
         libraryDb.endTransaction();
@@ -227,12 +223,61 @@ public class Library {
 
         v = new ContentValues();
         v.put(SongTable.Columns.FILE_PATH, REMOTE_SONG_MISSING_PATH);
-        v.put(SongTable.Columns.LIBRARY_USERNAME, dbFile.getName());
+        v.put(SongTable.Columns.IS_REMOTE, 1);
+        v.put(SongTable.Columns.REMOTE_USERNAME, dbFile.getName());
+
         libraryDb.update(SongTable.TABLE_NAME,v, null, null);
+
+        Cursor cursor = libraryDb.query(true, AlbumTable.TABLE_NAME,
+                new String[]{AlbumTable.Columns.ALBUM_ID, AlbumTable.Columns.ALBUM_ART},
+                null, null, null, null, null, null);
+
+        for(boolean res = cursor.moveToFirst(); (res); res = cursor.moveToNext()) {
+            long albumId = getLong(cursor,AlbumTable.Columns.ALBUM_ID);
+            String albumArt = getString(cursor, AlbumTable.Columns.ALBUM_ART);
+            if(albumArt != null) {
+                String[] split = albumArt.split("/");
+
+                albumArt = Library.REMOTE_COVERS_LOCATION + "/" + dbFile.getName()
+                        + "/" + split[split.length - 1];
+
+                v = new ContentValues();
+                v.put(AlbumTable.Columns.ALBUM_ART, albumArt);
+
+                libraryDb.update(AlbumTable.TABLE_NAME, v,
+                        AlbumTable.Columns.ALBUM_ID + "=?", new String[]{String.valueOf(albumId)});
+            }
+        }
+
+        cursor.close();
 
         libraryDb.setTransactionSuccessful();
         libraryDb.endTransaction();
 
+        File remoteCoversLocation = new File(REMOTE_COVERS_LOCATION, dbFile.getName());
+        if(!remoteCoversLocation.exists()) {
+            remoteCoversLocation.mkdir();
+        }
+
         return true;
+    }
+
+    public File getAlbumArt(long albumId) {
+        Cursor cursor = libraryDb.query(true, AlbumTable.TABLE_NAME,
+                new String[]{AlbumTable.Columns.ALBUM_ART},
+                AlbumTable.Columns.ALBUM_ID + "=?",
+                new String[]{String.valueOf(albumId)},
+                null,null,null,null);
+
+        String path;
+        if(cursor.moveToFirst()) {
+            path = getString(cursor, AlbumTable.Columns.ALBUM_ART);
+        } else {
+            path = null;
+        }
+
+        cursor.close();
+
+        return (path == null) ? null : new File(path);
     }
 }

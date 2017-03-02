@@ -128,7 +128,12 @@ public class Song implements Parcelable {
         String artist = Library.getString(cursor, ArtistTable.Columns.ARTIST_NAME);
         Long artistId = Library.getLong(cursor, SongTable.Columns.ARTIST_ID);
         Long duration = Library.getLong(cursor, SongTable.Columns.DURATION);
-        String libraryUserName = Library.getString(cursor, SongTable.Columns.LIBRARY_USERNAME);
+        String libraryUserName;
+        if(Library.getInt(cursor, SongTable.Columns.IS_REMOTE) == 1) {
+            libraryUserName = Library.getString(cursor, SongTable.Columns.REMOTE_USERNAME);
+        } else  {
+            libraryUserName = null;
+        }
 
         return new Song(_id, filePath, title, album, albumId, albumArt, artist, artistId, duration,
                 libraryUserName);

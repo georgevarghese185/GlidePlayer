@@ -2,7 +2,6 @@ package teefourteen.glideplayer.fragments.library.adapters;
 
 import android.content.Context;
 import android.database.Cursor;
-import android.graphics.drawable.Drawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,7 +21,7 @@ import teefourteen.glideplayer.music.database.Library;
  */
 
 public class AlbumAdapter extends CursorAdapter {
-    AsyncImageLoader asyncImageLoader = new AsyncImageLoader(2);
+    private AsyncImageLoader asyncImageLoader = new AsyncImageLoader(2);
 
     public AlbumAdapter(Context context, Cursor cursor) {
         super(context, cursor, 0);
@@ -38,7 +37,7 @@ public class AlbumAdapter extends CursorAdapter {
             @Override
             public void onMovedToScrapHeap(View view) {
                 if(view.getTag() != null) {
-                    asyncImageLoader.cancelTask((AsyncImageLoader.LoadTask) view.getTag());
+                    asyncImageLoader.cancelTask((AsyncImageLoader.ImageLoadTask)view.getTag());
                 }
             }
         });
@@ -58,12 +57,13 @@ public class AlbumAdapter extends CursorAdapter {
 
         String path = Library.getString(cursor, AlbumTable.Columns.ALBUM_ART);
         if(path!=null) {
-            AsyncImageLoader.LoadTask task = new AsyncImageLoader.LoadTask(albumArt, path);
+            AsyncImageLoader.ImageLoadTask imageLoadTask =
+                    asyncImageLoader.loadImageAsync(albumArt, path);
+
             if(view.getTag() != null) {
-                asyncImageLoader.cancelTask((AsyncImageLoader.LoadTask) view.getTag());
+                asyncImageLoader.cancelTask((AsyncImageLoader.ImageLoadTask) view.getTag());
             }
-            view.setTag(task);
-            asyncImageLoader.loadAsync(task);
+            view.setTag(imageLoadTask);
         }
     }
 }

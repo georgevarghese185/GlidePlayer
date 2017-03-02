@@ -39,6 +39,7 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
 
     private static final int ACTION_GET_USERNAME = 1000;
     private static final int ACTION_GET_SONG = 1002;
+    private static final int ACTION_GET_ALBUM_ART = 1004;
     private static final int ACTION_NOTIFY_USERNAME_TAKEN = 1005;
     private static int sessionId = 0;
     private boolean isOwner = false;
@@ -144,6 +145,11 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
         void onFailedGettingSong();
     }
 
+    public interface GetAlbumArtListener {
+        void onGotAlbumArt(File imageFile);
+        void onFailedGettingAlbumArt();
+    }
+
 
 
     private ServiceConnection serviceConnection = new ServiceConnection() {
@@ -188,6 +194,37 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
                         getSongListener.onFailedGettingSong();
                     }
                 });
+    }
+
+    public static void getAlbumArt(String userName, long albumId,
+                                   final GetAlbumArtListener albumArtListener) {
+        String memberId = currentGroup.getMemberId(userName);
+
+        ShareGroup group = ShareGroup.shareGroupWeakReference.get();
+
+        group.netService.sendRequest(memberId, ACTION_GET_ALBUM_ART, albumId,
+                new ResponseListener() {
+                    @Override
+                    public void onResponseReceived(Object responseData) {
+                        albumArtListener.onGotAlbumArt((File) responseData);
+                    }
+
+                    @Override
+                    public void onRequestFailed() {
+                        albumArtListener.onFailedGettingAlbumArt();
+                    }
+                });
+    }
+
+    private File getAlbumArtRequest(Long albumId) {
+        Library library = new Library(activity,
+                new File(Library.DATABASE_LOCATION,Library.LOCAL_DATABASE_NAME));
+
+        File albumArtFile = library.getAlbumArt(albumId);
+
+        library.close();
+
+        return albumArtFile;
     }
 
     private File getSongRequest(long songId) {
@@ -540,6 +577,8 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
             deleteGroup();
             currentGroup.removeMember(deviceId);
             return null;
+        } else if(action == ACTION_GET_ALBUM_ART) {
+            return getAlbumArtRequest((Long) requestData);
         }
 
         else return null;

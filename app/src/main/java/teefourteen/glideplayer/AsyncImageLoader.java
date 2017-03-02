@@ -5,83 +5,50 @@ import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.widget.ImageView;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.LinkedList;
 
-public class AsyncImageLoader {
-    private int maxThreads;
-    private static final String ON_COMPLETE_THREAD = "Async_image_complete_thread";
-    private EasyHandler handler = new EasyHandler();
-    private HashMap<LoadTask, ImageAsyncTask> activeTasks;
-    private LinkedList<LoadTask> taskList = new LinkedList<>();
+public class AsyncImageLoader extends CancellableAsyncTaskHandler {
 
-
-    private class ImageAsyncTask extends AsyncTask<String, Object, Drawable> {
-        private ImageView imageView;
-        private LoadTask loadTask;
-
-        ImageAsyncTask(ImageView imageView, LoadTask loadTask) {
-            this.imageView = imageView;
-            this.loadTask = loadTask;
-        }
-
-        @Override
-        protected Drawable doInBackground(String... params) {
-            return Drawable.createFromPath(params[0]);
-        }
-
-        @Override
-        protected void onPostExecute(Drawable drawable) {
-            imageView.setImageDrawable(drawable);
-            handler.executeAsync(new Runnable() {
-                @Override
-                public void run() {
-                    onTaskComplete(loadTask);
-                }
-            }, ON_COMPLETE_THREAD, true);
-        }
-    }
-
-    public static class LoadTask {
+    public static class ImageLoadTask implements Task {
         private ImageView imageView;
         private String imagePath;
+        private Drawable artDrawable;
 
-        public LoadTask(ImageView imageView, String imagePath) {
+        private ImageLoadTask(ImageView imageView, String imagePath) {
             this.imageView = imageView;
             this.imagePath = imagePath;
+        }
+
+        @Override
+        public void doBackground() {
+            if(new File(imagePath).exists()) {
+                artDrawable = Drawable.createFromPath(imagePath);
+            } else {
+                artDrawable = null;
+            }
+        }
+
+        @Override
+        public void doOnMainThread() {
+            if(artDrawable != null) {
+                imageView.setImageDrawable(artDrawable);
+            }
         }
     }
 
     public AsyncImageLoader(int maxParallelLoads) {
-        this.maxThreads = maxParallelLoads;
-        activeTasks = new HashMap<>(maxParallelLoads);
+        super(maxParallelLoads);
     }
 
-    synchronized public void loadAsync(LoadTask loadTask) {
-        if(activeTasks.size() < maxThreads) {
-            ImageAsyncTask asyncTask = new ImageAsyncTask(loadTask.imageView, loadTask);
-            activeTasks.put(loadTask, asyncTask);
-            asyncTask.execute(loadTask.imagePath);
-        } else {
-            taskList.addLast(loadTask);
-        }
+    public ImageLoadTask loadImageAsync(ImageView imageView, String imagePath) {
+        ImageLoadTask imageLoadTask = new ImageLoadTask(imageView, imagePath);
+        loadAsync(imageLoadTask);
+        return imageLoadTask;
     }
 
-    synchronized public void cancelTask(LoadTask loadTask) {
-        if(activeTasks.containsKey(loadTask)) {
-            activeTasks.get(loadTask).cancel(true);
-            activeTasks.remove(loadTask);
-        } else if(taskList.contains(loadTask)) {
-            taskList.remove(loadTask);
-        }
-    }
-
-    synchronized private void onTaskComplete(LoadTask loadTask) {
-        activeTasks.remove(loadTask);
-        if(taskList.size() > 0) {
-            LoadTask task = taskList.getFirst();
-            taskList.remove(task);
-            loadAsync(task);
-        }
+    public synchronized void cancelTask(Task task) {
+        super.cancelTask(task, true);
     }
 }

@@ -94,7 +94,7 @@ public class SplashActivity extends AppCompatActivity {
         Library.REMOTE_COVERS_LOCATION = getExternalCacheDir() + "/remote_album_covers";
         Library.FILE_SAVE_LOCATION = getExternalCacheDir() + "/files";
 
-        try{
+        try {
             createDir(Library.DATABASE_LOCATION);
             createDir(Library.REMOTE_DATABASE_LOCATION);
             createDir(Library.REMOTE_COVERS_LOCATION);
