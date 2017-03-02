@@ -148,7 +148,7 @@ public class PlayQueue implements Parcelable {
 
         public void cancelImageLoad(View view) {
             if(view.getTag() != null) {
-                asyncImageLoader.cancelTask((AsyncImageLoader.LoadTask) view.getTag());
+                asyncImageLoader.cancelTask((AsyncImageLoader.ImageLoadTask) view.getTag());
             }
         }
 
@@ -178,9 +178,9 @@ public class PlayQueue implements Parcelable {
 
             String path = song.getAlbumArt();
             if(path != null) {
-                AsyncImageLoader.LoadTask task = new AsyncImageLoader.LoadTask(trackAlbumArt, path);
+                AsyncImageLoader.ImageLoadTask task = asyncImageLoader.loadImageAsync(trackAlbumArt, path);
                 if(convertView.getTag() != null) {
-                    asyncImageLoader.cancelTask((AsyncImageLoader.LoadTask) convertView.getTag());
+                    asyncImageLoader.cancelTask((AsyncImageLoader.ImageLoadTask) convertView.getTag());
                 }
                 convertView.setTag(task);
                 asyncImageLoader.loadAsync(task);
