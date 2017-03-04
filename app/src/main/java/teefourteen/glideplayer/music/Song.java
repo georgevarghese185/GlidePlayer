@@ -84,6 +84,8 @@ public class Song implements Parcelable {
         return albumArt;
     }
 
+    public boolean isRemote() { return (libraryUsername != null);}
+
     @Override
     public int describeContents() {
         return 0;

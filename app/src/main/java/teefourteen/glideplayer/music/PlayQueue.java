@@ -61,6 +61,8 @@ public class PlayQueue implements Parcelable {
         return queue.get(currentPlaying);
     }
 
+    public ArrayList<Song> getQueue() { return queue; }
+
 
     public Song changeTrack(int index) {
         return queue.get(setCurrentPlaying(index));

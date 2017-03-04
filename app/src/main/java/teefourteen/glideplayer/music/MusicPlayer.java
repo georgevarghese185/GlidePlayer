@@ -6,6 +6,7 @@ import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.PowerManager;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -15,7 +16,7 @@ import teefourteen.glideplayer.music.database.Library;
 import teefourteen.glideplayer.services.PlayerService;
 
 
-public class MusicPlayer {
+public class MusicPlayer implements Closeable{
     public static final int MAX_SEEK_VALUE = 2000;
 
     private MediaPlayer mediaPlayer =null;
@@ -195,7 +196,7 @@ public class MusicPlayer {
             }
         };
 
-        handler.executeAsync(r,SEEK_UPDATER_THREAD_NAME, true);
+        handler.executeAsync(r,SEEK_UPDATER_THREAD_NAME);
     }
 
 
@@ -209,5 +210,10 @@ public class MusicPlayer {
         } else {
             return mediaPlayer.isPlaying();
         }
+    }
+
+    @Override
+    public void close() {
+        handler.closeAllHandlers();
     }
 }

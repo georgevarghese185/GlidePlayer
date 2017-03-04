@@ -37,7 +37,7 @@ public class CancellableAsyncTaskHandler {
                 @Override
                 public void run() {onTaskComplete(task);
                 }
-            }, ON_COMPLETE_THREAD, true);
+            }, ON_COMPLETE_THREAD);
         }
     }
 

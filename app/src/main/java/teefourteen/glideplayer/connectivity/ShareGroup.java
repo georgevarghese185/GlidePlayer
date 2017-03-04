@@ -220,11 +220,7 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
         Library library = new Library(activity,
                 new File(Library.DATABASE_LOCATION,Library.LOCAL_DATABASE_NAME));
 
-        File albumArtFile = library.getAlbumArt(albumId);
-
-        library.close();
-
-        return albumArtFile;
+        return library.getAlbumArt(albumId);
     }
 
     private File getSongRequest(long songId) {
@@ -232,7 +228,6 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
                 new File(Library.DATABASE_LOCATION, Library.LOCAL_DATABASE_NAME));
 
         Cursor cursor = Library.getSong(lib.getReadableDatabase(), songId);
-        lib.close();
         if(cursor.moveToFirst()) {
             return new File(Song.toSong(cursor).getFilePath());
         } else {
@@ -535,9 +530,6 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
 
             currentGroup.addMember(memberId, newMemberUsername,
                     Library.DATABASE_LOCATION + "/" + newMemberUsername);
-
-            library.close();
-            remoteLibrary.close();
 
             currentGroup.groupMembers.get(memberId).dbFile = remoteLibraryFile.getAbsolutePath();
 

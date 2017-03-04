@@ -45,8 +45,6 @@ public class Library {
                 new SongTable(context.getContentResolver()),
                 new AlbumTable(context.getContentResolver()),
                 new ArtistTable(context.getContentResolver())};
-
-        libraryDb = openHelper.getWritableDatabase();
     }
 
 
@@ -76,6 +74,8 @@ public class Library {
 
 
     public void initializeTables() {
+        libraryDb = openHelper.getWritableDatabase();
+
         libraryDb.beginTransaction();
 
         for(Table table : tables) {
@@ -84,9 +84,7 @@ public class Library {
 
         libraryDb.setTransactionSuccessful();
         libraryDb.endTransaction();
-    }
 
-    public void close() {
         libraryDb.close();
     }
 
@@ -140,6 +138,8 @@ public class Library {
     }
 
     public boolean sendOverStream(InputStream in, OutputStream out)throws JSONException, IOException {
+        libraryDb = openHelper.getReadableDatabase();
+
         PrintWriter printWriter = new PrintWriter(out, true);
         BufferedReader reader = new BufferedReader(new InputStreamReader(in));
 
@@ -172,11 +172,14 @@ public class Library {
             cursor.close();
         }
 
+        libraryDb.close();
         return true;
     }
 
 
     public boolean getFromStream(InputStream in, OutputStream out)throws JSONException, IOException {
+        libraryDb = openHelper.getWritableDatabase();
+
         //TODO: clear album art cache on disconnect/close app
         BufferedReader reader = new BufferedReader(new InputStreamReader(in));
         PrintWriter printWriter = new PrintWriter(out, true);
@@ -259,10 +262,13 @@ public class Library {
             remoteCoversLocation.mkdir();
         }
 
+        libraryDb.close();
         return true;
     }
 
     public File getAlbumArt(long albumId) {
+        libraryDb = openHelper.getReadableDatabase();
+
         Cursor cursor = libraryDb.query(true, AlbumTable.TABLE_NAME,
                 new String[]{AlbumTable.Columns.ALBUM_ART},
                 AlbumTable.Columns.ALBUM_ID + "=?",
@@ -278,6 +284,7 @@ public class Library {
 
         cursor.close();
 
+        libraryDb.close();
         return (path == null) ? null : new File(path);
     }
 }

@@ -13,7 +13,7 @@ import android.widget.ListView;
 import teefourteen.glideplayer.R;
 import teefourteen.glideplayer.fragments.library.adapters.AlbumAdapter;
 
-public class AlbumsFragment extends Fragment {
+public class AlbumsFragment extends Fragment implements LibraryFragment.LibraryChangedListener{
     public static Cursor albumCursor;
 
     public AlbumsFragment() {
@@ -35,4 +35,8 @@ public class AlbumsFragment extends Fragment {
         return view;
     }
 
+    @Override
+    public void onLibraryChanged(Cursor newCursor) {
+
+    }
 }

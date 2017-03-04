@@ -1,8 +1,9 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".fragments.library.LibraryFragment">
+
 
     <TabHost
         android:id="@+id/libraryTabHost"
@@ -12,12 +13,19 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:id="@+id/tab_host_root">
+
 
             <TabWidget
                 android:id="@android:id/tabs"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" />
+
+            <Spinner
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/library_spinner" />
 
             <FrameLayout
                 android:id="@android:id/tabcontent"
@@ -51,4 +59,4 @@
         </LinearLayout>
     </TabHost>
 
-</FrameLayout>
+</RelativeLayout>

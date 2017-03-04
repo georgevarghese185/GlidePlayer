@@ -309,6 +309,7 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
     @Override
     public void onDestroy() {
         super.onDestroy();
+        player.close();
         handler.closeAllHandlers();
         stopForeground(false);
     }

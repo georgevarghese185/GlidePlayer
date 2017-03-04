@@ -162,14 +162,14 @@ public class NetworkService extends Service {
                         public void run() {
                             incomingEstablishRequested(con, senderDeviceAddress);
                         }
-                    }, THREAD_CLIENT_HANDLER, true);
+                    }, THREAD_CLIENT_HANDLER);
                 } else if (action == ACTION_NEW_CLIENT) {
                     handler.executeAsync(new Runnable() {
                         @Override
                         public void run() {
                             newClient(con);
                         }
-                    }, THREAD_CLIENT_HANDLER, true);
+                    }, THREAD_CLIENT_HANDLER);
                 } else if(action == ACTION_CLIENT_LEFT) {
                     handler.executeAsync(new Runnable() {
                         @Override

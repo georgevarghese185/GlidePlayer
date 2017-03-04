@@ -47,44 +47,8 @@ public class EasyHandler {
      */
     public void executeAsync(Runnable r, final String handlerName) {
         createHandler(handlerName);
-        handlerMap.get(handlerName).post(r);
-    }
-
-    /**
-     * If quitHandlerIfIdle is true, a temporary HandlerThread is created that stays alive only as
-     * long as there are more runnables to be executed.
-     *
-     * Note: Once a runnable is posted to a handler using this overload, it becomes a temporary
-     * handler and cannot be changed back to non temporary. Either post new runnables to it while
-     * it is still alive to keep it from quitting, or if the thread quit already, just call
-     * executeAsync() with the same thread name and a new thread will be created again with the same
-     * name. Either way, it probably won't make a difference except for the overhead of having to
-     * create a new handler and thread once again.
-     */
-    public void executeAsync(Runnable r, final String handlerName, boolean quitHandlerIfIdle) {
-        executeAsync(r, handlerName);
-
-        if(quitHandlerIfIdle) {
-            final Handler handler = handlerMap.get(handlerName);
-
-            final MessageQueue.IdleHandler idleHandler = new MessageQueue.IdleHandler() {
-                @Override
-                public boolean queueIdle() {
-                    handlerMap.remove(handlerName);
-                    handler.getLooper().quit();
-                    return false;
-                }
-            };
-
-            Runnable quitter = new Runnable() {
-                @Override
-                public void run() {
-                    Looper.myQueue().addIdleHandler(idleHandler);
-                }
-            };
-
-            handler.post(quitter);
-        }
+        Handler handler = handlerMap.get(handlerName);
+        handler.post(r);
     }
 
     /**

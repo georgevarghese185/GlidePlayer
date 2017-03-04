@@ -1,18 +1,18 @@
 package teefourteen.glideplayer.activities;
 
-import android.os.Handler;
-import android.os.Looper;
-import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.view.View;
-import android.widget.AdapterView;
+
+import java.util.ArrayList;
 
 import teefourteen.glideplayer.R;
 import teefourteen.glideplayer.fragments.FragmentSwitcher;
+import teefourteen.glideplayer.fragments.library.adapters.SongAdapter;
 import teefourteen.glideplayer.fragments.player.PlayerFragment;
 import teefourteen.glideplayer.fragments.library.SongsFragment;
 import teefourteen.glideplayer.music.PlayQueue;
+import teefourteen.glideplayer.music.Song;
+
 import static teefourteen.glideplayer.Global.playQueue;
 
 public class PlayerActivity extends AppCompatActivity {
@@ -33,14 +33,14 @@ public class PlayerActivity extends AppCompatActivity {
     Navigator playerNavigator = new Navigator() {
         @Override
         public void showQueue() {
-            SongsFragment songsFragment = new SongsFragment();
-            songsFragment.setupList(playQueue.getListAdapter(getApplicationContext()),
-                    new AdapterView.OnItemClickListener() {
+            SongsFragment songsFragment = SongsFragment.getInstance(playQueue.getQueue(),
+                    new SongAdapter.SongQueueClickListener() {
                         @Override
-                        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                        public void onSongClicked(ArrayList<Song> songList, int position) {
                             returnToPlayer(position);
                         }
                     });
+
             playerFragmentSwitcher.switchTo(songsFragment, SONGS_FRAGMENT_TAG);
         }
 

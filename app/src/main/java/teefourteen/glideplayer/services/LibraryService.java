@@ -29,11 +29,8 @@ public class LibraryService extends IntentService {
         Library library = new Library(this, file);
 
         library.initializeTables();
-        library.close();
 
         SQLiteDatabase libraryDb = library.getReadableDatabase();
-
-        Global.songCursor = Library.getSongs(libraryDb);
 
         albumCursor = Library.getAlbums(libraryDb);
 

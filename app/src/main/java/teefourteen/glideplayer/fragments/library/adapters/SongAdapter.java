@@ -3,16 +3,16 @@ package teefourteen.glideplayer.fragments.library.adapters;
 import android.content.Context;
 import android.database.Cursor;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.widget.PagerSnapHelper;
+import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AbsListView;
-import android.widget.CursorAdapter;
 import android.widget.ImageView;
-import android.widget.ListView;
 import android.widget.TextView;
 
 import java.io.File;
+import java.util.ArrayList;
 
 import teefourteen.glideplayer.AsyncImageLoader;
 import teefourteen.glideplayer.CancellableAsyncTaskHandler;
@@ -25,115 +25,188 @@ import teefourteen.glideplayer.music.database.Library;
 import teefourteen.glideplayer.music.Song;
 import teefourteen.glideplayer.music.database.SongTable;
 
-
-public class SongAdapter extends CursorAdapter {
-    private SelectionChecker checker;
+public class SongAdapter extends RecyclerView.Adapter<SongAdapter.SongHolder> {
+    private Cursor songCursor;
+    private ArrayList<Song> songList; //temporary
     private AsyncImageLoader asyncImageLoader = new AsyncImageLoader(2);
     private RemoteAlbumCoverLoader remoteCoverLoader = new RemoteAlbumCoverLoader(1, asyncImageLoader);
+    private final Source source;
+    private SongClickListener songClickListener;
+    private SongQueueClickListener songQueueClickListener; //temporary
 
-    public interface SelectionChecker {
-        boolean isSelected(int position);
+    private enum Source {
+        CURSOR,
+        ARRAY_LIST
+    }
+    
+    public interface SongClickListener {
+        void onSongClicked(Cursor songCursor, int position);
+    }
+    
+    //temporary
+    public interface SongQueueClickListener {
+        void onSongClicked(ArrayList<Song> songList, int position);
     }
 
-    public void setChecker(SelectionChecker checker){this.checker = checker;}
 
-    public SongAdapter(Context context, Cursor cursor, SelectionChecker checker) {
-        super(context, cursor, 0);
-        this.checker = checker;
-    }
+    class SongHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
+        private View trackView;
+        private Song song;
+        private Context context;
+        private int position;
+        private TextView trackArtist;
+        private TextView trackAlbum;
+        private TextView trackTitle;
+        private ImageView trackAlbumArt;
 
-    public void cancelImageLoad(View view) {
-        Object tag = view.getTag();
-        cancelAlbumArt(tag);
-    }
+        SongHolder(Context context, View itemView) {
+            super(itemView);
+            this.context = context;
+            this.trackView = itemView;
 
-    private void cancelAlbumArt(Object tag) {
-        if(tag != null) {
-            if(tag instanceof AsyncImageLoader.ImageLoadTask) {
-                asyncImageLoader.cancelTask((CancellableAsyncTaskHandler.Task) tag);
-            } else if(tag instanceof RemoteAlbumCoverLoader.RemoteCoverTask) {
-                remoteCoverLoader.cancelTask((CancellableAsyncTaskHandler.Task) tag);
+            trackArtist = (TextView) trackView.findViewById(R.id.trackArtist);
+            trackAlbum = (TextView) trackView.findViewById(R.id.trackAlbum);
+            trackTitle = (TextView) trackView.findViewById(R.id.trackTitle);
+            trackAlbumArt = (ImageView) trackView.findViewById(R.id.trackAlbumArt);
+            
+            itemView.setOnClickListener(this);
+        }
+
+        void bindView(Cursor songCursor, int position) {
+            this.position = position;
+            songCursor.moveToPosition(position);
+
+            bindView(Song.toSong(songCursor), position);
+        }
+
+        void bindView(Song song, int position) {
+            this.position = position;
+            this.song = song;
+
+            trackAlbum.setText(song.getAlbum());
+            String string = song.getArtist();
+            if(!string.equals("<unknown>"))
+                trackArtist.setText(string);
+            else trackArtist.setText(R.string.track_artist);
+            trackTitle.setText(song.getTitle());
+
+            trackAlbumArt.setImageResource(R.drawable.ic_album_black_24dp);
+
+            fetchCover();
+        }
+
+        private void fetchCover() {
+            String path = song.getAlbumArt();
+            if (path != null && new File(path).exists()) {
+                Object tag = trackAlbumArt.getTag();
+                if (tag != null) {
+                    if(tag instanceof AsyncImageLoader.ImageLoadTask) {
+                        asyncImageLoader.cancelTask((CancellableAsyncTaskHandler.Task) tag);
+                    } else if(tag instanceof RemoteAlbumCoverLoader.RemoteCoverTask) {
+                        remoteCoverLoader.cancelTask((CancellableAsyncTaskHandler.Task) tag);
+                    }
+                }
+                
+                AsyncImageLoader.ImageLoadTask imageLoadTask =
+                        asyncImageLoader.loadImageAsync(trackAlbumArt, path);
+                
+                trackAlbumArt.setTag(imageLoadTask);
+            } else if (song.isRemote()) {
+                fetchRemoteCover();
+            }
+        }
+
+        private void fetchRemoteCover() {
+            String username = song.getLibraryUsername();
+            long albumId = song.getAlbumId();
+            String path = song.getAlbumArt();
+
+            if (trackAlbumArt.getTag() != null) {
+                cancelAlbumArt();
+            }
+
+            RemoteAlbumCoverLoader.RemoteCoverTask task =
+                    remoteCoverLoader.loadRemoteCover(trackAlbumArt, username, albumId, path);
+            trackAlbumArt.setTag(task);
+        }
+
+        private void cancelAlbumArt() {
+            Object tag = trackAlbumArt.getTag();
+
+            if(tag != null) {
+                if(tag instanceof AsyncImageLoader.ImageLoadTask) {
+                    asyncImageLoader.cancelTask((CancellableAsyncTaskHandler.Task) tag);
+                } else if(tag instanceof RemoteAlbumCoverLoader.RemoteCoverTask) {
+                    remoteCoverLoader.cancelTask((CancellableAsyncTaskHandler.Task) tag);
+                }
+            }
+        }
+
+        @Override
+        public void onClick(View v) {
+            if (source == Source.CURSOR) {
+                songClickListener.onSongClicked(songCursor, position);
+            } else {
+                songQueueClickListener.onSongClicked(songList, position);
             }
         }
     }
 
 
-    @Override
-    public View newView(Context context, Cursor cursor, ViewGroup parent) {
-        return LayoutInflater.from(context).inflate(R.layout.track, parent, false);
+
+    public SongAdapter(Cursor songCursor, SongClickListener songClickListener) {
+        this.songCursor = songCursor;
+        source = Source.CURSOR;
+        this.songClickListener = songClickListener;
+    }
+
+    public SongAdapter(ArrayList<Song> songList, SongQueueClickListener songQueueClickListener) {
+        this.songList = songList;
+        source = Source.ARRAY_LIST;
+        this.songQueueClickListener = songQueueClickListener;
     }
 
     @Override
-    public void bindView(View view, Context context, Cursor cursor) {
-        TextView trackArtist = (TextView) view.findViewById(R.id.trackArtist);
-        TextView trackAlbum = (TextView) view.findViewById(R.id.trackAlbum);
-        TextView trackTitle = (TextView) view.findViewById(R.id.trackTitle);
-        ImageView trackAlbumArt = (ImageView) view.findViewById(R.id.trackAlbumArt);
-        colorBackground(view, context, cursor.getPosition());
+    public SongHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        View view = LayoutInflater.from(parent.getContext())
+                .inflate(R.layout.track, parent, false);
 
+        return new SongHolder(parent.getContext(), view);
+    }
 
-        trackAlbum.setText(Library.getString(cursor, AlbumTable.Columns.ALBUM_NAME));
-        String string = Library.getString(cursor, ArtistTable.Columns.ARTIST_NAME);
-        if (string != null && !string.equals("<unknown>"))
-            trackArtist.setText(string);
-        else trackArtist.setText(R.string.track_artist);
-        trackTitle.setText(Library.getString(cursor, SongTable.Columns.TITLE));
-
-        trackAlbumArt.setImageResource(R.drawable.ic_album_black_24dp);
-
-        String path = Library.getString(cursor, AlbumTable.Columns.ALBUM_ART);
-        if (path != null && new File(path).exists()) {
-            AsyncImageLoader.ImageLoadTask imageLoadTask =
-                    asyncImageLoader.loadImageAsync(trackAlbumArt, path);
-
-            if (view.getTag() != null) {
-                asyncImageLoader.cancelTask((AsyncImageLoader.ImageLoadTask) view.getTag());
-            }
-            view.setTag(imageLoadTask);
-        } else if (isRemoteSong(cursor)) {
-            fetchRemoteCover(cursor, trackAlbumArt);
+    public void cancelImageLoad(RecyclerView.ViewHolder viewHolder) {
+        if(viewHolder instanceof SongHolder) {
+            ((SongHolder)viewHolder).cancelAlbumArt();
         }
     }
 
-    private boolean isRemoteSong(Cursor cursor) {
-        return (ShareGroup.shareGroupWeakReference != null
-                && ShareGroup.shareGroupWeakReference.get() != null
-                && (Library.getInt(cursor, SongTable.Columns.IS_REMOTE) == 1));
-    }
-
-    private void fetchRemoteCover(Cursor cursor, ImageView imageView) {
-        String username = Library.getString(cursor, SongTable.Columns.REMOTE_USERNAME);
-        long albumId = Library.getLong(cursor, AlbumTable.Columns.ALBUM_ID);
-        String path = (Library.getString(cursor, AlbumTable.Columns.ALBUM_ART));
-
-        if (imageView.getTag() != null) {
-            cancelAlbumArt(imageView.getTag());
+    @Override
+    public void onBindViewHolder(SongHolder holder, int position) {
+        if(source == Source.CURSOR) {
+            songCursor.moveToPosition(position);
+            holder.bindView(songCursor, position);
+        } else {
+            holder.bindView(songList.get(position), position);
         }
-
-        RemoteAlbumCoverLoader.RemoteCoverTask task =
-                remoteCoverLoader.loadRemoteCover(imageView, username, albumId, path);
-        imageView.setTag(task);
-    }
-
-    public void colorBackground(View view, Context context, int position) {
-        if(checker!=null && checker.isSelected(position))
-            view.setBackgroundColor(ContextCompat.getColor(context,R.color.track_selected));
-        else
-            view.setBackgroundColor(ContextCompat.getColor(context, R.color.track_unselected));
     }
 
     @Override
+    public int getItemCount() {
+        if(source == Source.CURSOR) {
+            return songCursor.getCount();
+        } else {
+            return songList.size();
+        }
+    }
+
     public void changeCursor(Cursor cursor) {
-        super.changeCursor(cursor);
+        songCursor.close();
+        songCursor = cursor;
     }
 
-
-    @Override
-    public Object getItem(int position) {
-        Cursor cursor = (Cursor) super.getItem(position);
-        if(cursor != null) {
-            return Song.toSong(cursor);
+    public void closeCursor() {
+        if(songCursor != null) {
+            songCursor.close();
         }
-        else return null;
     }
 }
