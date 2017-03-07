@@ -3,6 +3,10 @@ package teefourteen.glideplayer.fragments.connectivity;
 
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -47,13 +51,25 @@ public class ConnectivityFragment extends Fragment implements ConnectivitySelect
         else {
             connectivityFragmentSwitcher.reattach();
         }
+
+        Toolbar toolbar = (Toolbar) rootView.findViewById(R.id.connectivity_toolbar);
+        AppCompatActivity mainActivity = (AppCompatActivity)getActivity();
+
+        mainActivity.setSupportActionBar(toolbar);
+
+        DrawerLayout drawerLayout = (DrawerLayout) mainActivity.findViewById(R.id.drawer_layout);
+        ActionBarDrawerToggle drawerToggle = new ActionBarDrawerToggle(mainActivity,
+                drawerLayout, toolbar,
+                R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+
+        drawerLayout.addDrawerListener(drawerToggle);
+        drawerToggle.syncState();
+
         return rootView;
     }
 
     @Override
     public void OnJoinGroupSelected(String username) {
-        LibraryFragment fragment = (LibraryFragment) LibraryFragment.getInstance();
-
         joinFragment = JoinGroupFragment.newInstance(new ShareGroup(getActivity(), username,
                         new ShareGroup.ShareGroupInitListener() {
                             @Override
@@ -65,7 +81,6 @@ public class ConnectivityFragment extends Fragment implements ConnectivitySelect
 
     @Override
     public void OnCreateGroupSelected(String username) {
-        LibraryFragment fragment = (LibraryFragment) LibraryFragment.getInstance();
 
         createFragment = CreateGroupFragment.newInstance(new ShareGroup(getActivity(), username,
                 new ShareGroup.ShareGroupInitListener() {

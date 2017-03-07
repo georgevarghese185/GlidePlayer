@@ -53,7 +53,7 @@ public class SplashActivity extends AppCompatActivity {
     }
 
     private boolean readPermissionGranted() {
-        if(ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
+        if(ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
                     REQUEST_READ_EXTERNAL_STORAGE);
@@ -86,11 +86,19 @@ public class SplashActivity extends AppCompatActivity {
     }
 
     private void createFiles() {
-        Library.DATABASE_LOCATION = getExternalCacheDir() + "/libraries";
+        String cacheDir;
+        if(getExternalCacheDir() == null) {
+            Toast.makeText(this, "Failed to get Internal storage. Using app data storage.", Toast.LENGTH_LONG).show();
+            cacheDir = getCacheDir().getAbsolutePath();
+        } else  {
+            cacheDir = getExternalCacheDir().getAbsolutePath();
+        }
+
+        Library.DATABASE_LOCATION = cacheDir + "/libraries";
         Library.REMOTE_DATABASE_LOCATION = Library.DATABASE_LOCATION + "/remote_libraries";
         //before changing covers location, remember that the file move action in RemoteAlbumCoverLoader can only move files on the same mount point
-        Library.REMOTE_COVERS_LOCATION = getExternalCacheDir() + "/remote_album_covers";
-        Library.FILE_SAVE_LOCATION = getExternalCacheDir() + "/files";
+        Library.REMOTE_COVERS_LOCATION = cacheDir + "/remote_album_covers";
+        Library.FILE_SAVE_LOCATION = cacheDir + "/files";
 
         try {
             createDir(Library.DATABASE_LOCATION);
