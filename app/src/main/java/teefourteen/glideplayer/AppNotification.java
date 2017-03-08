@@ -115,21 +115,21 @@ public class AppNotification extends NotificationCompat {
                     Uri.parse(album_art));
         } else {
             notificationView.setImageViewResource(R.id.notification_album_art,
-                    R.drawable.ic_album_white_24dp);
+                    R.mipmap.ic_album_white);
         }
 
         notificationView.setImageViewResource(R.id.notification_prev,
-                R.drawable.glideplayer_skip_prev_white);
+                R.mipmap.glideplayer_skip_prev_white);
 
         if(isPlaying) {
             notificationView.setImageViewResource(R.id.notification_play_pause,
-                    R.drawable.glideplayer_pause_white);
+                    R.mipmap.glideplayer_pause_white);
         } else {
             notificationView.setImageViewResource(R.id.notification_play_pause,
-                    R.drawable.glideplayer_play_white);
+                    R.mipmap.glideplayer_play_white);
         }
         notificationView.setImageViewResource(R.id.notification_next,
-                R.drawable.glideplayer_skip_next_white);
+                R.mipmap.glideplayer_skip_next_white);
 
         //set text
         notificationView.setTextViewText(R.id.notification_track_title,
@@ -176,20 +176,20 @@ public class AppNotification extends NotificationCompat {
                     Uri.parse(album_art));
         } else {
             notificationExpandedView.setImageViewResource(R.id.notification_expanded_album_art,
-                    R.drawable.ic_album_white_24dp);
+                    R.mipmap.ic_album_white);
         }
 
         notificationExpandedView.setImageViewResource(R.id.notification_expanded_prev,
-                R.drawable.glideplayer_skip_prev_white);
+                R.mipmap.glideplayer_skip_prev_white);
         if(isPlaying) {
             notificationExpandedView.setImageViewResource(R.id.notification_expanded_play_pause,
-                    R.drawable.glideplayer_pause_white);
+                    R.mipmap.glideplayer_pause_white);
         } else {
             notificationExpandedView.setImageViewResource(R.id.notification_expanded_play_pause,
-                    R.drawable.glideplayer_play_white);
+                    R.mipmap.glideplayer_play_white);
         }
         notificationExpandedView.setImageViewResource(R.id.notification_expanded_next,
-                R.drawable.glideplayer_skip_next_white);
+                R.mipmap.glideplayer_skip_next_white);
 
         //set text
         notificationExpandedView.setTextViewText(R.id.notification_expanded_track_title,
