@@ -21,7 +21,7 @@ public class SongsFragment extends Fragment implements LibraryFragment.LibraryCh
     public SongsFragment() {
     }
 
-    public static SongsFragment getInstance(Cursor songCursor,
+    public static SongsFragment newInstance(Cursor songCursor,
                                             SongAdapter.SongClickListener songClickListener) {
         SongsFragment fragment = new SongsFragment();
         fragment.songAdapter = new SongAdapter(songCursor,
@@ -31,8 +31,8 @@ public class SongsFragment extends Fragment implements LibraryFragment.LibraryCh
     }
 
     //temporary
-    public static SongsFragment getInstance(ArrayList<Song> songList,
-                              SongAdapter.SongQueueClickListener songQueueClickListener) {
+    public static SongsFragment newInstance(ArrayList<Song> songList,
+                                            SongAdapter.SongQueueClickListener songQueueClickListener) {
         SongsFragment fragment = new SongsFragment();
         fragment.songAdapter = new SongAdapter(songList, songQueueClickListener);
 

@@ -2,6 +2,7 @@ package teefourteen.glideplayer.fragments.connectivity;
 
 
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -15,7 +16,6 @@ import teefourteen.glideplayer.connectivity.ShareGroup;
 import teefourteen.glideplayer.fragments.FragmentSwitcher;
 import teefourteen.glideplayer.fragments.connectivity.listeners.ConnectionCloseListener;
 import teefourteen.glideplayer.fragments.connectivity.listeners.ConnectivitySelectionListener;
-import teefourteen.glideplayer.fragments.library.LibraryFragment;
 
 
 public class ConnectivityFragment extends Fragment implements ConnectivitySelectionListener,
@@ -39,14 +39,27 @@ public class ConnectivityFragment extends Fragment implements ConnectivitySelect
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_connectivity, container, false);
+
         if(homeFragment == null) {
-            homeFragment = new ConnectivityHomeFragment();
-            homeFragment.setConnectivitySelectionListener(this);
+            homeFragment = ConnectivityHomeFragment.newInstance(this);
         }
         if(connectivityFragmentSwitcher == null) {
             connectivityFragmentSwitcher = new FragmentSwitcher(getFragmentManager(),
                     R.id.fragment_connectivity_main_container);
-            connectivityFragmentSwitcher.switchTo(homeFragment, HOME_FRAGMENT_TAG);
+
+            if(ShareGroup.shareGroupWeakReference != null
+                    && ShareGroup.shareGroupWeakReference.get() != null) {
+                ShareGroup group = ShareGroup.shareGroupWeakReference.get();
+                if(group.getMode() == ShareGroup.Mode.CREATE_GROUP) {
+                    createFragment = CreateGroupFragment.newInstance(group, this);
+                    connectivityFragmentSwitcher.switchTo(createFragment, CREATE_FRAGMENT_TAG);
+                } else {
+                    joinFragment = JoinGroupFragment.newInstance(group, this);
+                    connectivityFragmentSwitcher.switchTo(joinFragment, JOIN_FRAGMENT_TAG);
+                }
+            } else {
+                connectivityFragmentSwitcher.switchTo(homeFragment, HOME_FRAGMENT_TAG);
+            }
         }
         else {
             connectivityFragmentSwitcher.reattach();
@@ -71,28 +84,33 @@ public class ConnectivityFragment extends Fragment implements ConnectivitySelect
     @Override
     public void OnJoinGroupSelected(String username) {
         joinFragment = JoinGroupFragment.newInstance(new ShareGroup(getActivity(), username,
-                        new ShareGroup.ShareGroupInitListener() {
-                            @Override
-                            public void onShareGroupReady() {
-                                connectivityFragmentSwitcher.switchTo(joinFragment, JOIN_FRAGMENT_TAG);
-                            }
-                        }), this);
+                ShareGroup.Mode.JOIN_GROUP), this);
+
+        connectivityFragmentSwitcher.switchTo(joinFragment, JOIN_FRAGMENT_TAG);
     }
 
     @Override
     public void OnCreateGroupSelected(String username) {
-
         createFragment = CreateGroupFragment.newInstance(new ShareGroup(getActivity(), username,
-                new ShareGroup.ShareGroupInitListener() {
-                    @Override
-                    public void onShareGroupReady() {
-                        connectivityFragmentSwitcher.switchTo(createFragment,CREATE_FRAGMENT_TAG);
-                    }
-                }), this);
+                ShareGroup.Mode.CREATE_GROUP), this);
+
+        connectivityFragmentSwitcher.switchTo(createFragment,CREATE_FRAGMENT_TAG);
     }
 
     @Override
     public void onConnectionClose() {
         connectivityFragmentSwitcher.switchTo(homeFragment, HOME_FRAGMENT_TAG, true);
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        connectivityFragmentSwitcher.getCurrentFragment().onPause();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        connectivityFragmentSwitcher.getCurrentFragment().onResume();
     }
 }

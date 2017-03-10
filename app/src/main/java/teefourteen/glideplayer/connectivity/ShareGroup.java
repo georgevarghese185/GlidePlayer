@@ -1,13 +1,9 @@
 package teefourteen.glideplayer.connectivity;
 
 
-import android.app.Activity;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.database.Cursor;
-import android.os.IBinder;
 import android.util.Log;
 import android.widget.ArrayAdapter;
 import android.widget.Toast;
@@ -43,18 +39,41 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
     private static final int ACTION_NOTIFY_USERNAME_TAKEN = 1005;
     private static int sessionId = 0;
     private boolean isOwner = false;
+    private Mode mode;
     public static WeakReference<ShareGroup> shareGroupWeakReference;
     private NetworkService.ServiceBinder netService;
     public static String userName;
     private static GlidePlayerGroup currentGroup;
+    private String lastJoinedGroupName;
     private ArrayList<GlidePlayerGroup> foundGroups;
-    private Activity activity;
+    private Context context;
     private ArrayAdapter groupListAdapter;
     private ArrayList<String> memberList;
     private ArrayList<GroupMemberListener> groupMemberListenerList = new ArrayList<>();
     private ArrayList<GroupConnectionListener> groupConnectionListenerList  = new ArrayList<>();
-    private ShareGroupInitListener shareGroupInitListener;
+    private ArrayList<GroupCreationListener> groupCreationListenerList = new ArrayList<>();
+    private CreationStatus creationStatus = CreationStatus.GROUP_NOT_CREATED;
+    private JoinStatus joinStatus = JoinStatus.NOT_CONNECTED;
     private EasyHandler handler;
+
+    public enum CreationStatus {
+        GROUP_NOT_CREATED,
+        GROUP_CREATED,
+        GROUP_WAITING_FOR_CREATION
+    }
+
+    public enum JoinStatus {
+        NOT_CONNECTED,
+        RECENTLY_DISCONNECTED,
+        CONNECTING,
+        EXCHANGING_INFO,
+        CONNECTED
+    }
+
+    public enum Mode {
+        CREATE_GROUP,
+        JOIN_GROUP
+    }
 
     public class GlidePlayerGroup {
         public final String ownerId;
@@ -135,11 +154,6 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
         }
     }
 
-
-    public interface ShareGroupInitListener {
-        void onShareGroupReady();
-    }
-
     public interface GetSongListener {
         void onGotSong(String songFilePath);
         void onFailedGettingSong();
@@ -150,21 +164,6 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
         void onFailedGettingAlbumArt();
     }
 
-
-
-    private ServiceConnection serviceConnection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName name, IBinder service) {
-            netService = (NetworkService.ServiceBinder) service;
-            shareGroupInitListener.onShareGroupReady();
-            //TODO: listener notify ready
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName name) {
-            Log.d("Binding", "unbound");
-        }
-    };
 
 
     public static File getLibraryFile(String memberName) {
@@ -196,7 +195,7 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
                 });
     }
 
-    public static void getAlbumArt(String userName, long albumId,
+    static void getAlbumArt(String userName, long albumId,
                                    final GetAlbumArtListener albumArtListener) {
         String memberId = currentGroup.getMemberId(userName);
 
@@ -216,15 +215,15 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
                 });
     }
 
-    private File getAlbumArtRequest(Long albumId) {
-        Library library = new Library(activity,
+    private File albumArtRequest(Long albumId) {
+        Library library = new Library(context,
                 new File(Library.DATABASE_LOCATION,Library.LOCAL_DATABASE_NAME));
 
         return library.getAlbumArt(albumId);
     }
 
-    private File getSongRequest(long songId) {
-        Library lib = new Library(activity,
+    private File songRequest(long songId) {
+        Library lib = new Library(context,
                 new File(Library.DATABASE_LOCATION, Library.LOCAL_DATABASE_NAME));
 
         Cursor cursor = Library.getSong(lib.getReadableDatabase(), songId);
@@ -235,13 +234,13 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
         }
     }
 
-    public ShareGroup(Activity activity, String userName, ShareGroupInitListener listener){
+    public ShareGroup(Context context, String userName, Mode mode){
+        this.mode = mode;
         shareGroupWeakReference = new WeakReference<ShareGroup>(this);
         sessionId++;
 
-        this.activity = activity;
+        this.context = context;
         ShareGroup.userName = userName;
-        this.shareGroupInitListener = listener;
 
         memberList = new ArrayList<>();
         memberList.add(userName);
@@ -249,29 +248,63 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
         handler = new EasyHandler();
         foundGroups = new ArrayList<GlidePlayerGroup>();
         currentGroup = null;
-        startService();
+        context.startService(new Intent(context, NetworkService.class));
     }
 
-    private void startService() {
-        Intent intent = new Intent(activity, NetworkService.class);
-
-
-        activity.bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
-    }
-
-    public boolean isConnected() {
-        return (currentGroup != null);
-    }
+    public Mode getMode() { return mode; }
 
     public void createGroup(final String groupName, final GroupCreationListener groupCreationListener,
                             GroupMemberListener groupMemberListener) {
+        if(netService == null) { netService = NetworkService.getServiceBinder(); }
         isOwner = true;
         currentGroup = new GlidePlayerGroup(null,null,groupName, 1);
-        netService.createGroup(userName, groupName, groupCreationListener, this, this);
+
+        registerGroupCreationListener(groupCreationListener);
+        GroupCreationListener localCreationListener = new GroupCreationListener() {
+            @Override
+            public void onGroupCreated() {
+                for(final GroupCreationListener listener : groupCreationListenerList) {
+                    creationStatus = CreationStatus.GROUP_CREATED;
+                    EasyHandler.executeOnMainThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            listener.onGroupCreated();
+                        }
+                    });
+                }
+            }
+
+            @Override
+            public void onGroupCreationFailed(final String failureMessage) {
+                for(final GroupCreationListener listener : groupCreationListenerList) {
+                    EasyHandler.executeOnMainThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            creationStatus = CreationStatus.GROUP_NOT_CREATED;
+                            listener.onGroupCreationFailed(failureMessage);
+                        }
+                    });
+                }
+            }
+        };
+
         registerGroupMemberListener(groupMemberListener);
+        creationStatus = CreationStatus.GROUP_WAITING_FOR_CREATION;
+        netService.createGroup(userName, groupName, localCreationListener, this, this);
     }
 
+    public String getGroupName() {
+        if(currentGroup != null) {
+            return currentGroup.groupName;
+        } else {
+            return lastJoinedGroupName;
+        }
+    }
+
+    public CreationStatus getCreationStatus() { return creationStatus; }
+
     public void deleteGroup() {
+        if(netService == null) { netService = NetworkService.getServiceBinder(); }
         netService.deleteGroup();
     }
 
@@ -280,11 +313,13 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
     }
 
     public void findGroups(ArrayAdapter groupListAdapter) {
+        if(netService == null) { netService = NetworkService.getServiceBinder(); }
         this.groupListAdapter = groupListAdapter;
         netService.discoverGroups(this, this);
     }
 
     public void stopFindingGroups() {
+        if(netService == null) { netService = NetworkService.getServiceBinder(); }
         netService.stopDiscovery();
         foundGroups.clear();
         groupListAdapter.clear();
@@ -293,6 +328,7 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
     public void connectToGroup(int groupListIndex, final GroupConnectionListener connectionListener,
                                final GroupMemberListener memberListener) {
         //TODO: check if anyone else in the group has the same username
+        if(netService == null) { netService = NetworkService.getServiceBinder(); }
         isOwner = false;
         String groupId = foundGroups.get(groupListIndex).ownerId;
         registerGroupConnectionListener(connectionListener);
@@ -307,14 +343,18 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
                 }
                 stopFindingGroups();
                 currentGroup.connected();
+                lastJoinedGroupName = currentGroup.groupName;
+                joinStatus = JoinStatus.EXCHANGING_INFO;
                 for(GroupConnectionListener listener : groupConnectionListenerList) {
                     listener.onExchangingInfo();
                 }
             }
+
             @Override
             public void onExchangingInfo() {} //never called
             @Override
             public void onConnectionFailed(final String failureMessage) {
+                joinStatus = JoinStatus.NOT_CONNECTED;
                 EasyHandler.executeOnMainThread(new Runnable() {
                     @Override
                     public void run() {
@@ -332,6 +372,7 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
                 memberList.add(userName);
                 currentGroup = null;
                 stopFindingGroups();
+                joinStatus = JoinStatus.RECENTLY_DISCONNECTED;
                 for(final GroupConnectionListener listener : groupConnectionListenerList) {
                     EasyHandler.executeOnMainThread(new Runnable() {
                         @Override
@@ -345,8 +386,11 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
 
         registerGroupMemberListener(memberListener);
 
+        joinStatus = JoinStatus.CONNECTING;
         netService.connectToGroup(groupId, connectionListener2, this, this);
     }
+
+    public JoinStatus getJoinStatus() { return joinStatus; }
 
     public ArrayList<String> getMemberList() {
         return memberList;
@@ -371,6 +415,16 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
     public void unregisterGroupConnectionListener(GroupConnectionListener listener) {
         groupConnectionListenerList.remove(listener);
     }
+    
+    public void registerGroupCreationListener(GroupCreationListener listener) {
+        if(!groupCreationListenerList.contains(listener)) {
+            groupCreationListenerList.add(listener);
+        }
+    }
+    
+    public void unregisterGroupCreationListener(GroupCreationListener listener) {
+        groupCreationListenerList.remove(listener);
+    }
 
     public int getSessionId() {
         return sessionId;
@@ -378,7 +432,8 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
 
     @Override
     public void close() {
-        activity.unbindService(serviceConnection);
+        netService = null;
+        context.stopService(new Intent(context, NetworkService.class));
         handler.closeAllHandlers();
         deleteFiles();
         shareGroupWeakReference = null;
@@ -513,9 +568,9 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
         if (remoteLibraryFile.exists()) {
             remoteLibraryFile.delete();
         }
-        Library library = new Library(activity,
+        Library library = new Library(context,
                 new File(Library.DATABASE_LOCATION, Library.LOCAL_DATABASE_NAME));
-        Library remoteLibrary = new Library(activity, remoteLibraryFile);
+        Library remoteLibrary = new Library(context, remoteLibraryFile);
 
         try {
             if(sendFirst) {
@@ -546,6 +601,7 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
         } else if(action == NetworkService.ACTION_RAW_SOCKET) {
             exchangeLibraries(deviceId, (Socket) requestData, false);
             updateLibraryLists(deviceId);
+            joinStatus = JoinStatus.CONNECTED;
             EasyHandler.executeOnMainThread(new Runnable() {
                 @Override
                 public void run() {
@@ -556,7 +612,7 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
             });
             return null;
         } else if(action == ACTION_GET_SONG) {
-            return getSongRequest((Long)requestData);
+            return songRequest((Long)requestData);
         } else if(action == ACTION_NOTIFY_USERNAME_TAKEN) {
             EasyHandler.executeOnMainThread(new Runnable() {
                 @Override
@@ -570,7 +626,7 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
             currentGroup.removeMember(deviceId);
             return null;
         } else if(action == ACTION_GET_ALBUM_ART) {
-            return getAlbumArtRequest((Long) requestData);
+            return albumArtRequest((Long) requestData);
         }
 
         else return null;
@@ -578,7 +634,6 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
 
     @Override
     public void error(String errorMsg) {
-        Toast.makeText(activity, errorMsg, Toast.LENGTH_LONG).show();
+        Toast.makeText(context, errorMsg, Toast.LENGTH_LONG).show();
     }
 }
-

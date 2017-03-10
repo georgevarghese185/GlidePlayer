@@ -20,7 +20,6 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
-import android.widget.TabHost;
 
 import java.io.File;
 
@@ -107,7 +106,7 @@ public class LibraryFragment extends Fragment implements GroupMemberListener,
                     new File(Library.DATABASE_LOCATION, Library.LOCAL_DATABASE_NAME))
                     .getReadableDatabase();
 
-            songsFragment = SongsFragment.getInstance(Library.getSongs(libraryDb),this);
+            songsFragment = SongsFragment.newInstance(Library.getSongs(libraryDb),this);
 
             albumsFragment = new AlbumsFragment();
         }
