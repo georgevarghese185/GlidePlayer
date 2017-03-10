@@ -7,5 +7,5 @@
     <color name="track_unselected">#c7c7c7</color>
     <color name="group_details_color">#505050</color>
     <color name="album_art_background">#1e1e1e</color>
-    <color name="notification_player_background">#2a2a2a</color>
+    <color name="notification_player_background">#251541</color>
 </resources>
