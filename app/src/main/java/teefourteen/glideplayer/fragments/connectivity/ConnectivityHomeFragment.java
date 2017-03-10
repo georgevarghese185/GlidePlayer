@@ -27,6 +27,12 @@ public class ConnectivityHomeFragment extends Fragment {
         // Required empty public constructor
     }
 
+    public static ConnectivityHomeFragment newInstance(ConnectivitySelectionListener listener) {
+        ConnectivityHomeFragment fragment = new ConnectivityHomeFragment();
+        fragment.connectivitySelectionListener = listener;
+        return fragment;
+    }
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -56,10 +62,6 @@ public class ConnectivityHomeFragment extends Fragment {
         }
 
         return parentView;
-    }
-
-    void setConnectivitySelectionListener(ConnectivitySelectionListener listener) {
-        connectivitySelectionListener = listener;
     }
 
     private void joinGroup(View view) {

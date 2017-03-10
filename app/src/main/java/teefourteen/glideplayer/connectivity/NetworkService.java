@@ -71,7 +71,7 @@ public class NetworkService extends Service {
     private static final String DATA_TYPE_NULL = "null";
     public static String FILE_SAVE_LOCATION;
 
-    private final IBinder binder = new ServiceBinder();
+    private static ServiceBinder binder;
     private WifiP2pManager p2pManager;
     private WifiP2pManager.Channel channel;
     private String ownerDeviceAddress;
@@ -260,7 +260,7 @@ public class NetworkService extends Service {
 
 
 
-    public class ServiceBinder extends Binder {
+    public class ServiceBinder {
         private NetworkService service = NetworkService.this;
 
         void createGroup(final String username, final String groupName,
@@ -347,10 +347,22 @@ public class NetworkService extends Service {
 
 
 
+
+
+    public static ServiceBinder getServiceBinder() {
+        return binder;
+    }
+
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
+        return null;
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
         try {
+            binder = new ServiceBinder();
             server = new Connection.ListenServer(0);
             p2pManager = (WifiP2pManager) getSystemService(Context.WIFI_P2P_SERVICE);
             channel = p2pManager.initialize(this, Looper.getMainLooper(), null);
@@ -371,11 +383,12 @@ public class NetworkService extends Service {
             if( !(fileDir.exists()) ) {
                 fileDir.mkdir();
             }
-
-            return binder;
+            startForeground(0, null);
         } catch (IOException e) {
-            return null;
+            binder = null;
         }
+
+        return super.onStartCommand(intent, flags, startId);
     }
 
     void createGroup(final String username, final String groupName,
@@ -870,6 +883,8 @@ public class NetworkService extends Service {
     public void onDestroy() {
         server.close();
         handler.closeAllHandlers();
+        binder = null;
+        stopForeground(false);
         unregisterReceiver(p2pBroadcastReceiver);
     }
 }

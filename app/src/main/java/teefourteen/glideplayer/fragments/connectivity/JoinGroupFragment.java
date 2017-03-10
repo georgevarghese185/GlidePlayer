@@ -27,15 +27,7 @@ public class JoinGroupFragment extends Fragment implements GroupConnectionListen
     private ShareGroup group;
     private GroupAdapter groupAdapter;
     private ConnectionCloseListener closeListener;
-    private enum ConnectionStatus {
-        NOT_CONNECTED,
-        RECENTLY_DISCONNECTED,
-        FINDING_GROUPS,
-        CONNECTING,
-        EXCHANGING_INFO,
-        CONNECTED
-    }
-    ConnectionStatus connectionStatus = ConnectionStatus.NOT_CONNECTED;
+    ShareGroup.JoinStatus joinStatus = ShareGroup.JoinStatus.NOT_CONNECTED;
     String connectedGroupName;
 
     public JoinGroupFragment() {
@@ -46,6 +38,12 @@ public class JoinGroupFragment extends Fragment implements GroupConnectionListen
                                                 ConnectionCloseListener closeListener) {
         JoinGroupFragment fragment = new JoinGroupFragment();
         fragment.group = group;
+
+        if(group.getJoinStatus() != ShareGroup.JoinStatus.NOT_CONNECTED) {
+            fragment.connectedGroupName = group.getGroupName();
+            fragment.joinStatus = group.getJoinStatus();
+        }
+
         fragment.closeListener = closeListener;
         return fragment;
     }
@@ -67,7 +65,7 @@ public class JoinGroupFragment extends Fragment implements GroupConnectionListen
     }
 
     private void initializeViews() {
-        switch (connectionStatus) {
+        switch (joinStatus) {
             case CONNECTED:
                 onConnectionSuccess(connectedGroupName);
                 break;
@@ -81,9 +79,6 @@ public class JoinGroupFragment extends Fragment implements GroupConnectionListen
                 groupAdapter = new GroupAdapter(getContext(), group.getGroupList());
                 setupGroupList();
                 group.findGroups(groupAdapter);
-                break;
-            case FINDING_GROUPS:
-                setupGroupList();
                 break;
             case EXCHANGING_INFO:
                 onExchangingInfo();
@@ -100,7 +95,7 @@ public class JoinGroupFragment extends Fragment implements GroupConnectionListen
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 group.connectToGroup(position, fragment, fragment);
                 setStatusConnecting();
-                connectionStatus = ConnectionStatus.CONNECTING;
+                joinStatus = ShareGroup.JoinStatus.CONNECTING;
             }
         });
     }
@@ -120,7 +115,7 @@ public class JoinGroupFragment extends Fragment implements GroupConnectionListen
         TextView connectionStatus = (TextView)rootView.findViewById(R.id.connection_status);
         connectionStatus.setText("Not Connected");
         connectionStatus.setTextColor(Color.parseColor("#0a5900"));
-        this.connectionStatus = ConnectionStatus.NOT_CONNECTED;
+        this.joinStatus = ShareGroup.JoinStatus.NOT_CONNECTED;
         initializeViews();
     }
 
@@ -129,7 +124,7 @@ public class JoinGroupFragment extends Fragment implements GroupConnectionListen
         this.connectedGroupName = connectedGroup;
         ((ListView)rootView.findViewById(R.id.group_list)).setOnItemClickListener(null);
         setStatusConnected();
-        connectionStatus = ConnectionStatus.CONNECTED;
+        joinStatus = ShareGroup.JoinStatus.CONNECTED;
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(getContext(),
                 android.R.layout.simple_list_item_1,
                 ShareGroup.shareGroupWeakReference.get().getMemberList());
@@ -175,8 +170,31 @@ public class JoinGroupFragment extends Fragment implements GroupConnectionListen
     @Override
     public void onOwnerDisconnected() {
         Toast.makeText(getContext(), "Owner disconnected. Group closed", Toast.LENGTH_LONG).show();
-        connectionStatus = ConnectionStatus.RECENTLY_DISCONNECTED;
+        joinStatus = ShareGroup.JoinStatus.RECENTLY_DISCONNECTED;
         ((TextView) rootView.findViewById(R.id.group_members_caption)).setText("Nearby Groups");
         initializeViews();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        if (group != null) {
+            group.unregisterGroupConnectionListener(this);
+            group.unregisterGroupMemberListener(this);
+
+            if(joinStatus == ShareGroup.JoinStatus.NOT_CONNECTED
+                    && getContext() != null) {
+                group.stopFindingGroups();
+            }
+        }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (group != null) {
+            group.registerGroupConnectionListener(this);
+            group.registerGroupMemberListener(this);
+        }
     }
 }

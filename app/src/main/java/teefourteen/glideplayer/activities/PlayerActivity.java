@@ -10,7 +10,6 @@ import teefourteen.glideplayer.fragments.FragmentSwitcher;
 import teefourteen.glideplayer.fragments.library.adapters.SongAdapter;
 import teefourteen.glideplayer.fragments.player.PlayerFragment;
 import teefourteen.glideplayer.fragments.library.SongsFragment;
-import teefourteen.glideplayer.music.PlayQueue;
 import teefourteen.glideplayer.music.Song;
 
 import static teefourteen.glideplayer.Global.playQueue;
@@ -33,7 +32,7 @@ public class PlayerActivity extends AppCompatActivity {
     Navigator playerNavigator = new Navigator() {
         @Override
         public void showQueue() {
-            SongsFragment songsFragment = SongsFragment.getInstance(playQueue.getQueue(),
+            SongsFragment songsFragment = SongsFragment.newInstance(playQueue.getQueue(),
                     new SongAdapter.SongQueueClickListener() {
                         @Override
                         public void onSongClicked(ArrayList<Song> songList, int position) {

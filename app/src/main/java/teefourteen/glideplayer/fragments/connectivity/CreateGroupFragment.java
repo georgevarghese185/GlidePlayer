@@ -4,23 +4,17 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
-import android.os.Message;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import teefourteen.glideplayer.Global;
 import teefourteen.glideplayer.R;
-import teefourteen.glideplayer.connectivity.Connection;
 import teefourteen.glideplayer.connectivity.ShareGroup;
 import teefourteen.glideplayer.connectivity.listeners.GroupCreationListener;
 import teefourteen.glideplayer.connectivity.listeners.GroupMemberListener;
@@ -29,13 +23,10 @@ import teefourteen.glideplayer.fragments.connectivity.listeners.ConnectionCloseL
 public class CreateGroupFragment extends Fragment implements GroupCreationListener,
         GroupMemberListener{
     private View rootView;
-    enum ConnectionStatus {
-        GROUP_NOT_CREATED,
-        GROUP_CREATED,
-        GROUP_WAITING_FOR_CREATION
-    }
-    private ConnectionStatus groupConnectionStatus = ConnectionStatus.GROUP_NOT_CREATED;
+    private ShareGroup.CreationStatus groupCreationStatus
+            = ShareGroup.CreationStatus.GROUP_NOT_CREATED;
     private ShareGroup group;
+    private String groupName;
     private ConnectionCloseListener closeListener;
 
     public CreateGroupFragment() {
@@ -47,6 +38,12 @@ public class CreateGroupFragment extends Fragment implements GroupCreationListen
         CreateGroupFragment fragment = new CreateGroupFragment();
         fragment.group = group;
         fragment.closeListener = closeListener;
+
+        if(group.getCreationStatus() != ShareGroup.CreationStatus.GROUP_NOT_CREATED) {
+            fragment.groupName = group.getGroupName();
+            fragment.groupCreationStatus = group.getCreationStatus();
+        }
+
         return fragment;
     }
 
@@ -56,7 +53,9 @@ public class CreateGroupFragment extends Fragment implements GroupCreationListen
 
         rootView = inflater.inflate(R.layout.fragment_create_group, container, false);
 
-        switch (groupConnectionStatus) {
+        groupCreationStatus = group.getCreationStatus();
+
+        switch (groupCreationStatus) {
             case GROUP_NOT_CREATED:
                 rootView.findViewById(R.id.create_group).setOnClickListener(new View.OnClickListener() {
                     @Override
@@ -100,22 +99,28 @@ public class CreateGroupFragment extends Fragment implements GroupCreationListen
     private void createGroup(View view){
         String groupName = ((EditText) rootView.findViewById(R.id.group_name)).getText().toString();
         if(groupName.equals("")) {
-            EditText textView = (EditText)rootView.findViewById(R.id.group_name);
-            textView.setHint("Cannot be empty!");
-            textView.setHintTextColor(Color.RED);
+            EditText editText = (EditText)rootView.findViewById(R.id.group_name);
+            editText.setHint("Cannot be empty!");
+            editText.setHintTextColor(Color.RED);
         } else {
+            this.groupName = groupName;
             SharedPreferences.Editor editor = getContext()
                     .getSharedPreferences(Global.SHARED_PREFS_NAME, Context.MODE_PRIVATE).edit();
             editor.putString(ConnectivityFragment.LAST_USED_GROUP_NAME_KEY, groupName);
             editor.apply();
 
             group.createGroup(groupName, this, this);
-            groupConnectionStatus = ConnectionStatus.GROUP_WAITING_FOR_CREATION;
+            groupCreationStatus = ShareGroup.CreationStatus.GROUP_WAITING_FOR_CREATION;
             onWaitingForGroupCreation();
         }
     }
 
     private void onWaitingForGroupCreation() {
+        EditText editText = (EditText)rootView.findViewById(R.id.group_name);
+        editText.setText(groupName); //in case this is called on first run of fragment.
+        editText.setFocusable(false);
+        editText.setFocusableInTouchMode(false);
+        editText.setClickable(false);
         rootView.findViewById(R.id.creating_group_progress_bar).setVisibility(View.VISIBLE);
         rootView.findViewById(R.id.create_group).setEnabled(false);
     }
@@ -129,16 +134,25 @@ public class CreateGroupFragment extends Fragment implements GroupCreationListen
 
     @Override
     public void onGroupCreated() {
+        EditText editText = (EditText)rootView.findViewById(R.id.group_name);
+        editText.setText(groupName); //in case this is called on first run of fragment.
+        editText.setFocusable(false);
+        editText.setFocusableInTouchMode(false);
+        editText.setClickable(false);
         rootView.findViewById(R.id.creating_group_progress_bar).setVisibility(View.INVISIBLE);
         rootView.findViewById(R.id.create_group).setVisibility(View.INVISIBLE);
         rootView.findViewById(R.id.group_created_message).setVisibility(View.VISIBLE);
-        groupConnectionStatus = ConnectionStatus.GROUP_CREATED;
+        groupCreationStatus = ShareGroup.CreationStatus.GROUP_CREATED;
     }
 
     @Override
     public void onGroupCreationFailed(String failureMessage) {
         Toast.makeText(getContext(), failureMessage, Toast.LENGTH_LONG).show();
-        groupConnectionStatus = ConnectionStatus.GROUP_NOT_CREATED;
+        EditText editText = (EditText)rootView.findViewById(R.id.group_name);
+        editText.setFocusable(true);
+        editText.setFocusableInTouchMode(true);
+        editText.setClickable(true);
+        groupCreationStatus = ShareGroup.CreationStatus.GROUP_NOT_CREATED;
         rootView.findViewById(R.id.creating_group_progress_bar).setVisibility(View.INVISIBLE);
         rootView.findViewById(R.id.create_group).setEnabled(true);
     }
@@ -154,5 +168,25 @@ public class CreateGroupFragment extends Fragment implements GroupCreationListen
         Toast.makeText(getContext(), memberName + " joined", Toast.LENGTH_LONG).show();
         ((ArrayAdapter) ((ListView) rootView.findViewById(R.id.peer_list))
                 .getAdapter()).notifyDataSetChanged();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        if(group != null) {
+            group.unregisterGroupCreationListener(this);
+            group.unregisterGroupMemberListener(this);
+        }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if(group != null) {
+            group.registerGroupCreationListener(this);
+            group.registerGroupMemberListener(this);
+            ((ArrayAdapter) ((ListView) rootView.findViewById(R.id.peer_list))
+                    .getAdapter()).notifyDataSetChanged();
+        }
     }
 }
