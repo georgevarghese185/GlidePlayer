@@ -52,18 +52,6 @@
         android:layout_marginLeft="5dp">
 
         <TextView
-            android:text="Group: "
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="top"
-            android:id="@+id/notification_group_name"
-            android:layout_weight="1"
-            android:maxLines="1"
-            android:scrollHorizontally="true"
-            android:ellipsize="end"
-            android:textColor="@android:color/holo_orange_light" />
-
-        <TextView
             android:text="Title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

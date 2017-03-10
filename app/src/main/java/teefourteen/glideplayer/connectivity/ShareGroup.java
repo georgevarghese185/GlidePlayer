@@ -18,6 +18,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import teefourteen.glideplayer.AppNotification;
 import teefourteen.glideplayer.EasyHandler;
 import teefourteen.glideplayer.connectivity.listeners.ErrorListener;
 import teefourteen.glideplayer.connectivity.listeners.GroupConnectionListener;
@@ -55,6 +56,7 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
     private CreationStatus creationStatus = CreationStatus.GROUP_NOT_CREATED;
     private JoinStatus joinStatus = JoinStatus.NOT_CONNECTED;
     private EasyHandler handler;
+    private AppNotification networkNotification;
 
     public enum CreationStatus {
         GROUP_NOT_CREATED,
@@ -249,6 +251,8 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
         foundGroups = new ArrayList<GlidePlayerGroup>();
         currentGroup = null;
         context.startService(new Intent(context, NetworkService.class));
+        networkNotification = AppNotification.getInstance(context);
+        networkNotification.displayNetworkNotification(null, false);
     }
 
     public Mode getMode() { return mode; }
@@ -263,6 +267,7 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
         GroupCreationListener localCreationListener = new GroupCreationListener() {
             @Override
             public void onGroupCreated() {
+                networkNotification.displayNetworkNotification(currentGroup.groupName, true);
                 for(final GroupCreationListener listener : groupCreationListenerList) {
                     creationStatus = CreationStatus.GROUP_CREATED;
                     EasyHandler.executeOnMainThread(new Runnable() {
@@ -345,6 +350,7 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
                 currentGroup.connected();
                 lastJoinedGroupName = currentGroup.groupName;
                 joinStatus = JoinStatus.EXCHANGING_INFO;
+                networkNotification.displayNetworkNotification(currentGroup.groupName, false);
                 for(GroupConnectionListener listener : groupConnectionListenerList) {
                     listener.onExchangingInfo();
                 }
@@ -373,6 +379,7 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
                 currentGroup = null;
                 stopFindingGroups();
                 joinStatus = JoinStatus.RECENTLY_DISCONNECTED;
+                networkNotification.displayNetworkNotification(null, false);
                 for(final GroupConnectionListener listener : groupConnectionListenerList) {
                     EasyHandler.executeOnMainThread(new Runnable() {
                         @Override
@@ -437,6 +444,7 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
         handler.closeAllHandlers();
         deleteFiles();
         shareGroupWeakReference = null;
+        networkNotification.dismissNetworkNotification();
     }
 
     private void deleteFiles() {

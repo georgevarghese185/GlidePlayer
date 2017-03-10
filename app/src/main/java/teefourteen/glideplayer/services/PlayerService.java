@@ -179,10 +179,10 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
     public void play(){
         boolean playbackSuccessful = player.playSong(playQueue.getCurrentPlaying());
 
-        startForeground(AppNotification.getPlayerNotificationId(),
-                playerNotification.getPlayerNotification(playQueue.getCurrentPlaying(), true));
-
         if(playbackSuccessful) {
+            startForeground(0, null);
+            playerNotification.displayPlayerNotification(playQueue.getCurrentPlaying(), true, true);
+
             for(final SongListener listener : songListenerList) {
                 EasyHandler.executeOnMainThread(new Runnable() {
                     @Override
@@ -205,7 +205,7 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
 
     public void pause(){
         player.pauseSong();
-        playerNotification.updatePlayerNotification(playQueue.getCurrentPlaying(), false);
+        playerNotification.displayPlayerNotification(playQueue.getCurrentPlaying(), false, true);
 
         for(final SongListener listener : songListenerList) {
             EasyHandler.executeOnMainThread(new Runnable() {
@@ -250,14 +250,11 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
     }
 
     private void endService(boolean dismissNotification) {
+        stopForeground(false);
         if(dismissNotification) {
-            stopForeground(false);
             playerNotification.dismissPlayerNotification();
-        } else if (Build.VERSION.SDK_INT >= 24) {
-            stopForeground(STOP_FOREGROUND_DETACH);
         } else {
-            stopForeground(false);
-            playerNotification.detachPlayerNotification();
+            playerNotification.displayPlayerNotification(playQueue.getCurrentPlaying(), false, false);
         }
         stopSelf();
     }
@@ -287,7 +284,7 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
                     }
                 });
             }
-
+            playerNotification.displayPlayerNotification(playQueue.getCurrentPlaying(), false, true);
             if(!isBound) {
                 endService(false);
             }

@@ -1,10 +1,10 @@
 package teefourteen.glideplayer;
 
-import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.support.v4.app.TaskStackBuilder;
 import android.support.v7.app.NotificationCompat;
@@ -22,7 +22,8 @@ public class AppNotification extends NotificationCompat {
     private static WeakReference<AppNotification> weakReference = null;
     private Song currentSong = null;
     private Context context = null;
-    private static int playerAndNetworkNotificationId = 1;
+    private static int playerNotificationId = 1;
+    private static int networkNotificationId = 2;
     private static final int PLAY_REQUEST_CODE = 0;
     private static final int PAUSE_REQUEST_CODE = 1;
     private static final int NEXT_REQUEST_CODE = 2;
@@ -41,11 +42,8 @@ public class AppNotification extends NotificationCompat {
         this.context = context;
     }
 
-    public static int getPlayerNotificationId() {
-        return playerAndNetworkNotificationId;
-    }
-
-    public Notification getPlayerNotification(Song currentSong, boolean isPlaying) {
+    public void displayPlayerNotification(Song currentSong, boolean isPlaying,
+                                                  boolean ongoing) {
         this.currentSong = currentSong;
 
         NotificationCompat.Builder notificationBuilder = new Builder(context);
@@ -75,35 +73,11 @@ public class AppNotification extends NotificationCompat {
 
         notificationBuilder.setContentIntent(pendingIntent);
 
-        return notificationBuilder.build();
-    }
+        notificationBuilder.setOngoing(ongoing);
 
-    public void detachPlayerNotification() {
-        NotificationManager notificationManager =
-                (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-
-        notificationManager.cancel(playerAndNetworkNotificationId);
-        playerAndNetworkNotificationId++;
-        notificationManager.notify(playerAndNetworkNotificationId,
-                getPlayerNotification(currentSong,false));
-    }
-
-    public void updatePlayerNotification(Song currentSong, boolean isPlaying) {
-        this.currentSong = currentSong;
-
-        NotificationManager notificationManager =
-                (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-
-        notificationManager.notify(playerAndNetworkNotificationId,
-                getPlayerNotification(currentSong, isPlaying));
-    }
-
-    public void dismissPlayerNotification() {
-        NotificationManager notificationManager =
-                (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-
-        notificationManager.cancel(playerAndNetworkNotificationId);
-        playerAndNetworkNotificationId++;
+        NotificationManager notificationManager = (NotificationManager) context
+                .getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.notify(playerNotificationId, notificationBuilder.build());
     }
 
     private void preparePlayerNotification(RemoteViews notificationView, boolean isPlaying) {
@@ -229,5 +203,56 @@ public class AppNotification extends NotificationCompat {
                 PendingIntent.FLAG_UPDATE_CURRENT);
         notificationExpandedView.setOnClickPendingIntent(R.id.notification_expanded_next,
                 pendingIntent);
+    }
+
+    public void dismissPlayerNotification() {
+        NotificationManager notificationManager =
+                (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+
+        notificationManager.cancel(playerNotificationId);
+    }
+
+    public void displayNetworkNotification(String groupName, boolean isGroupOwner) {
+        NotificationCompat.Builder notificationBuilder = new Builder(context);
+
+        notificationBuilder.setContentTitle("GlidePlayer Network");
+        if (groupName == null) {
+            notificationBuilder.setContentText("Not connected to any group");
+            notificationBuilder.setContentInfo("");
+        } else {
+            notificationBuilder.setContentText("Connected to " + groupName);
+            if (isGroupOwner) {
+                notificationBuilder.setContentInfo("(Owner)");
+            } else {
+                notificationBuilder.setContentInfo("");
+            }
+        }
+        notificationBuilder.setWhen(0);
+
+        notificationBuilder.setSmallIcon(R.mipmap.glideplayer_play_white);
+
+        TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
+
+        Intent intent = new Intent(context, MainActivity.class);
+        intent.putExtra(MainActivity.EXTRA_JUMP_TO_CONNECTIVITY_FRAGMENT, 0);
+        stackBuilder.addNextIntent(intent);
+        PendingIntent pendingIntent =
+                stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        notificationBuilder.setContentIntent(pendingIntent);
+
+        NotificationManager notificationManager =
+                (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+
+        notificationBuilder.setOngoing(true);
+        notificationBuilder.setPriority(PRIORITY_MIN);
+
+        notificationManager.notify(networkNotificationId, notificationBuilder.build());
+    }
+
+    public void dismissNetworkNotification() {
+        NotificationManager notificationManager = (NotificationManager) context
+                .getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.cancel(networkNotificationId);
     }
 }

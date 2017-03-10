@@ -362,6 +362,7 @@ public class NetworkService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         try {
+            binder = new ServiceBinder();
             server = new Connection.ListenServer(0);
             p2pManager = (WifiP2pManager) getSystemService(Context.WIFI_P2P_SERVICE);
             channel = p2pManager.initialize(this, Looper.getMainLooper(), null);
@@ -382,8 +383,7 @@ public class NetworkService extends Service {
             if( !(fileDir.exists()) ) {
                 fileDir.mkdir();
             }
-
-            binder = new ServiceBinder();
+            startForeground(0, null);
         } catch (IOException e) {
             binder = null;
         }
@@ -884,6 +884,7 @@ public class NetworkService extends Service {
         server.close();
         handler.closeAllHandlers();
         binder = null;
+        stopForeground(false);
         unregisterReceiver(p2pBroadcastReceiver);
     }
 }

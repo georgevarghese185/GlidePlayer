@@ -10,9 +10,7 @@ import android.os.IBinder;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
@@ -36,6 +34,7 @@ public class MainActivity extends AppCompatActivity
 
     private LibraryFragment libraryFragment;
     private ConnectivityFragment connectivityFragment;
+    public static final String EXTRA_JUMP_TO_CONNECTIVITY_FRAGMENT = "jump_to_connectivity_fragment";
     private static final String LIBRARY_FRAGMENT_TAG ="songs";
     private static final String CONNECTIVITY_FRAGMENT_TAG = "connectivity";
     private FragmentSwitcher mainFragmentSwitcher;
@@ -82,7 +81,12 @@ public class MainActivity extends AppCompatActivity
         libraryFragment = new LibraryFragment();
         connectivityFragment = new ConnectivityFragment();
 
-        mainFragmentSwitcher.switchTo(libraryFragment, LIBRARY_FRAGMENT_TAG);
+        if(getIntent().hasExtra(EXTRA_JUMP_TO_CONNECTIVITY_FRAGMENT)) {
+            mainFragmentSwitcher.switchTo(connectivityFragment, CONNECTIVITY_FRAGMENT_TAG);
+            getIntent().removeExtra(EXTRA_JUMP_TO_CONNECTIVITY_FRAGMENT);
+        } else {
+            mainFragmentSwitcher.switchTo(libraryFragment, LIBRARY_FRAGMENT_TAG);
+        }
 
         serviceConnection = new ServiceConnection() {
             @Override
@@ -99,8 +103,6 @@ public class MainActivity extends AppCompatActivity
         };
 
         ((ProgressBar)findViewById(R.id.peek_player_progress)).setMax(MusicPlayer.MAX_SEEK_VALUE);
-        
-        
     }
 
     private void initializePeekPlayer() {
