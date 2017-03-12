@@ -6,9 +6,11 @@ import android.database.sqlite.SQLiteDatabase;
 import android.support.v4.content.LocalBroadcastManager;
 
 import java.io.File;
+import java.io.IOException;
 
 import teefourteen.glideplayer.activities.SplashActivity;
 import teefourteen.glideplayer.Global;
+import teefourteen.glideplayer.music.PlayQueue;
 import teefourteen.glideplayer.music.database.Library;
 
 import static teefourteen.glideplayer.fragments.library.AlbumsFragment.albumCursor;
@@ -33,6 +35,16 @@ public class LibraryService extends IntentService {
         SQLiteDatabase libraryDb = library.getReadableDatabase();
 
         albumCursor = Library.getAlbums(libraryDb);
+
+        File lastQueue = new File(PlayerService.PLAY_QUEUE_FILE_PATH);
+
+        if(lastQueue.exists()) {
+            try {
+                Global.playQueue = new PlayQueue(lastQueue, libraryDb);
+            } catch (IOException e) {
+                Global.playQueue = null;
+            }
+        }
 
         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(
                 new Intent(SplashActivity.LIBRARY_INITIALIZED_ACTION));

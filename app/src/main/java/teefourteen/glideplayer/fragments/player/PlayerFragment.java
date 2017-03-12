@@ -137,7 +137,11 @@ public class PlayerFragment extends Fragment implements PlayerService.SongListen
             changeTrack(index);
         } else {
             changeSongInfo(Global.playQueue.getCurrentPlaying(), rootView);
-            if(binder.isPlaying()) { showPause(); }
+            if(binder.isPlaying()) {
+                showPause();
+            } else {
+                seekBar.setProgress(binder.getSeek());
+            }
         }
     }
 

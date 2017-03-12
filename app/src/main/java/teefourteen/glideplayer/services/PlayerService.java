@@ -2,11 +2,12 @@ package teefourteen.glideplayer.services;
 
 import android.app.Service;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.media.MediaPlayer;
 import android.os.Binder;
-import android.os.Build;
 import android.os.IBinder;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 import teefourteen.glideplayer.AppNotification;
@@ -15,7 +16,9 @@ import teefourteen.glideplayer.EasyHandler;
 import teefourteen.glideplayer.music.MusicPlayer;
 import teefourteen.glideplayer.music.PlayQueue;
 import teefourteen.glideplayer.music.Song;
+import teefourteen.glideplayer.music.database.Library;
 
+import static teefourteen.glideplayer.Global.SHARED_PREFS_NAME;
 import static teefourteen.glideplayer.Global.playQueue;
 
 public class PlayerService extends Service implements MediaPlayer.OnCompletionListener,
@@ -29,8 +32,12 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
     private ArrayList<SongListener> songListenerList = new ArrayList<>();
     private static final String PLAYER_HANDLER_THREAD_NAME = "player_handler_thread";
     private AppNotification playerNotification = AppNotification.getInstance(this);
+    private SharedPreferences.Editor editor;
 
+    public static final String PLAY_QUEUE_FILE_PATH = Library.DATABASE_LOCATION + "/" + "last_play_queue";
     public final static String EXTRA_PLAY_CONTROL = "play_control";
+    private static final String LAST_SONG_INDEX = "last_song";
+    private static final String LAST_SEEK = "last_seek";
     public final static String PLAY = "play";
     public final static String PAUSE = "pause";
     public final static String NEXT = "next";
@@ -138,6 +145,10 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
             handler.executeAsync(r, PLAYER_HANDLER_THREAD_NAME);
         }
 
+        public int getSeek() {
+            return player.getSeek();
+        }
+
         public boolean isPlaying() {
             return player.isPlaying();
         }
@@ -150,6 +161,23 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
         handler = new EasyHandler();
         handler.createHandler(PLAYER_HANDLER_THREAD_NAME);
         player.registerOnCompletionListener(this);
+        final SharedPreferences sharedPreferences = getSharedPreferences(SHARED_PREFS_NAME, MODE_PRIVATE);
+        editor = sharedPreferences.edit();
+        if(playQueue != null) {
+            playQueue.changeTrack(sharedPreferences.getInt(LAST_SONG_INDEX,0));
+            try {
+                player.prepareSong(playQueue.getCurrentPlaying(),
+                        new MediaPlayer.OnPreparedListener() {
+                            @Override
+                            public void onPrepared(MediaPlayer mp) {
+                                player.trueSeek(sharedPreferences.getInt(LAST_SEEK, 0));
+                                onSeekUpdated(player.getSeek());
+                            }
+                        });
+            } catch (IOException e) {
+                //Nothing to do here
+            }
+        }
     }
 
     @Override
@@ -206,6 +234,7 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
     public void pause(){
         player.pauseSong();
         playerNotification.displayPlayerNotification(playQueue.getCurrentPlaying(), false, true);
+        editor.putInt(LAST_SEEK, player.getTrueSeek()).apply();
 
         for(final SongListener listener : songListenerList) {
             EasyHandler.executeOnMainThread(new Runnable() {
@@ -225,28 +254,38 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
         player.reset();
         onSeekUpdated(0);
         playQueue.next();
+        editor.putInt(LAST_SEEK, 0).apply();
+        editor.putInt(LAST_SONG_INDEX, playQueue.getIndex()).apply();
     }
 
     public void prev() {
         player.reset();
         onSeekUpdated(0);
         playQueue.prev();
+        editor.putInt(LAST_SEEK, 0).apply();
+        editor.putInt(LAST_SONG_INDEX, playQueue.getIndex()).apply();
     }
 
     public void changeTrack(int songIndex) {
         player.reset();
         onSeekUpdated(0);
         playQueue.changeTrack(songIndex);
+        editor.putInt(LAST_SEEK, 0).apply();
+        editor.putInt(LAST_SONG_INDEX, playQueue.getIndex()).apply();
     }
 
     public void newQueue(PlayQueue queue) {
         player.reset();
         onSeekUpdated(0);
         Global.playQueue = queue;
+        playQueue.saveQueueToFile(PLAY_QUEUE_FILE_PATH);
+        editor.putInt(LAST_SEEK, 0).apply();
+        editor.putInt(LAST_SONG_INDEX, playQueue.getIndex()).apply();
     }
 
     public void seek(int seek){
         player.seek(seek);
+        editor.putInt(LAST_SEEK, player.getTrueSeek());
     }
 
     private void endService(boolean dismissNotification) {

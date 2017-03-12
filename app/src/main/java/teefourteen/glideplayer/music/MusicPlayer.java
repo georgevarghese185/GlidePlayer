@@ -18,6 +18,7 @@ import teefourteen.glideplayer.services.PlayerService;
 
 public class MusicPlayer implements Closeable{
     public static final int MAX_SEEK_VALUE = 2000;
+    public static final int SEEK_INTERVAL_MS = 300;
 
     private MediaPlayer mediaPlayer =null;
     private Context context=null;
@@ -114,6 +115,28 @@ public class MusicPlayer implements Closeable{
         }
     }
 
+    public void trueSeek(int seek) {
+        if(mediaPlayer != null && prepared) {
+            mediaPlayer.seekTo(seek);
+        }
+    }
+
+    public int getSeek() {
+        if(prepared) {
+            return mediaPlayer.getCurrentPosition() * MAX_SEEK_VALUE / mediaPlayer.getDuration();
+        } else {
+            return 0;
+        }
+    }
+
+    public int getTrueSeek() {
+        if(mediaPlayer != null && prepared) {
+            return mediaPlayer.getCurrentPosition();
+        } else {
+            return 0;
+        }
+    }
+
     public void reset() {
         stopSeekMonitor();
         callSeekListeners();
@@ -127,7 +150,7 @@ public class MusicPlayer implements Closeable{
 
     //TODO: use listener for remote song, or return a different value for "downloading" instead of boolean.
     //TODO: or, try wait() notify()
-    private void prepareSong(final Song song,
+    public void prepareSong(final Song song,
                              final MediaPlayer.OnPreparedListener preparedListener) throws IOException {
         mediaPlayer = new MediaPlayer();
         mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
@@ -185,7 +208,7 @@ public class MusicPlayer implements Closeable{
                     if(monitorSeek) {
                         callSeekListeners();
                         try {
-                            Thread.sleep(300);
+                            Thread.sleep(SEEK_INTERVAL_MS);
                         } catch (InterruptedException e) {
                             //Do nothing?
                         }

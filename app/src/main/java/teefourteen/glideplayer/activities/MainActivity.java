@@ -9,10 +9,13 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
+import android.support.v4.view.ViewPager;
+import android.support.v4.view.ViewParentCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -40,7 +43,10 @@ public class MainActivity extends AppCompatActivity
     private FragmentSwitcher mainFragmentSwitcher;
     private ServiceConnection serviceConnection;
     private PlayerService.PlayerServiceBinder binder = null;
+    private ViewGroup peekPlayerParent;
+    private View peekPlayer;
     private Song currentSong = null;
+    ProgressBar peekPlayerSeekBar;
     
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -102,16 +108,30 @@ public class MainActivity extends AppCompatActivity
             }
         };
 
-        ((ProgressBar)findViewById(R.id.peek_player_progress)).setMax(MusicPlayer.MAX_SEEK_VALUE);
+        peekPlayerSeekBar = (ProgressBar)findViewById(R.id.peek_player_seek_bar);
+        peekPlayerSeekBar.setMax(MusicPlayer.MAX_SEEK_VALUE);
+        peekPlayer = findViewById(R.id.peek_player);
+        peekPlayerParent = (ViewGroup) peekPlayer.getParent();
     }
 
     private void initializePeekPlayer() {
-        binder.registerSongListener(this);
-        
-        if(binder.isPlaying()) {
+        if(playQueue!=null) {
+            if(findViewById(R.id.peek_player) == null) {
+                peekPlayerParent.addView(peekPlayer);
+            }
+            binder.registerSongListener(this);
             Song song = playQueue.getCurrentPlaying();
             changeTrackInfo(song);
-            showPause();
+            if(binder.isPlaying()) {
+                showPause();
+            } else {
+                peekPlayerSeekBar.setProgress(binder.getSeek());
+                showPlay();
+            }
+        } else {
+            if(findViewById(R.id.peek_player) != null) {
+                peekPlayerParent.removeView(peekPlayer);
+            }
         }
     }
     
@@ -231,14 +251,12 @@ public class MainActivity extends AppCompatActivity
         //start PlayerService
         Intent intent = new Intent(this, PlayerService.class);
         startService(intent);
-
-        intent = new Intent(this, PlayerService.class);
         this.bindService(intent, serviceConnection, Context.BIND_ABOVE_CLIENT);
     }
 
     @Override
     public void onSeekUpdate(int currentSeek) {
-        ((ProgressBar)findViewById(R.id.peek_player_progress)).setProgress(currentSeek);
+        peekPlayerSeekBar.setProgress(currentSeek);
     }
 
     @Override

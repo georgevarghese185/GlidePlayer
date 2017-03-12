@@ -2,10 +2,11 @@ package teefourteen.glideplayer.music;
 
 import android.content.Context;
 import android.database.Cursor;
-import android.graphics.drawable.Drawable;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.support.annotation.NonNull;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,10 +14,18 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 
 import teefourteen.glideplayer.AsyncImageLoader;
 import teefourteen.glideplayer.R;
+import teefourteen.glideplayer.music.database.Library;
 
 /**
  * Created by george on 15/10/16.
@@ -56,9 +65,29 @@ public class PlayQueue implements Parcelable {
         }
     }
 
+    public PlayQueue(File playQueueFile, SQLiteDatabase libraryDb)throws IOException {
+        queue = new ArrayList<>();
+        BufferedReader reader = new BufferedReader(
+                new InputStreamReader(new FileInputStream(playQueueFile)));
+
+        for (String string = reader.readLine(); string != null; string = reader.readLine()) {
+            int songId = Integer.parseInt(string);
+            Cursor cursor = Library.getSong(libraryDb, songId);
+            if(cursor.moveToFirst()) {
+                Song song = Song.toSong(cursor);
+                cursor.close();
+                queue.add(song);
+            }
+        }
+    }
+
 
     public Song getCurrentPlaying() {
         return queue.get(currentPlaying);
+    }
+
+    public int getIndex() {
+        return currentPlaying;
     }
 
     public ArrayList<Song> getQueue() { return queue; }
@@ -139,6 +168,26 @@ public class PlayQueue implements Parcelable {
 
     public SongListAdapter getListAdapter(Context context) {
         return new SongListAdapter(context, queue);
+    }
+
+    public void saveQueueToFile(String filePath) {
+        try {
+            File file = new File(filePath);
+            if (file.exists()) {
+                file.delete();
+            }
+            file.createNewFile();
+
+            PrintWriter printWriter = new PrintWriter(new FileOutputStream(file), true);
+            for (Song song : queue) {
+                printWriter.println(song.get_id());
+            }
+
+            printWriter.close();
+        } catch (IOException e) {
+            Log.d("save queue", "failed to save queue");
+            e.printStackTrace();
+        }
     }
 
     public class SongListAdapter extends ArrayAdapter<Song> {

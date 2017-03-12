@@ -17,7 +17,7 @@
             style="?android:attr/progressBarStyleHorizontal"
             android:layout_width="match_parent"
             android:layout_height="2dp"
-            android:id="@+id/peek_player_progress"
+            android:id="@+id/peek_player_seek_bar"
             android:clickable="false"/>
 
         <RelativeLayout
