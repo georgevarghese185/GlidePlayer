@@ -120,14 +120,15 @@ public class MainActivity extends AppCompatActivity
                 peekPlayerParent.addView(peekPlayer);
             }
             binder.registerSongListener(this);
-            Song song = playQueue.getCurrentPlaying();
-            changeTrackInfo(song);
             if(binder.isPlaying()) {
                 showPause();
             } else {
+                binder.restoreSavedQueue();
                 peekPlayerSeekBar.setProgress(binder.getSeek());
                 showPlay();
             }
+            Song song = playQueue.getCurrentPlaying();
+            changeTrackInfo(song);
         } else {
             if(findViewById(R.id.peek_player) != null) {
                 peekPlayerParent.removeView(peekPlayer);

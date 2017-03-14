@@ -152,6 +152,9 @@ public class MusicPlayer implements Closeable{
     //TODO: or, try wait() notify()
     public void prepareSong(final Song song,
                              final MediaPlayer.OnPreparedListener preparedListener) throws IOException {
+        if(mediaPlayer!=null) {
+            mediaPlayer.release();
+        }
         mediaPlayer = new MediaPlayer();
         mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
 

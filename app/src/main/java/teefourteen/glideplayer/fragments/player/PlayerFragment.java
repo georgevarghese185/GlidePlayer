@@ -140,6 +140,7 @@ public class PlayerFragment extends Fragment implements PlayerService.SongListen
             if(binder.isPlaying()) {
                 showPause();
             } else {
+                binder.restoreSavedQueue();
                 seekBar.setProgress(binder.getSeek());
             }
         }

@@ -135,6 +135,32 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
             handler.executeAsync(r, PLAYER_HANDLER_THREAD_NAME);
         }
 
+        public void restoreSavedQueue() {
+            final SharedPreferences sharedPreferences =
+                    getSharedPreferences(SHARED_PREFS_NAME, MODE_PRIVATE);
+
+            playQueue.changeTrack(sharedPreferences.getInt(LAST_SONG_INDEX, 0));
+            try {
+                player.prepareSong(playQueue.getCurrentPlaying(),
+                        new MediaPlayer.OnPreparedListener() {
+                            @Override
+                            public void onPrepared(MediaPlayer mp) {
+                                player.trueSeek(sharedPreferences.getInt(LAST_SEEK, 0));
+                                onSeekUpdated(player.getSeek());
+                            }
+                        });
+            } catch (IOException e) {
+                for (final SongListener listener : songListenerList) {
+                    EasyHandler.executeOnMainThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            listener.onSongPlaybackFailed();
+                        }
+                    });
+                }
+            }
+        }
+
         public void seek(final int seek) {
             Runnable r = new Runnable() {
                 @Override
@@ -163,21 +189,6 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
         player.registerOnCompletionListener(this);
         final SharedPreferences sharedPreferences = getSharedPreferences(SHARED_PREFS_NAME, MODE_PRIVATE);
         editor = sharedPreferences.edit();
-        if(playQueue != null) {
-            playQueue.changeTrack(sharedPreferences.getInt(LAST_SONG_INDEX,0));
-            try {
-                player.prepareSong(playQueue.getCurrentPlaying(),
-                        new MediaPlayer.OnPreparedListener() {
-                            @Override
-                            public void onPrepared(MediaPlayer mp) {
-                                player.trueSeek(sharedPreferences.getInt(LAST_SEEK, 0));
-                                onSeekUpdated(player.getSeek());
-                            }
-                        });
-            } catch (IOException e) {
-                //Nothing to do here
-            }
-        }
     }
 
     @Override

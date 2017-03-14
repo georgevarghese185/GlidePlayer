@@ -179,11 +179,19 @@ public class PlayQueue implements Parcelable {
             file.createNewFile();
 
             PrintWriter printWriter = new PrintWriter(new FileOutputStream(file), true);
+            int songsSaved=0;
             for (Song song : queue) {
-                printWriter.println(song.get_id());
+                if(!song.isRemote()) {
+                    printWriter.println(song.get_id());
+                    songsSaved++;
+                }
             }
 
             printWriter.close();
+
+            if(songsSaved == 0) {
+                file.delete();
+            }
         } catch (IOException e) {
             Log.d("save queue", "failed to save queue");
             e.printStackTrace();
