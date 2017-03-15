@@ -14,7 +14,6 @@ import android.net.wifi.p2p.WifiP2pManager.DnsSdTxtRecordListener;
 import android.net.wifi.p2p.WifiP2pManager.DnsSdServiceResponseListener;
 import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceInfo;
 import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceRequest;
-import android.os.Binder;
 import android.os.IBinder;
 import android.os.Looper;
 import android.support.annotation.Nullable;
@@ -69,7 +68,7 @@ public class NetworkService extends Service {
     private static final String DATA_TYPE_OBJECT = "object";
     private static final String DATA_TYPE_FILE = "file";
     private static final String DATA_TYPE_NULL = "null";
-    public static String FILE_SAVE_LOCATION;
+    private static final int MAX_FILE_CACHE_SIZE_MB = 100 * 1024 * 1024;
 
     private static ServiceBinder binder;
     private WifiP2pManager p2pManager;
@@ -85,6 +84,8 @@ public class NetworkService extends Service {
     private RequestListener requestListener;
     private EasyHandler handler;
     private int session = 0;
+    private int fileCacheSize = 0;
+    private int cacheFileName = 0;
 
 
 
@@ -342,6 +343,14 @@ public class NetworkService extends Service {
                 }
             };
             handler.executeAsync(r, THREAD_NETWORK_MANAGER);
+        }
+
+        public void deleteCacheFile(String fileName) {
+            File file = new File(Library.FILE_SAVE_LOCATION, fileName);
+            if(file.exists()) {
+                fileCacheSize -= file.length();
+                file.delete();
+            }
         }
     }
 
@@ -818,7 +827,7 @@ public class NetworkService extends Service {
             } else if(requestData instanceof Integer) {
                 connection.sendString(DATA_TYPE_INTEGER);
                 connection.sendInt((Integer) requestData);
-            }else if(requestData instanceof Long) {
+            } else if(requestData instanceof Long) {
                 connection.sendString(DATA_TYPE_LONG);
                 connection.sendLong((Long) requestData);
             } else if (requestData instanceof File){
@@ -850,8 +859,24 @@ public class NetworkService extends Service {
                     break;
                 case DATA_TYPE_FILE:
                     int size = connection.getNextInt();
-                    responseListener.onResponseReceived(
-                            connection.getNextFile(Library.FILE_SAVE_LOCATION, size));
+                    if(size > (MAX_FILE_CACHE_SIZE_MB-fileCacheSize)) {
+                        for(int i =0 ; i<cacheFileName
+                                && size>MAX_FILE_CACHE_SIZE_MB-fileCacheSize; i++) {
+                            File file = new File(Library.FILE_SAVE_LOCATION,
+                                    String.valueOf(i));
+                            if(file.exists()) {
+                                fileCacheSize -= file.length();
+                                file.delete();
+                            }
+                        }
+                        if(size>(MAX_FILE_CACHE_SIZE_MB-fileCacheSize)) {
+                            throw new Exception("File too big");
+                        }
+                    }
+                    File file = connection.getNextFile(
+                            Library.FILE_SAVE_LOCATION + "/" + cacheFileName++, size);
+                    fileCacheSize+=size;
+                    responseListener.onResponseReceived(file);
                     break;
                 default:
                     responseListener.onResponseReceived(connection.getNextObject());

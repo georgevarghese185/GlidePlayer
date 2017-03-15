@@ -20,8 +20,6 @@ import java.net.SocketException;
 public class Connection implements Closeable {
     private Socket clientSocket;
     private TransmissionType lastTransmission = null;
-    private static int sessionFileName = 0;
-    private int maxFiles = 300;
 
     private enum TransmissionType {
         READ,
@@ -105,8 +103,8 @@ public class Connection implements Closeable {
         }
     }
 
-    File getNextFile(String saveLocation, int size)throws IOException {
-        File file = new File(saveLocation, String.valueOf(sessionFileName));
+    File getNextFile(String filePath, int size)throws IOException {
+        File file = new File(filePath);
         if(file.exists()) {
             file.delete();
         }
@@ -125,7 +123,6 @@ public class Connection implements Closeable {
         }
 
         fileOut.close();
-        sessionFileName = (sessionFileName + 1) % maxFiles;
 
         return file;
     }

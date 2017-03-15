@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.util.Log;
+import android.util.LongSparseArray;
 import android.widget.ArrayAdapter;
 import android.widget.Toast;
 
@@ -32,6 +33,9 @@ import teefourteen.glideplayer.music.database.Library;
 
 public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberListener,
         RequestListener, Closeable {
+    class HOOMAN{
+
+    }
     //TODO: change method parameters to be relevant to sharegroup (eg: memberId in place of deviceId)
 
     private static final int ACTION_GET_USERNAME = 1000;
@@ -148,11 +152,13 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
         public  final String name;
         public  final String deviceName;
         public  String dbFile;
+        public LongSparseArray<String> songCache;
 
         Member(String name, String deviceName, String dbFile) {
             this.name = name;
             this.deviceName = deviceName;
             this.dbFile = dbFile;
+            this.songCache = new LongSparseArray<>();
         }
     }
 
@@ -177,24 +183,34 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
         }
     }
 
-    public static void getSong(String memberName, long songId,
-                                 final GetSongListener getSongListener) {
+    public static void getSong(String memberName, final long songId,
+                               final GetSongListener getSongListener) {
         String memberId = currentGroup.getMemberId(memberName);
 
         ShareGroup group = ShareGroup.shareGroupWeakReference.get();
 
-        group.netService.sendRequest(memberId, ACTION_GET_SONG, songId,
-                new ResponseListener() {
-                    @Override
-                    public void onResponseReceived(Object responseData) {
-                        getSongListener.onGotSong(((File) responseData).getAbsolutePath());
-                    }
+        final Member member = currentGroup.getMemberFromUsername(memberName);
+        String cachedSongName = member.songCache.get(songId);
 
-                    @Override
-                    public void onRequestFailed() {
-                        getSongListener.onFailedGettingSong();
-                    }
-                });
+
+        if(cachedSongName != null && new File(Library.FILE_SAVE_LOCATION,cachedSongName).exists()) {
+            getSongListener.onGotSong(Library.FILE_SAVE_LOCATION+"/"+cachedSongName);
+        } else {
+
+            group.netService.sendRequest(memberId, ACTION_GET_SONG, songId,
+                    new ResponseListener() {
+                        @Override
+                        public void onResponseReceived(Object responseData) {
+                            member.songCache.put(songId, ((File) responseData).getName());
+                            getSongListener.onGotSong(((File) responseData).getAbsolutePath());
+                        }
+
+                        @Override
+                        public void onRequestFailed() {
+                            getSongListener.onFailedGettingSong();
+                        }
+                    });
+        }
     }
 
     static void getAlbumArt(String userName, long albumId,
@@ -215,6 +231,11 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
                         albumArtListener.onFailedGettingAlbumArt();
                     }
                 });
+    }
+
+    public static void deleteCacheFile(String fileName) {
+        ShareGroup group = ShareGroup.shareGroupWeakReference.get();
+        group.netService.deleteCacheFile(fileName);
     }
 
     private File albumArtRequest(Long albumId) {
