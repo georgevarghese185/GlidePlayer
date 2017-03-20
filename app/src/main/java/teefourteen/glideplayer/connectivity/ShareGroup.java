@@ -1,9 +1,12 @@
 package teefourteen.glideplayer.connectivity;
 
 
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.database.Cursor;
+import android.os.IBinder;
 import android.util.Log;
 import android.util.LongSparseArray;
 import android.widget.ArrayAdapter;
@@ -30,6 +33,7 @@ import teefourteen.glideplayer.connectivity.listeners.RequestListener;
 import teefourteen.glideplayer.connectivity.listeners.ResponseListener;
 import teefourteen.glideplayer.music.Song;
 import teefourteen.glideplayer.music.database.Library;
+import teefourteen.glideplayer.services.PlayerService;
 
 public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberListener,
         RequestListener, Closeable {
@@ -332,6 +336,11 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
     public void deleteGroup() {
         if(netService == null) { netService = NetworkService.getServiceBinder(); }
         netService.deleteGroup();
+        if(currentGroup != null) {
+            for (Member member : currentGroup.groupMembers.values()) {
+                clearPlayQueue(member.name);
+            }
+        }
     }
 
     public ArrayList<GlidePlayerGroup> getGroupList() {
@@ -395,6 +404,10 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
             @Override
             public void onOwnerDisconnected() {
                 if(currentGroup == null) return;
+                for(Member member: currentGroup.groupMembers.values()) {
+                    clearPlayQueue(member.name);
+                }
+
                 memberList.clear();
                 memberList.add(userName);
                 currentGroup = null;
@@ -454,8 +467,19 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
         groupCreationListenerList.remove(listener);
     }
 
-    public int getSessionId() {
-        return sessionId;
+    private void clearPlayQueue(final String userName) {
+        context.bindService(new Intent(context, PlayerService.class),
+                new ServiceConnection() {
+                    @Override
+                    public void onServiceConnected(ComponentName name, IBinder service) {
+                        ((PlayerService.PlayerServiceBinder)service).removeRemoteUserSongs(userName);
+                        context.unbindService(this);
+                    }
+
+                    @Override
+                    public void onServiceDisconnected(ComponentName name) {}
+                },
+                Context.BIND_ABOVE_CLIENT);
     }
 
     @Override
@@ -509,6 +533,8 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
         if(currentGroup.groupMembers.get(member) == null) {
             return;
         }
+
+        clearPlayQueue(currentGroup.groupMembers.get(member).name);
 
         memberList.remove(currentGroup.groupMembers.get(member).name);
         for(final GroupMemberListener listener : groupMemberListenerList) {

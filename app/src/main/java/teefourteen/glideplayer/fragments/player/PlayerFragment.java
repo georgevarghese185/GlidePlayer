@@ -268,4 +268,9 @@ public class PlayerFragment extends Fragment implements PlayerService.SongListen
         binder = null;
         getContext().unbindService(serviceConnection);
     }
+
+    @Override
+    public void onPlayQueueDestroyed() {
+        getActivity().finish();
+    }
 }

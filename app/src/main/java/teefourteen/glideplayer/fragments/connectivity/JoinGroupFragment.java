@@ -195,6 +195,7 @@ public class JoinGroupFragment extends Fragment implements GroupConnectionListen
         if (group != null) {
             group.registerGroupConnectionListener(this);
             group.registerGroupMemberListener(this);
+            joinStatus = group.getJoinStatus();
         }
     }
 }

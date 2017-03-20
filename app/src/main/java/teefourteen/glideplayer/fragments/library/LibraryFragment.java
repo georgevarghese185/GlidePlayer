@@ -227,6 +227,8 @@ public class LibraryFragment extends Fragment implements GroupMemberListener,
             ShareGroup group = shareGroupWeakReference.get();
             group.registerGroupMemberListener(this);
             group.registerGroupConnectionListener(this);
+
+            memberListAdapter.notifyDataSetChanged();
         }
     }
 
@@ -261,8 +263,6 @@ public class LibraryFragment extends Fragment implements GroupMemberListener,
         if(memberListAdapter != null) {
             memberListAdapter.notifyDataSetChanged();
         }
-        librarySpinner.performClick();
-        libraryChanged(new File(Library.DATABASE_LOCATION, Library.LOCAL_DATABASE_NAME));
     }
 
 

@@ -50,6 +50,7 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
         void onSongStopped();
         /** seek value between 0 and MusicPlayer.MAX_SEEK_VALUE inclusive */
         void onSeekUpdate(int currentSeek);
+        void onPlayQueueDestroyed();
     }
 
     public class PlayerServiceBinder extends Binder {
@@ -157,6 +158,20 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
                             listener.onSongPlaybackFailed();
                         }
                     });
+                }
+            }
+        }
+
+        public void removeRemoteUserSongs(String userName) {
+            if(playQueue != null) {
+                boolean empty = playQueue.removeRemoteSongs(userName);
+                if(empty) {
+                    player.reset();
+                    for(SongListener listener : songListenerList) {
+                        listener.onPlayQueueDestroyed();
+                    }
+                    playQueue = null;
+                    endService(true);
                 }
             }
         }
