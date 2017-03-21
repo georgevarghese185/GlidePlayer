@@ -142,14 +142,9 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
 
             playQueue.changeTrack(sharedPreferences.getInt(LAST_SONG_INDEX, 0));
             try {
-                player.prepareSong(playQueue.getCurrentPlaying(),
-                        new MediaPlayer.OnPreparedListener() {
-                            @Override
-                            public void onPrepared(MediaPlayer mp) {
-                                player.trueSeek(sharedPreferences.getInt(LAST_SEEK, 0));
-                                onSeekUpdated(player.getSeek());
-                            }
-                        });
+                player.prepareSong(playQueue.getCurrentPlaying());
+                player.trueSeek(sharedPreferences.getInt(LAST_SEEK, 0));
+                onSeekUpdated(player.getSeek());
             } catch (IOException e) {
                 for (final SongListener listener : songListenerList) {
                     EasyHandler.executeOnMainThread(new Runnable() {
@@ -213,7 +208,14 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
 
             switch (extraPlayControl) {
                 case PLAY:
-                    ((PlayerServiceBinder)binder).play();
+                    handler.executeAsync(new Runnable() {
+                        @Override
+                        public void run() {
+                            ((PlayerServiceBinder)binder).restoreSavedQueue();
+                            ((PlayerServiceBinder)binder).play();
+                        }
+                    }, PLAYER_HANDLER_THREAD_NAME);
+
                     break;
                 case PAUSE:
                     ((PlayerServiceBinder)binder).pause();

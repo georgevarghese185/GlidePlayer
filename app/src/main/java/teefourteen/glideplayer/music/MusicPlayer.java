@@ -9,11 +9,11 @@ import android.os.PowerManager;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.concurrent.CountDownLatch;
 
 import teefourteen.glideplayer.EasyHandler;
 import teefourteen.glideplayer.connectivity.ShareGroup;
 import teefourteen.glideplayer.music.database.Library;
-import teefourteen.glideplayer.services.PlayerService;
 
 
 public class MusicPlayer implements Closeable{
@@ -72,13 +72,11 @@ public class MusicPlayer implements Closeable{
 
     public boolean playSong(Song song) {
         try {
-            if (!prepared)
-                prepareSong(song, new MediaPlayer.OnPreparedListener() {
-                    @Override
-                    public void onPrepared(MediaPlayer mp) {
-                        play();
-                    }
-                });
+            if (!prepared) {
+                prepareSong(song);
+                if(prepared) play();
+                else return false;
+            }
             else if(!mediaPlayer.isPlaying()) {
                 play();
             }
@@ -150,44 +148,55 @@ public class MusicPlayer implements Closeable{
 
     //TODO: use listener for remote song, or return a different value for "downloading" instead of boolean.
     //TODO: or, try wait() notify()
-    public void prepareSong(final Song song,
-                             final MediaPlayer.OnPreparedListener preparedListener) throws IOException {
+    public boolean prepareSong(final Song song) throws IOException {
         if(mediaPlayer!=null) {
             mediaPlayer.release();
         }
         mediaPlayer = new MediaPlayer();
         mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
 
+        final CountDownLatch countDownLatch = new CountDownLatch(1);
+
         if(song.getFilePath().equals(Library.REMOTE_SONG_MISSING_PATH)) {
+            final boolean[] fetched = {false};
+
             ShareGroup.getSong(song.getLibraryUsername(), song.get_id(),
                     new ShareGroup.GetSongListener() {
                 @Override
                 public void onGotSong(String songFilePath) {
                     try {
+                        fetched[0] = true;
                         mediaPlayer.setDataSource(context, Uri.parse(songFilePath));
                         mediaPlayer.prepare();
                         prepared = true;
-                        preparedListener.onPrepared(mediaPlayer);
+                        countDownLatch.countDown();
                     } catch (IOException e) {
-                        //TODO: redo this logic
+                        prepared = false;
+                        countDownLatch.countDown();
                     }
                 }
 
                 @Override
                 public void onFailedGettingSong() {
-                    //TODO: redo this logic
+                    countDownLatch.countDown();
                 }
             });
+
+            try {
+                countDownLatch.await();
+                if(fetched[0] && prepared) {
+                    return true;
+                } else {
+                    return false;
+                }
+            } catch (InterruptedException e) {
+                return false;
+            }
         } else {
             mediaPlayer.setDataSource(context, Uri.parse(song.getFilePath()));
-            mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-                @Override
-                public void onPrepared(MediaPlayer mp) {
-                    prepared = true;
-                    preparedListener.onPrepared(mp);
-                }
-            });
-            mediaPlayer.prepareAsync();
+            mediaPlayer.prepare();
+            prepared = true;
+            return true;
         }
     }
 

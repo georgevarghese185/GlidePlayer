@@ -43,6 +43,7 @@ public class LibraryService extends IntentService {
                 Global.playQueue = new PlayQueue(lastQueue, libraryDb);
             } catch (IOException e) {
                 Global.playQueue = null;
+                lastQueue.delete();
             }
         }
 

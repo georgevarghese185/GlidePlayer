@@ -266,6 +266,8 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
         shareGroupWeakReference = new WeakReference<ShareGroup>(this);
         sessionId++;
 
+        deleteFiles();
+
         this.context = context;
         ShareGroup.userName = userName;
 

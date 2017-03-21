@@ -79,6 +79,10 @@ public class PlayQueue implements Parcelable {
                 queue.add(song);
             }
         }
+
+        if(queue.size()<1) {
+            throw new IOException("Invalid queue");
+        }
     }
 
 
