@@ -6,7 +6,12 @@ import android.database.sqlite.SQLiteDatabase;
 
 
 public abstract class Table {
-    String TABLE_NAME;
+    public String TABLE_NAME;
+
+    public interface RemoteColumns {
+        String IS_REMOTE = "is_remote";
+        String REMOTE_USERNAME = "libowner";
+    }
 
     Table(String tableName) {
         TABLE_NAME = tableName;

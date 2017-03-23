@@ -8,10 +8,11 @@ import android.provider.MediaStore;
 
 
 public class SongTable extends Table {
-    public static final String TABLE_NAME = "song";
+    public static final String localTableName = "song";
+    public static final String remoteTableName = "remote_song";
     ContentResolver resolver;
 
-    public class Columns implements BaseColumns {
+    public class Columns implements BaseColumns, RemoteColumns {
         public static final String SONG_ID = "song_id";
         public static final String ALBUM_ID = MediaStore.Audio.Media.ALBUM_ID;
         public static final String ARTIST_ID = MediaStore.Audio.Media.ARTIST_ID;
@@ -24,12 +25,11 @@ public class SongTable extends Table {
         public static final String TITLE = MediaStore.Audio.Media.TITLE;
         public static final String TRACK = MediaStore.Audio.Media.TRACK;
         public static final String YEAR = MediaStore.Audio.Media.YEAR;
-        public static final String IS_REMOTE = "is_remote";
-        public static final String REMOTE_USERNAME = "libowner";
     }
 
+    /** pass null for remote table */
     SongTable(ContentResolver resolver) {
-        super(TABLE_NAME);
+        super((resolver == null) ? remoteTableName : localTableName);
         this.resolver = resolver;
     }
 

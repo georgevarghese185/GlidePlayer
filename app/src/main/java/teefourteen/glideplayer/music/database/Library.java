@@ -28,25 +28,41 @@ public class Library {
     public static String DATABASE_LOCATION;
     public static String REMOTE_DATABASE_LOCATION;
     public static String REMOTE_COVERS_LOCATION;
+    private static Library library;
 
     private File dbFile;
     private static final int DATABASE_VERSION = 1;
-    private SQLiteDatabase libraryDb;
+    private SQLiteDatabase readableDb;
     private LibraryDbOpenHelper openHelper;
     private Table[] tables;
+    private Table[] remoteTables;
     private Context context;
 
-    public Library(Context context, File databaseFile) {
+    public static void initialize(Context context) {
+        library = new Library(context);
+        library.initializeLocalLibrary();
+        library.readableDb = library.openHelper.getReadableDatabase();
+    }
+
+    private Library(Context context) {
+        File databaseFile = new File(DATABASE_LOCATION, LOCAL_DATABASE_NAME);
         openHelper = new LibraryDbOpenHelper(context, databaseFile);
         dbFile = databaseFile;
         this.context = context;
 
+        //fill both Table arrays with same Table types and in the same order! This is used by the library get and send methods.
         tables = new Table[]{
                 new SongTable(context.getContentResolver()),
                 new AlbumTable(context.getContentResolver()),
-                new ArtistTable(context.getContentResolver())};
-    }
+                new ArtistTable(context.getContentResolver())
+        };
 
+        remoteTables = new Table[] {
+                new SongTable(null),
+                new AlbumTable(null),
+                new ArtistTable(null)
+        };
+    }
 
     private class LibraryDbOpenHelper extends SQLiteOpenHelper {
 
@@ -59,6 +75,10 @@ public class Library {
             for(Table table : tables) {
                 db.execSQL(table.createTableQuery());
             }
+
+            for(Table table : remoteTables) {
+                db.execSQL(table.createTableQuery());
+            }
         }
 
         @Override
@@ -67,14 +87,8 @@ public class Library {
         }
     }
 
-
-    public SQLiteDatabase getReadableDatabase() {
-        return new LibraryDbOpenHelper(context, dbFile).getReadableDatabase();
-    }
-
-
-    public void initializeTables() {
-        libraryDb = openHelper.getWritableDatabase();
+    private void initializeLocalLibrary() {
+        SQLiteDatabase libraryDb = openHelper.getWritableDatabase();
 
         libraryDb.beginTransaction();
 
@@ -88,41 +102,95 @@ public class Library {
         libraryDb.close();
     }
 
-    public static Cursor getSongs(SQLiteDatabase libraryDb) {
-        return querySongs(libraryDb, null, null);
+    private SQLiteDatabase getReadableDb() {
+        if(readableDb.isOpen()) {
+            return readableDb;
+        } else {
+            readableDb = openHelper.getReadableDatabase();
+            return readableDb;
+        }
     }
 
-    public static Cursor getSong(SQLiteDatabase libraryDb, long songId) {
-        return querySongs(libraryDb,
-                " WHERE " + SongTable.TABLE_NAME + "." + SongTable.Columns.SONG_ID + "=?"
+    public static Cursor getSongs(String userName) { return querySongs(userName, null, null); }
+
+    public static Cursor getSong(String userName ,long songId) {
+        return querySongs(userName,
+                " WHERE " + SongTable.localTableName + "." + SongTable.Columns.SONG_ID + "=?"
                 , new String[]{String.valueOf(songId)});
     }
 
-    public static Cursor getAlbumSongs(long albumId, SQLiteDatabase libraryDb) {
-        String selection = " WHERE " + SongTable.TABLE_NAME + "." + SongTable.Columns.ALBUM_ID + "=?";
+    public static Cursor getAlbumSongs(String userName ,long albumId) {
+        String selection = " WHERE " + SongTable.localTableName + "." + SongTable.Columns.ALBUM_ID + "=?";
         String[] selectionArgs = {String.valueOf(albumId)};
 
-        return querySongs(libraryDb, selection, selectionArgs);
+        return querySongs(userName, selection, selectionArgs);
     }
 
-    public static Cursor querySongs(SQLiteDatabase libraryDb, String selection,
-                                    String[] selectionArgs) {
+    public static Cursor querySongs(String userName, String selection, String[] selectionArgs) {
+        String songTable;
+        String albumTable;
+        String artistTable;
+
+        if(userName != null) {
+            songTable = SongTable.remoteTableName;
+            albumTable = AlbumTable.remoteTableName;
+            artistTable = ArtistTable.remoteTableName;
+
+            if(selection == null) {
+                selection = " WHERE ";
+            } else {
+                selection = selection + " AND ";
+            }
+
+            selection = selection + songTable + "." + SongTable.Columns.IS_REMOTE + "=?"
+                    + " AND " + songTable + "." + SongTable.Columns.REMOTE_USERNAME + "=?";
+
+            String newArgs[];
+            if(selectionArgs != null) {
+                newArgs = new String[selectionArgs.length + 2];
+                System.arraycopy(selectionArgs, 0, newArgs, 0, selectionArgs.length);
+                System.arraycopy(new String[]{"1", userName}, 0, newArgs, selectionArgs.length, 2);
+            } else {
+                newArgs = new String[]{"1", userName};
+            }
+
+            selectionArgs = newArgs;
+        } else {
+            songTable = SongTable.localTableName;
+            albumTable = AlbumTable.localTableName;
+            artistTable = ArtistTable.localTableName;
+        }
+
         String query = "SELECT * FROM "
-                + SongTable.TABLE_NAME + " LEFT JOIN " + AlbumTable.TABLE_NAME
-                + " ON " + SongTable.TABLE_NAME + "." + SongTable.Columns.ALBUM_ID + "=" + AlbumTable.TABLE_NAME + "." + AlbumTable.Columns.ALBUM_ID
-                + " LEFT JOIN " + ArtistTable.TABLE_NAME
-                + " ON " + SongTable.TABLE_NAME + "." + SongTable.Columns.ARTIST_ID + "=" + ArtistTable.TABLE_NAME + "." + ArtistTable.Columns.ARTIST_ID
+                + songTable + " LEFT JOIN " + albumTable
+                + " ON " + songTable + "." + SongTable.Columns.ALBUM_ID + "=" + albumTable + "." + AlbumTable.Columns.ALBUM_ID
+                + " LEFT JOIN " + artistTable
+                + " ON " + songTable + "." + SongTable.Columns.ARTIST_ID + "=" + artistTable + "." + ArtistTable.Columns.ARTIST_ID
                 + ((selection==null)? "" : selection)
-                + " ORDER BY " + SongTable.TABLE_NAME + "." + SongTable.Columns.TITLE;
+                + " ORDER BY " + songTable + "." + SongTable.Columns.TITLE;
 
 
-        return libraryDb.rawQuery(query,selectionArgs);
+        return library.getReadableDb().rawQuery(query,selectionArgs);
     }
 
-    public static Cursor getAlbums(SQLiteDatabase libraryDb) {
-        String query = "SELECT * FROM " + AlbumTable.TABLE_NAME;
+    public static Cursor getAlbums(String userName) {
+        String albumTable;
+        String selection = null;
+        String selectionArgs[] = null;
+        if(userName != null) {
+            albumTable = AlbumTable.remoteTableName;
+            selection = " WHERE " + AlbumTable.Columns.IS_REMOTE + "=?"
+                    + " AND " + AlbumTable.Columns.REMOTE_USERNAME + "=?";
+            selectionArgs = new String[]{"1", userName};
+        } else {
+            albumTable = AlbumTable.localTableName;
+        }
+        
+        String query = "SELECT * FROM " + albumTable
+                + ((selection == null)? "" : selection)
+                + " ORDER BY " + AlbumTable.Columns.ALBUM_NAME;
 
-        return libraryDb.rawQuery(query,null);
+        return library.getReadableDb().rawQuery(query, selectionArgs);
     }
 
     public static long getLong(Cursor cursor, String column) {
@@ -137,16 +205,15 @@ public class Library {
         return cursor.getInt(cursor.getColumnIndex(column));
     }
 
-    public boolean sendOverStream(InputStream in, OutputStream out)throws JSONException, IOException {
-        libraryDb = openHelper.getReadableDatabase();
+    public static boolean sendOverStream(OutputStream out)throws JSONException, IOException {
+        SQLiteDatabase libraryDb = library.openHelper.getReadableDatabase();
 
         PrintWriter printWriter = new PrintWriter(out, true);
-        BufferedReader reader = new BufferedReader(new InputStreamReader(in));
 
         JSONObject jsonObject;
 
-        for(int i = 0; i < tables.length; i++) {
-            Cursor cursor = tables[i].getFullTable(libraryDb);
+        for(int i = 0; i < library.tables.length; i++) {
+            Cursor cursor = library.tables[i].getFullTable(libraryDb);
             cursor.moveToFirst(); //TODO: if false do something
 
             //send number of rows
@@ -177,18 +244,16 @@ public class Library {
     }
 
 
-    public boolean getFromStream(InputStream in, OutputStream out)throws JSONException, IOException {
-        libraryDb = openHelper.getWritableDatabase();
+    public static boolean getFromStream(InputStream in, String userName)throws JSONException, IOException {
+        SQLiteDatabase libraryDb = library.openHelper.getWritableDatabase();
 
-        //TODO: clear album art cache on disconnect/close app
         BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-        PrintWriter printWriter = new PrintWriter(out, true);
 
         JSONObject jsonObject;
 
         libraryDb.beginTransaction();
 
-        for(int i = 0; i < tables.length; i++) {
+        for(int i = 0; i < library.remoteTables.length; i++) {
             //get number of rows
             int rows = Integer.parseInt(reader.readLine());
 
@@ -211,27 +276,29 @@ public class Library {
                 }
 
                 //insert row
-                tables[i].insertValues(values, libraryDb);
+                library.remoteTables[i].insertValues(values, libraryDb);
             }
         }
 
         libraryDb.setTransactionSuccessful();
         libraryDb.endTransaction();
 
-
-
         libraryDb.beginTransaction();
 
         ContentValues v;
 
+        //set userName
+        v = new ContentValues();
+        v.put(Table.RemoteColumns.IS_REMOTE, 1);
+        v.put(Table.RemoteColumns.REMOTE_USERNAME, userName);
+        for(Table table : library.remoteTables) {libraryDb.update(table.TABLE_NAME,v,null,null);}
+
         v = new ContentValues();
         v.put(SongTable.Columns.FILE_PATH, REMOTE_SONG_MISSING_PATH);
-        v.put(SongTable.Columns.IS_REMOTE, 1);
-        v.put(SongTable.Columns.REMOTE_USERNAME, dbFile.getName());
 
-        libraryDb.update(SongTable.TABLE_NAME,v, null, null);
+        libraryDb.update(SongTable.remoteTableName,v, null, null);
 
-        Cursor cursor = libraryDb.query(true, AlbumTable.TABLE_NAME,
+        Cursor cursor = libraryDb.query(true, AlbumTable.localTableName,
                 new String[]{AlbumTable.Columns.ALBUM_ID, AlbumTable.Columns.ALBUM_ART},
                 null, null, null, null, null, null);
 
@@ -241,13 +308,13 @@ public class Library {
             if(albumArt != null) {
                 String[] split = albumArt.split("/");
 
-                albumArt = Library.REMOTE_COVERS_LOCATION + "/" + dbFile.getName()
+                albumArt = Library.REMOTE_COVERS_LOCATION + "/" + userName
                         + "/" + split[split.length - 1];
 
                 v = new ContentValues();
                 v.put(AlbumTable.Columns.ALBUM_ART, albumArt);
 
-                libraryDb.update(AlbumTable.TABLE_NAME, v,
+                libraryDb.update(AlbumTable.remoteTableName, v,
                         AlbumTable.Columns.ALBUM_ID + "=?", new String[]{String.valueOf(albumId)});
             }
         }
@@ -257,7 +324,7 @@ public class Library {
         libraryDb.setTransactionSuccessful();
         libraryDb.endTransaction();
 
-        File remoteCoversLocation = new File(REMOTE_COVERS_LOCATION, dbFile.getName());
+        File remoteCoversLocation = new File(REMOTE_COVERS_LOCATION, userName);
         if(!remoteCoversLocation.exists()) {
             remoteCoversLocation.mkdir();
         }
@@ -266,10 +333,9 @@ public class Library {
         return true;
     }
 
-    public File getAlbumArt(long albumId) {
-        libraryDb = openHelper.getReadableDatabase();
+    public static File getAlbumArt(long albumId) {
 
-        Cursor cursor = libraryDb.query(true, AlbumTable.TABLE_NAME,
+        Cursor cursor = library.getReadableDb().query(true, AlbumTable.localTableName,
                 new String[]{AlbumTable.Columns.ALBUM_ART},
                 AlbumTable.Columns.ALBUM_ID + "=?",
                 new String[]{String.valueOf(albumId)},
@@ -283,8 +349,6 @@ public class Library {
         }
 
         cursor.close();
-
-        libraryDb.close();
         return (path == null) ? null : new File(path);
     }
 }

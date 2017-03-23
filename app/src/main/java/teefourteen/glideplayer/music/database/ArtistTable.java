@@ -7,32 +7,34 @@ import android.provider.BaseColumns;
 import android.provider.MediaStore;
 
 public class ArtistTable extends Table {
-    public static final String TABLE_NAME = "music_artist";
+    public static final String localTableName = "artist";
+    public static final String remoteTableName = "remote_artist";
     ContentResolver resolver;
 
-    public static class Columns implements BaseColumns {
+    public static class Columns implements BaseColumns, RemoteColumns {
         public static final String ARTIST_ID = "artist_id";
         public static final String ARTIST_NAME = MediaStore.Audio.Artists.ARTIST;
         public static final String NUMBER_OF_ALBUMS = MediaStore.Audio.Artists.NUMBER_OF_ALBUMS;
         public static final String NUMBER_OF_TRACKS = MediaStore.Audio.Artists.NUMBER_OF_TRACKS;
     }
 
+    /** pass null for remote table */
     ArtistTable(ContentResolver resolver) {
-        super(TABLE_NAME);
+        super((resolver == null) ? remoteTableName : localTableName);
         this.resolver = resolver;
     }
 
     @Override
     public String createTableQuery() {
-        String query = "CREATE TABLE " + TABLE_NAME + "("
+        return  "CREATE TABLE " + TABLE_NAME + "("
                 + BaseColumns._ID + " INTEGER" + ", "
                 + BaseColumns._COUNT + " INTEGER" + ", "
                 + Columns.ARTIST_ID + " INTEGER" + ", "
                 + Columns.ARTIST_NAME + " TEXT" + ", "
                 + Columns.NUMBER_OF_ALBUMS + " INTEGER" + ", "
-                + Columns.NUMBER_OF_TRACKS + " INTEGER" + ")";
-
-        return query;
+                + Columns.NUMBER_OF_TRACKS + " INTEGER" + ", "
+                + Columns.IS_REMOTE + " INTEGER" + ", "
+                + Columns.REMOTE_USERNAME + " TEXT" + ")";
     }
 
     @Override
@@ -57,6 +59,7 @@ public class ArtistTable extends Table {
         values.put(Columns.ARTIST_NAME, Library.getString(cursor, MediaStore.Audio.Artists.ARTIST));
         values.put(Columns.NUMBER_OF_ALBUMS, Library.getInt(cursor, MediaStore.Audio.Artists.NUMBER_OF_ALBUMS));
         values.put(Columns.NUMBER_OF_TRACKS, Library.getInt(cursor, MediaStore.Audio.Artists.NUMBER_OF_TRACKS));
+        values.put(Columns.IS_REMOTE, 0);
 
         return values;
     }

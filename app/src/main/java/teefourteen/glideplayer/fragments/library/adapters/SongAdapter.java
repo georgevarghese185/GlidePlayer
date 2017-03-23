@@ -52,16 +52,14 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.SongHolder> {
     class SongHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
         private View trackView;
         private Song song;
-        private Context context;
         private int position;
         private TextView trackArtist;
         private TextView trackAlbum;
         private TextView trackTitle;
         private ImageView trackAlbumArt;
 
-        SongHolder(Context context, View itemView) {
+        SongHolder(View itemView) {
             super(itemView);
-            this.context = context;
             this.trackView = itemView;
 
             trackArtist = (TextView) trackView.findViewById(R.id.trackArtist);
@@ -171,7 +169,7 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.SongHolder> {
         View view = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.track, parent, false);
 
-        return new SongHolder(parent.getContext(), view);
+        return new SongHolder(view);
     }
 
     public void cancelImageLoad(RecyclerView.ViewHolder viewHolder) {

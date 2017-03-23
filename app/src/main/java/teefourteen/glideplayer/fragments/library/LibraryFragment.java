@@ -28,6 +28,7 @@ import teefourteen.glideplayer.activities.PlayerActivity;
 import teefourteen.glideplayer.connectivity.ShareGroup;
 import teefourteen.glideplayer.connectivity.listeners.GroupConnectionListener;
 import teefourteen.glideplayer.connectivity.listeners.GroupMemberListener;
+import teefourteen.glideplayer.fragments.library.adapters.AlbumAdapter;
 import teefourteen.glideplayer.music.PlayQueue;
 import teefourteen.glideplayer.fragments.library.adapters.SongAdapter;
 import teefourteen.glideplayer.music.database.Library;
@@ -36,7 +37,7 @@ import static teefourteen.glideplayer.Global.playQueue;
 import static teefourteen.glideplayer.connectivity.ShareGroup.shareGroupWeakReference;
 
 public class LibraryFragment extends Fragment implements GroupMemberListener,
-        GroupConnectionListener, SongAdapter.SongClickListener {
+        GroupConnectionListener, SongAdapter.SongClickListener, AlbumAdapter.AlbumClickListener {
     private boolean fragmentInitialized = false;
     private View rootView;
     private ArrayAdapter<String> memberListAdapter;
@@ -102,13 +103,9 @@ public class LibraryFragment extends Fragment implements GroupMemberListener,
          initSpinner();
 
         if(!fragmentInitialized) {
-            SQLiteDatabase libraryDb = new Library(getContext(),
-                    new File(Library.DATABASE_LOCATION, Library.LOCAL_DATABASE_NAME))
-                    .getReadableDatabase();
+            songsFragment = SongsFragment.newInstance(Library.getSongs(null),this);
 
-            songsFragment = SongsFragment.newInstance(Library.getSongs(libraryDb),this);
-
-            albumsFragment = new AlbumsFragment();
+            albumsFragment = AlbumsFragment.newInstance(Library.getAlbums(null), this);
         }
 
         Toolbar toolbar = (Toolbar) rootView.findViewById(R.id.library_toolbar);
@@ -165,15 +162,13 @@ public class LibraryFragment extends Fragment implements GroupMemberListener,
                         lastPosition = position;
                     }
                     String name = group.getMemberList().get(position);
-                    File dbFile;
+
                     if (name.equals(ShareGroup.userName)) {
-                        dbFile = new File(Library.DATABASE_LOCATION, Library.LOCAL_DATABASE_NAME);
-                    } else {
-                        dbFile = ShareGroup.getLibraryFile(name);
+                        name = null;
                     }
 
-                    if (dbFile != null && dbFile.exists() && fragmentInitialized) {
-                        libraryChanged(dbFile);
+                    if (fragmentInitialized) {
+                        libraryChanged(name);
                     }
                 }
 
@@ -184,15 +179,14 @@ public class LibraryFragment extends Fragment implements GroupMemberListener,
         } else {
             ((ViewGroup)rootView.findViewById(R.id.library_app_bar)).removeView(librarySpinner);
             if(fragmentInitialized) {
-                libraryChanged(new File(Library.DATABASE_LOCATION, Library.LOCAL_DATABASE_NAME));
+                libraryChanged(null);
             }
         }
     }
 
-    private void libraryChanged(File dbFile) {
-        SQLiteDatabase libraryDb = new Library(getContext(), dbFile).getReadableDatabase();
-        songsFragment.onLibraryChanged(Library.getSongs(libraryDb));
-        albumsFragment.onLibraryChanged(Library.getAlbums(libraryDb));
+    private void libraryChanged(String userName) {
+        songsFragment.onLibraryChanged(Library.getSongs(userName));
+        albumsFragment.onLibraryChanged(Library.getAlbums(userName));
     }
 
     @Override
@@ -204,6 +198,11 @@ public class LibraryFragment extends Fragment implements GroupMemberListener,
         Intent intent = new Intent(getContext(), PlayerActivity.class);
         intent.putExtra(PlayerActivity.EXTRA_PLAY_QUEUE, playQueue);
         getActivity().startActivity(intent);
+    }
+
+    @Override
+    public void onAlbumClicked(Cursor albumCursor, int position) {
+
     }
 
     @Override

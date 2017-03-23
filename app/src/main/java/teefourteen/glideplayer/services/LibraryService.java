@@ -13,8 +13,6 @@ import teefourteen.glideplayer.Global;
 import teefourteen.glideplayer.music.PlayQueue;
 import teefourteen.glideplayer.music.database.Library;
 
-import static teefourteen.glideplayer.fragments.library.AlbumsFragment.albumCursor;
-
 
 public class LibraryService extends IntentService {
     public LibraryService() {
@@ -28,19 +26,13 @@ public class LibraryService extends IntentService {
             file.delete();
         }
 
-        Library library = new Library(this, file);
-
-        library.initializeTables();
-
-        SQLiteDatabase libraryDb = library.getReadableDatabase();
-
-        albumCursor = Library.getAlbums(libraryDb);
+        Library.initialize(this);
 
         File lastQueue = new File(PlayerService.PLAY_QUEUE_FILE_PATH);
 
         if(lastQueue.exists()) {
             try {
-                Global.playQueue = new PlayQueue(lastQueue, libraryDb);
+                Global.playQueue = new PlayQueue(lastQueue);
             } catch (IOException e) {
                 Global.playQueue = null;
                 lastQueue.delete();

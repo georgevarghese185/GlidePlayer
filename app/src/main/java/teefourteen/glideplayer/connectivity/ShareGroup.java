@@ -46,7 +46,6 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
     private static final int ACTION_GET_SONG = 1002;
     private static final int ACTION_GET_ALBUM_ART = 1004;
     private static final int ACTION_NOTIFY_USERNAME_TAKEN = 1005;
-    private static int sessionId = 0;
     private boolean isOwner = false;
     private Mode mode;
     public static WeakReference<ShareGroup> shareGroupWeakReference;
@@ -114,8 +113,8 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
 
         void connected(){ memberCount++; }
 
-        synchronized void addMember(String deviceId, String username, String dbFile) {
-            groupMembers.put(deviceId, new Member(username, null, dbFile));
+        synchronized void addMember(String deviceId, String username) {
+            groupMembers.put(deviceId, new Member(username, null));
             memberCount++;
         }
 
@@ -155,13 +154,11 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
     public class Member{
         public  final String name;
         public  final String deviceName;
-        public  String dbFile;
         public LongSparseArray<String> songCache;
 
-        Member(String name, String deviceName, String dbFile) {
+        Member(String name, String deviceName) {
             this.name = name;
             this.deviceName = deviceName;
-            this.dbFile = dbFile;
             this.songCache = new LongSparseArray<>();
         }
     }
@@ -174,17 +171,6 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
     public interface GetAlbumArtListener {
         void onGotAlbumArt(File imageFile);
         void onFailedGettingAlbumArt();
-    }
-
-
-
-    public static File getLibraryFile(String memberName) {
-        Member member = currentGroup.getMemberFromUsername(memberName);
-        if(member != null) {
-            return new File(member.dbFile);
-        } else {
-            return null;
-        }
     }
 
     public static void getSong(String memberName, final long songId,
@@ -243,17 +229,11 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
     }
 
     private File albumArtRequest(Long albumId) {
-        Library library = new Library(context,
-                new File(Library.DATABASE_LOCATION,Library.LOCAL_DATABASE_NAME));
-
-        return library.getAlbumArt(albumId);
+        return Library.getAlbumArt(albumId);
     }
 
     private File songRequest(long songId) {
-        Library lib = new Library(context,
-                new File(Library.DATABASE_LOCATION, Library.LOCAL_DATABASE_NAME));
-
-        Cursor cursor = Library.getSong(lib.getReadableDatabase(), songId);
+        Cursor cursor = Library.getSong(null, songId);
         if(cursor.moveToFirst()) {
             return new File(Song.toSong(cursor).getFilePath());
         } else {
@@ -264,7 +244,6 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
     public ShareGroup(Context context, String userName, Mode mode){
         this.mode = mode;
         shareGroupWeakReference = new WeakReference<ShareGroup>(this);
-        sessionId++;
 
         deleteFiles();
 
@@ -520,7 +499,7 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
     public void newGroupFound(String Id, String groupName, String ownerName, String deviceName, int memberCount) {
         GlidePlayerGroup newGroup = new GlidePlayerGroup(
                 Id,
-                new Member(ownerName, deviceName, null),
+                new Member(ownerName, deviceName),
                 groupName,
                 memberCount);
 
@@ -575,7 +554,7 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
                     }
                 } else {
 
-                    currentGroup.addMember(memberId, newMemberUsername, null);
+                    currentGroup.addMember(memberId, newMemberUsername);
 
                     ResponseListener getLibrary = new ResponseListener() {
                         @Override
@@ -621,30 +600,18 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
     private void exchangeLibraries(final String memberId, Socket socket, boolean sendFirst) {
         final String newMemberUsername = currentGroup.groupMembers.get(memberId).name;
 
-        File remoteLibraryFile = new File(Library.REMOTE_DATABASE_LOCATION, newMemberUsername);
-        if (remoteLibraryFile.exists()) {
-            remoteLibraryFile.delete();
-        }
-        Library library = new Library(context,
-                new File(Library.DATABASE_LOCATION, Library.LOCAL_DATABASE_NAME));
-        Library remoteLibrary = new Library(context, remoteLibraryFile);
-
         try {
             if(sendFirst) {
-                library.sendOverStream(socket.getInputStream(), socket.getOutputStream());
-                remoteLibrary.getFromStream(socket.getInputStream(), socket.getOutputStream());
+                Library.sendOverStream(socket.getOutputStream());
+                Library.getFromStream(socket.getInputStream(), newMemberUsername);
             } else {
-                remoteLibrary.getFromStream(socket.getInputStream(), socket.getOutputStream());
-                library.sendOverStream(socket.getInputStream(), socket.getOutputStream());
+                Library.getFromStream(socket.getInputStream(), newMemberUsername);
+                Library.sendOverStream(socket.getOutputStream());
             }
 
             socket.close();
 
-            currentGroup.addMember(memberId, newMemberUsername,
-                    Library.DATABASE_LOCATION + "/" + newMemberUsername);
-
-            currentGroup.groupMembers.get(memberId).dbFile = remoteLibraryFile.getAbsolutePath();
-
+            currentGroup.addMember(memberId, newMemberUsername);
         } catch (IOException | JSONException e) {
             Log.d("exchange libs", e.toString());
         }
@@ -653,7 +620,7 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
     @Override //always on a separate thread
     public Object onNewRequest(String deviceId, int action, Object requestData) {
         if(action == ACTION_GET_USERNAME) {
-            currentGroup.addMember(deviceId, (String) requestData, null);
+            currentGroup.addMember(deviceId, (String) requestData);
             return userName;
         } else if(action == NetworkService.ACTION_RAW_SOCKET) {
             exchangeLibraries(deviceId, (Socket) requestData, false);
