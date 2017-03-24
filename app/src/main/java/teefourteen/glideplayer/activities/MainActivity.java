@@ -44,6 +44,7 @@ public class MainActivity extends AppCompatActivity
     private ViewGroup peekPlayerParent;
     private View peekPlayer;
     private Song currentSong = null;
+    private Runnable backOverride;
     ProgressBar peekPlayerSeekBar;
     
     protected void onCreate(Bundle savedInstanceState) {
@@ -152,6 +153,8 @@ public class MainActivity extends AppCompatActivity
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
+        } else if(backOverride != null) {
+            backOverride.run();
         } else {
             super.onBackPressed();
         }
@@ -289,6 +292,14 @@ public class MainActivity extends AppCompatActivity
     public void onPlayQueueDestroyed() {
         if(findViewById(R.id.peek_player) != null) {
             peekPlayerParent.removeView(peekPlayer);
+        }
+    }
+
+    public void overrideBackButton(Runnable backOverride) {
+        if(backOverride == null) {
+            this.backOverride = null;
+        } else {
+            this.backOverride = backOverride;
         }
     }
 }

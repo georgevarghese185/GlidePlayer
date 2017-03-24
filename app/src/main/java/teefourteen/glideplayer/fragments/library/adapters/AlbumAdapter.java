@@ -51,7 +51,7 @@ public class AlbumAdapter extends RecyclerView.Adapter<AlbumAdapter.AlbumHolder>
             albumName = (TextView) itemView.findViewById(R.id.album_album_name);
             artistName = (TextView) itemView.findViewById(R.id.album_album_artist);
 
-            albumArt.setOnClickListener(this);
+            itemView.setOnClickListener(this);
         }
 
         void bindView(Cursor albumCursor, int position) {
@@ -172,50 +172,4 @@ public class AlbumAdapter extends RecyclerView.Adapter<AlbumAdapter.AlbumHolder>
             albumCursor.close();
         }
     }
-
-    //
-//
-//    public AlbumAdapter(Context context, Cursor cursor) {
-//        super(context, cursor, 0);
-//    }
-//
-//    @Override
-//    public View newView(Context context, Cursor cursor, ViewGroup parent) {
-//        return LayoutInflater.from(context).inflate(R.layout.album, parent, false);
-//    }
-//
-//    public void setForRecycling(ListView listView) {
-//        listView.setRecyclerListener(new AbsListView.RecyclerListener() {
-//            @Override
-//            public void onMovedToScrapHeap(View view) {
-//                if(view.getTag() != null) {
-//                    asyncImageLoader.cancelTask((AsyncImageLoader.ImageLoadTask)view.getTag());
-//                }
-//            }
-//        });
-//    }
-//
-//    @Override
-//    public void bindView(View view, Context context, Cursor cursor) {
-//        TextView albumName = (TextView) view.findViewById(R.id.albumAlbumName);
-//        TextView artistName = (TextView) view.findViewById(R.id.albumArtist);
-//
-//        ImageView albumArt = (ImageView) view.findViewById(R.id.album_art);
-//
-//        albumName.setText(Library.getString(cursor, AlbumTable.Columns.ALBUM_NAME));
-//        artistName.setText(Library.getString(cursor, AlbumTable.Columns.ARTIST));
-//
-//        albumArt.setImageResource(R.drawable.ic_album_white_24dp);
-//
-//        String path = Library.getString(cursor, AlbumTable.Columns.ALBUM_ART);
-//        if(path!=null) {
-//            AsyncImageLoader.ImageLoadTask imageLoadTask =
-//                    asyncImageLoader.loadImageAsync(albumArt, path);
-//
-//            if(view.getTag() != null) {
-//                asyncImageLoader.cancelTask((AsyncImageLoader.ImageLoadTask) view.getTag());
-//            }
-//            view.setTag(imageLoadTask);
-//        }
-//    }
 }

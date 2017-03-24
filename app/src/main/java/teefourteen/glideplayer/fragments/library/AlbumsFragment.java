@@ -2,7 +2,6 @@ package teefourteen.glideplayer.fragments.library;
 
 
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
@@ -10,22 +9,30 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ListView;
 
 import teefourteen.glideplayer.R;
 import teefourteen.glideplayer.fragments.library.adapters.AlbumAdapter;
 
-public class AlbumsFragment extends Fragment implements LibraryFragment.LibraryChangedListener{
+public class AlbumsFragment extends Fragment implements LibraryFragment.LibraryChangedListener,
+        LibraryFragment.CloseCursorsListener {
     private AlbumAdapter albumAdapter;
+    private int savedPosition = -1;
+    private View rootView;
 
     public AlbumsFragment() {
         // Required empty public constructor
     }
 
     public static AlbumsFragment newInstance(Cursor albumCursor,
-                                      AlbumAdapter.AlbumClickListener listener) {
-        AlbumsFragment fragment = new AlbumsFragment();
-        fragment.albumAdapter = new AlbumAdapter(albumCursor, listener);
+                                             final AlbumAdapter.AlbumClickListener listener) {
+        final AlbumsFragment fragment = new AlbumsFragment();
+        fragment.albumAdapter = new AlbumAdapter(albumCursor, new AlbumAdapter.AlbumClickListener() {
+            @Override
+            public void onAlbumClicked(Cursor albumCursor, int position) {
+                fragment.savedPosition = position;
+                listener.onAlbumClicked(albumCursor, position);
+            }
+        });
         return fragment;
     }
 
@@ -33,12 +40,14 @@ public class AlbumsFragment extends Fragment implements LibraryFragment.LibraryC
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        View view = inflater.inflate(R.layout.fragment_albums, container, false);
+        rootView = inflater.inflate(R.layout.fragment_albums, container, false);
 
-        RecyclerView albumRecyclerView = (RecyclerView) view.findViewById(R.id.albumList);
+        RecyclerView albumRecyclerView = (RecyclerView) rootView.findViewById(R.id.albumList);
 
         albumRecyclerView.setHasFixedSize(true);
-        albumRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+
+        LinearLayoutManager layoutManager = new LinearLayoutManager(getContext());
+        albumRecyclerView.setLayoutManager(layoutManager);
 
         albumRecyclerView.setAdapter(albumAdapter);
 
@@ -51,20 +60,34 @@ public class AlbumsFragment extends Fragment implements LibraryFragment.LibraryC
 
         albumAdapter.notifyDataSetChanged();
 
-        return view;
+        if(savedPosition != -1) {
+            layoutManager.scrollToPosition(savedPosition);
+        }
+
+        return rootView;
+    }
+
+    public void resetSavedScroll() {
+        savedPosition = -1;
     }
 
     @Override
     public void onLibraryChanged(Cursor newCursor) {
         albumAdapter.changeCursor(newCursor);
         albumAdapter.notifyDataSetChanged();
+        savedPosition = -1;
     }
 
     @Override
-    public void onDestroy() {
-        super.onDestroy();
+    public void closeCursors() {
         if(albumAdapter != null) {
             albumAdapter.closeCursor();
         }
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+
     }
 }

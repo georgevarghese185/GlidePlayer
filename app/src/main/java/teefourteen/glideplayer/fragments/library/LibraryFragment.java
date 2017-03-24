@@ -3,12 +3,11 @@ package teefourteen.glideplayer.fragments.library;
 
 import android.content.Intent;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -21,9 +20,8 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 
-import java.io.File;
-
 import teefourteen.glideplayer.R;
+import teefourteen.glideplayer.activities.MainActivity;
 import teefourteen.glideplayer.activities.PlayerActivity;
 import teefourteen.glideplayer.connectivity.ShareGroup;
 import teefourteen.glideplayer.connectivity.listeners.GroupConnectionListener;
@@ -31,6 +29,7 @@ import teefourteen.glideplayer.connectivity.listeners.GroupMemberListener;
 import teefourteen.glideplayer.fragments.library.adapters.AlbumAdapter;
 import teefourteen.glideplayer.music.PlayQueue;
 import teefourteen.glideplayer.fragments.library.adapters.SongAdapter;
+import teefourteen.glideplayer.music.database.AlbumTable;
 import teefourteen.glideplayer.music.database.Library;
 
 import static teefourteen.glideplayer.Global.playQueue;
@@ -44,6 +43,8 @@ public class LibraryFragment extends Fragment implements GroupMemberListener,
     private Spinner librarySpinner;
     private SongsFragment songsFragment;
     private AlbumsFragment albumsFragment;
+    private LibraryPagerAdapter pagerAdapter;
+    private Runnable backAction = null;
     private static final int NUMBER_OF_TABS = 2;
     private static final int SONGS_TAB_INDEX = 0;
     private static final int ALBUMS_TAB_INDEX = 1;
@@ -57,10 +58,22 @@ public class LibraryFragment extends Fragment implements GroupMemberListener,
         void onLibraryChanged(Cursor newCursor);
     }
 
+    public interface CloseCursorsListener {
+        void closeCursors();
+    }
 
-    private class LibraryPagerAdapter extends FragmentPagerAdapter {
-        LibraryPagerAdapter(FragmentManager fm) {
+
+    private class LibraryPagerAdapter extends FragmentStatePagerAdapter {
+        FragmentManager fm;
+        Fragment songsFragment;
+        Fragment albumsFragment;
+        Fragment toReplace;
+
+        LibraryPagerAdapter(FragmentManager fm, Fragment songsFragment, Fragment albumsFragment) {
             super(fm);
+            this.fm = fm;
+            this.songsFragment = songsFragment;
+            this.albumsFragment = albumsFragment;
         }
 
         @Override
@@ -75,6 +88,16 @@ public class LibraryFragment extends Fragment implements GroupMemberListener,
         }
 
         @Override
+        public int getItemPosition(Object object) {
+            if(object == toReplace) {
+                toReplace = null;
+                return POSITION_NONE;
+            } else {
+                return POSITION_UNCHANGED;
+            }
+        }
+
+        @Override
         public CharSequence getPageTitle(int position) {
             if(position == SONGS_TAB_INDEX) {
                 return SONGS_TAB_TITLE;
@@ -83,6 +106,13 @@ public class LibraryFragment extends Fragment implements GroupMemberListener,
             } else {
                 return null;
             }
+        }
+
+        public void changeAlbumsFragment(Fragment fragment) {
+            toReplace = albumsFragment;
+            fm.beginTransaction().remove(albumsFragment).commit();
+            albumsFragment = fragment;
+            notifyDataSetChanged();
         }
 
         @Override
@@ -122,8 +152,8 @@ public class LibraryFragment extends Fragment implements GroupMemberListener,
         drawerToggle.syncState();
 
         ViewPager viewPager = (ViewPager) rootView.findViewById(R.id.library_view_pager);
-
-        viewPager.setAdapter(new LibraryPagerAdapter(getChildFragmentManager()));
+        pagerAdapter = new LibraryPagerAdapter(getChildFragmentManager(), songsFragment, albumsFragment);
+        viewPager.setAdapter(pagerAdapter);
 
         ((TabLayout)rootView.findViewById(R.id.library_tab_layout)).setupWithViewPager(viewPager);
 
@@ -186,6 +216,9 @@ public class LibraryFragment extends Fragment implements GroupMemberListener,
 
     private void libraryChanged(String userName) {
         songsFragment.onLibraryChanged(Library.getSongs(userName));
+        if(backAction != null) {
+            backAction.run();
+        }
         albumsFragment.onLibraryChanged(Library.getAlbums(userName));
     }
 
@@ -202,7 +235,30 @@ public class LibraryFragment extends Fragment implements GroupMemberListener,
 
     @Override
     public void onAlbumClicked(Cursor albumCursor, int position) {
+        String username = null;
+        albumCursor.moveToPosition(position);
+        if(Library.getInt(albumCursor, AlbumTable.Columns.IS_REMOTE) == 1) {
+            username = Library.getString(albumCursor, AlbumTable.Columns.REMOTE_USERNAME);
+        }
+        Cursor albumSongsCursor = Library.getAlbumSongs(username,
+                Library.getLong(albumCursor, AlbumTable.Columns.ALBUM_ID));
 
+        final SongsFragment albumSongsFragment = SongsFragment.newInstance(albumSongsCursor, this);
+        pagerAdapter.changeAlbumsFragment(albumSongsFragment);
+
+        final MainActivity mainActivity = (MainActivity) getActivity();
+
+        backAction = new Runnable() {
+            @Override
+            public void run() {
+                backAction = null;
+                pagerAdapter.changeAlbumsFragment(albumsFragment);
+                albumSongsFragment.closeCursors();
+                mainActivity.overrideBackButton(null);
+            }
+        };
+
+        mainActivity.overrideBackButton(backAction);
     }
 
     @Override
@@ -234,6 +290,8 @@ public class LibraryFragment extends Fragment implements GroupMemberListener,
     @Override
     public void onDestroy() {
         super.onDestroy();
+        songsFragment.closeCursors();
+        albumsFragment.closeCursors();
     }
 
     @Override

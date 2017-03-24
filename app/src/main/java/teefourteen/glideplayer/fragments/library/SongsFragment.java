@@ -14,7 +14,8 @@ import teefourteen.glideplayer.R;
 import teefourteen.glideplayer.music.*;
 import teefourteen.glideplayer.fragments.library.adapters.SongAdapter;
 
-public class SongsFragment extends Fragment implements LibraryFragment.LibraryChangedListener {
+public class SongsFragment extends Fragment implements LibraryFragment.LibraryChangedListener,
+        LibraryFragment.CloseCursorsListener {
     private SongAdapter songAdapter = null;
     private View rootView;
 
@@ -71,8 +72,7 @@ public class SongsFragment extends Fragment implements LibraryFragment.LibraryCh
     }
 
     @Override
-    public void onDestroy() {
-        super.onDestroy();
+    public void closeCursors() {
         if(songAdapter != null) {
             songAdapter.closeCursor();
         }
