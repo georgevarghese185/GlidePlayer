@@ -261,7 +261,7 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
 
     public void pause(){
         player.pauseSong();
-        playerNotification.displayPlayerNotification(playQueue.getCurrentPlaying(), false, true);
+        playerNotification.displayPlayerNotification(playQueue.getCurrentPlaying(), false, false);
         editor.putInt(LAST_SEEK, player.getTrueSeek()).apply();
 
         for(final SongListener listener : songListenerList) {
