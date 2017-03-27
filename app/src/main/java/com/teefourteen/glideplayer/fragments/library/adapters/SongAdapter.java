@@ -88,7 +88,7 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.SongHolder> {
             else trackArtist.setText(R.string.track_artist);
             trackTitle.setText(song.getTitle());
 
-            trackAlbumArt.setImageResource(R.drawable.ic_album_black_24dp);
+            trackAlbumArt.setImageResource(R.drawable.ic_album_white_24dp);
 
             fetchCover();
         }
