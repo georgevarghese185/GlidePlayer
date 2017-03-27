@@ -2,7 +2,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="teefourteen.glideplayer.fragments.connectivity.CreateGroupFragment">
+    tools:context="com.teefourteen.glideplayer.fragments.connectivity.CreateGroupFragment">
 
     <include
         android:id="@+id/close_connection"

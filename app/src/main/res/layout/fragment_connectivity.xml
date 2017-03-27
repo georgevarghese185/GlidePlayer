@@ -4,7 +4,7 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="teefourteen.glideplayer.fragments.connectivity.ConnectivityHomeFragment">
+    tools:context="com.teefourteen.glideplayer.fragments.connectivity.ConnectivityHomeFragment">
 
     <android.support.design.widget.AppBarLayout
         android:id="@+id/connectivity_app_bar"
