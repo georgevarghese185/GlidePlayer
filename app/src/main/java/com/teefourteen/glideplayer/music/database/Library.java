@@ -5,6 +5,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.provider.BaseColumns;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -17,8 +18,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.util.Iterator;
-
-import com.teefourteen.glideplayer.music.Song;
 
 
 public class Library {
@@ -97,8 +96,6 @@ public class Library {
 
         libraryDb.setTransactionSuccessful();
         libraryDb.endTransaction();
-
-        libraryDb.close();
     }
 
     private SQLiteDatabase getReadableDb() {
@@ -143,16 +140,18 @@ public class Library {
                 selection = selection + " AND ";
             }
 
-            selection = selection + songTable + "." + SongTable.Columns.IS_REMOTE + "=?"
-                    + " AND " + songTable + "." + SongTable.Columns.REMOTE_USERNAME + "=?";
+            selection = selection + songTable + "." + SongTable.Columns.REMOTE_USERNAME + "=?"
+                    + " AND " + albumTable + "." + AlbumTable.Columns.REMOTE_USERNAME  + "=?"
+                    + " AND " + artistTable + "." + ArtistTable.Columns.REMOTE_USERNAME  + "=?";
 
             String newArgs[];
             if(selectionArgs != null) {
-                newArgs = new String[selectionArgs.length + 2];
+                newArgs = new String[selectionArgs.length + 3];
                 System.arraycopy(selectionArgs, 0, newArgs, 0, selectionArgs.length);
-                System.arraycopy(new String[]{"1", userName}, 0, newArgs, selectionArgs.length, 2);
+                System.arraycopy(new String[]{userName, userName, userName}, 0, newArgs,
+                        selectionArgs.length, 3);
             } else {
-                newArgs = new String[]{"1", userName};
+                newArgs = new String[]{userName, userName, userName};
             }
 
             selectionArgs = newArgs;
@@ -240,7 +239,6 @@ public class Library {
             cursor.close();
         }
 
-        libraryDb.close();
         return true;
     }
 
@@ -267,15 +265,18 @@ public class Library {
                 while(names.hasNext()) {
                     String column = names.next();
                     Object value = jsonObject.get(column);
-                    if(value instanceof Long || value instanceof Integer) {
+
+                    if(column.equals(BaseColumns._ID) || column.equals(BaseColumns._COUNT)) {
+                        continue;
+                    } else if(column.equals(Table.RemoteColumns.IS_REMOTE)) {
+                        values.put(Table.RemoteColumns.IS_REMOTE, 1);
+                    } else if(value instanceof Long || value instanceof Integer) {
                         values.put(column, Long.parseLong(jsonObject.getString(column)));
                     } else if(value instanceof String) {
                         values.put(column, jsonObject.getString(column));
-                    } else {
-                        //TODO: something's wrong
                     }
                 }
-
+                values.put(Table.RemoteColumns.REMOTE_USERNAME, userName);
                 //insert row
                 library.remoteTables[i].insertValues(values, libraryDb);
             }
@@ -290,18 +291,15 @@ public class Library {
 
         //set userName
         v = new ContentValues();
-        v.put(Table.RemoteColumns.IS_REMOTE, 1);
-        v.put(Table.RemoteColumns.REMOTE_USERNAME, userName);
-        for(Table table : library.remoteTables) {libraryDb.update(table.TABLE_NAME,v,null,null);}
-
-        v = new ContentValues();
         v.put(SongTable.Columns.FILE_PATH, REMOTE_SONG_MISSING_PATH);
 
-        libraryDb.update(SongTable.remoteTableName,v, null, null);
+        libraryDb.update(SongTable.remoteTableName,v,
+                SongTable.Columns.REMOTE_USERNAME + "=?", new String[]{userName});
 
-        Cursor cursor = libraryDb.query(true, AlbumTable.localTableName,
+        Cursor cursor = libraryDb.query(true, AlbumTable.remoteTableName,
                 new String[]{AlbumTable.Columns.ALBUM_ID, AlbumTable.Columns.ALBUM_ART},
-                null, null, null, null, null, null);
+                AlbumTable.Columns.REMOTE_USERNAME + "=?", new String[]{userName},
+                null, null, null, null);
 
         for(boolean res = cursor.moveToFirst(); (res); res = cursor.moveToNext()) {
             long albumId = getLong(cursor,AlbumTable.Columns.ALBUM_ID);
@@ -316,7 +314,9 @@ public class Library {
                 v.put(AlbumTable.Columns.ALBUM_ART, albumArt);
 
                 libraryDb.update(AlbumTable.remoteTableName, v,
-                        AlbumTable.Columns.ALBUM_ID + "=?", new String[]{String.valueOf(albumId)});
+                        AlbumTable.Columns.REMOTE_USERNAME + "=?"
+                                + " AND " + AlbumTable.Columns.ALBUM_ID + "=?",
+                        new String[]{userName, String.valueOf(albumId)});
             }
         }
 
@@ -330,7 +330,6 @@ public class Library {
             remoteCoversLocation.mkdir();
         }
 
-        libraryDb.close();
         return true;
     }
 
@@ -365,7 +364,6 @@ public class Library {
 
         libraryDb.setTransactionSuccessful();
         libraryDb.endTransaction();
-        libraryDb.close();
     }
 
     public static void clearRemoteTables() {

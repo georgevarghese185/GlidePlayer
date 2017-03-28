@@ -311,8 +311,6 @@ public class LibraryFragment extends Fragment implements GroupMemberListener,
         if(memberListAdapter != null) {
             memberListAdapter.notifyDataSetChanged();
         }
-
-        librarySpinner.performClick();
     }
 
     @Override
