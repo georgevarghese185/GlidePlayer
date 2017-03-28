@@ -2,7 +2,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="teefourteen.glideplayer.fragments.connectivity.CreateGroupFragment">
+    tools:context="com.teefourteen.glideplayer.fragments.connectivity.CreateGroupFragment">
 
     <include
         android:id="@+id/close_connection"
@@ -11,7 +11,7 @@
         layout="@layout/close_connection_button" />
 
     <TextView
-        android:text="Connected Group members"
+        android:text="Group members"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/close_connection"
@@ -51,7 +51,7 @@
         android:layout_height="wrap_content"
         android:layout_alignLeft="@id/group_name"
         android:layout_above="@id/group_name"
-        android:id="@+id/textView3"
+        android:id="@+id/group_name_caption"
         android:textColor="@android:color/black" />
 
     <TextView

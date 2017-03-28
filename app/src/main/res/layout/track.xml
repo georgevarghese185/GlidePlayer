@@ -7,13 +7,14 @@
     android:clickable="false">
 
     <ImageView
+        android:id="@+id/trackAlbumArt"
         android:layout_width="60dp"
         android:layout_height="60dp"
-        android:id="@+id/trackAlbumArt"
-        android:contentDescription="@string/albumArt_description"
-        android:layout_margin="5dp"
         android:layout_gravity="center_vertical"
-        android:clickable="false" />
+        android:layout_margin="5dp"
+        android:background="@color/album_art_background"
+        android:clickable="false"
+        android:contentDescription="@string/albumArt_description" />
 
     <LinearLayout
         android:orientation="vertical"

@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="230dp"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="@color/notification_player_background">
+
+    <ImageView
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        android:background="@color/album_art_background"
+        app:srcCompat="@drawable/ic_album_white_24dp"
+        android:id="@+id/notification_expanded_album_art"/>
+
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:id="@+id/notification_track_info"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/notification_expanded_album_art"
+        android:layout_marginLeft="5dp">
+
+        <TextView
+            android:text="Unknown Artist"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/notification_expanded_track_artist"
+            android:textColor="@android:color/darker_gray"
+            android:layout_weight="1"
+            android:gravity="bottom" />
+
+
+        <TextView
+            android:text="Title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/notification_expanded_track_title"
+            android:textColor="@android:color/white"
+            android:maxLines="1"
+            android:scrollHorizontally="true"
+            android:ellipsize="end"
+            android:layout_below="@id/notification_expanded_album_art"
+            android:layout_weight="1"
+            android:gravity="top"
+            android:textSize="18sp" />
+
+        <TextView
+            android:text="Unknown Album"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:id="@+id/notification_expanded_track_album"
+            android:textColor="@android:color/darker_gray"
+            android:layout_weight="1"
+            android:maxLines="1"
+            android:scrollHorizontally="true"
+            android:ellipsize="end" />
+
+    </LinearLayout>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_toRightOf="@id/notification_expanded_album_art"
+        android:layout_alignBottom="@id/notification_expanded_album_art">
+
+        <ImageView
+            android:layout_height="match_parent"
+            android:layout_width="64dp"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            app:srcCompat="@drawable/glideplayer_play_white"
+            android:id="@+id/notification_expanded_play_pause"
+            android:layout_centerHorizontal="true" />
+
+        <ImageView
+            android:layout_width="54dp"
+            android:layout_height="match_parent"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            app:srcCompat="@drawable/glideplayer_skip_next_white"
+            android:id="@+id/notification_expanded_next"
+            android:layout_toRightOf="@id/notification_expanded_play_pause"/>
+
+
+        <ImageView
+            android:layout_width="54dp"
+            android:layout_height="match_parent"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            app:srcCompat="@drawable/glideplayer_skip_prev_white"
+            android:id="@+id/notification_expanded_prev"
+            android:layout_toLeftOf="@id/notification_expanded_play_pause"/>
+    </RelativeLayout>
+
+</RelativeLayout>
