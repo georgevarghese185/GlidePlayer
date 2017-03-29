@@ -42,6 +42,45 @@
             android:textColor="#e5e5e5"
             android:layout_marginTop="20dp" />
 
+        <Button
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/ic_format_list_bulleted_black_24dp"
+            android:id="@+id/player_queue_button"
+            android:layout_marginTop="54dp"
+            android:layout_below="@+id/player_track_album"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true"
+            android:layout_marginRight="40dp"
+            android:layout_marginEnd="40dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Unknown Album"
+            android:id="@+id/player_track_album"
+            android:textSize="15sp"
+            android:textColor="#8d8d8d"
+            android:layout_marginTop="21dp"
+            android:layout_below="@+id/player_track_title"
+            android:layout_centerHorizontal="true" />
+        <RelativeLayout
+            android:layout_height="match_parent"
+            android:layout_width="match_parent"
+            android:layout_below="@+id/player_track_album"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+            android:layout_marginTop="100dp">
+        <SeekBar
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/player_track_seek"
+            android:layout_below="@+id/player_track_title"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+            android:layout_marginTop="28dp" />
+
         <ImageView
             android:layout_width="60dp"
             android:layout_height="60dp"
@@ -55,52 +94,27 @@
             android:layout_centerHorizontal="true" />
 
         <ImageView
-            android:layout_width="45dp"
-            android:layout_height="45dp"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
             android:id="@+id/player_prev_button"
             app:srcCompat="@drawable/glideplayer_skip_prev_white"
             android:layout_alignTop="@+id/player_play_button"
-            android:layout_toStartOf="@+id/player_track_artist"
-            android:layout_alignBottom="@+id/player_play_button"
-            android:layout_toLeftOf="@+id/player_track_artist" />
+            android:layout_toLeftOf="@+id/player_play_button"
+            android:layout_marginRight="34dp"
+            android:layout_marginEnd="34dp" />
 
         <ImageView
-            android:layout_width="45dp"
-            android:layout_height="45dp"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
             android:id="@+id/player_next_button"
             app:srcCompat="@drawable/glideplayer_skip_next_white"
+            android:layout_marginLeft="32dp"
+            android:layout_marginStart="32dp"
             android:layout_alignTop="@+id/player_play_button"
-            android:layout_toEndOf="@+id/player_track_artist"
-            android:layout_alignBottom="@+id/player_play_button"
-            android:layout_toRightOf="@+id/player_track_artist" />
+            android:layout_toRightOf="@+id/player_play_button" />
 
-        <Button
-            style="?android:attr/buttonStyleSmall"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@drawable/ic_format_list_bulleted_black_24dp"
-            android:id="@+id/player_queue_button"
-            android:layout_alignTop="@+id/player_album_art"
-            android:layout_toRightOf="@+id/player_album_art" />
+        </RelativeLayout>
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Unknown Album"
-            android:id="@+id/player_track_album"
-            android:textSize="15sp"
-            android:textColor="#8d8d8d"
-            android:layout_marginTop="21dp"
-            android:layout_below="@+id/player_track_title"
-            android:layout_centerHorizontal="true" />
 
-        <SeekBar
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/player_track_seek"
-            android:layout_below="@+id/player_track_album"
-            android:layout_alignParentLeft="true"
-            android:layout_alignParentStart="true"
-            android:layout_marginTop="28dp" />
 
 </RelativeLayout>
