@@ -1,4 +1,6 @@
 Copyright (c) 2016 - 2017, George Varghese M.
+
+(Note: This project is currently unlicensed and NOT open sourced. You do not have permission to reproduce or publish the source code or the application anywhere. However, I am planning to make it open sourced once I reach a certain level of progress, perhaps, in the next few months. So stick around)
 # GlidePlayer
 An android app that should make locally sharing music easier.
 
@@ -20,8 +22,11 @@ This project is both a way of implementing an idea of mine and also to learn And
 * More possible features to take shape in the future.
 
 
-### Current progress
-What the app can do so far
-* Play local songs like a simple music player.
+### Current progress: 
+##### Beta Version 0.1 Released
+You can download the app from Google Play Store at this link: https://play.google.com/store/apps/details?id=com.teefourteen.glideplayer or you can download the apk from the release section of the GitHub project.
+
+#### What the app can do so far
+* Play local songs like a simple music player
 * Connect to other devices over a Wifi-Direct group
-* Two and more devices running the app and joining a WifiDirect netowork together can share their music libraries with each other and play any song from each other's phone. Very bare bones feature working right now with quite a lot of bugs.
+* Two and more devices running the app and joining a WifiDirect network together can share their music libraries with each other and play any song from each other's device. The song isn't buffered though, it starts playing only once the entire song file has been downloaded, which can take a while
