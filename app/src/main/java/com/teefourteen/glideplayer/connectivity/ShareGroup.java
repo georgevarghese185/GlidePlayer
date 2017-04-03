@@ -21,6 +21,7 @@ import java.lang.ref.WeakReference;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.concurrent.CountDownLatch;
 
 import com.teefourteen.glideplayer.AppNotification;
 import com.teefourteen.glideplayer.EasyHandler;
@@ -163,18 +164,7 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
         }
     }
 
-    public interface GetSongListener {
-        void onGotSong(String songFilePath);
-        void onFailedGettingSong();
-    }
-
-    public interface GetAlbumArtListener {
-        void onGotAlbumArt(File imageFile);
-        void onFailedGettingAlbumArt();
-    }
-
-    public static void getSong(String memberName, final long songId,
-                               final GetSongListener getSongListener) {
+    public static CacheFile getSong(String memberName, final long songId) {
         String memberId = currentGroup.getMemberId(memberName);
 
         ShareGroup group = ShareGroup.shareGroupWeakReference.get();
@@ -184,43 +174,63 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
 
 
         if(cachedSongName != null && new File(Library.FILE_SAVE_LOCATION,cachedSongName).exists()) {
-            getSongListener.onGotSong(Library.FILE_SAVE_LOCATION+"/"+cachedSongName);
+            return new CacheFile(new File(Library.FILE_SAVE_LOCATION,cachedSongName));
         } else {
-
+            final CountDownLatch countDownLatch = new CountDownLatch(1);
+            final CacheFile file[] = {null};
             group.netService.sendRequest(memberId, ACTION_GET_SONG, songId,
                     new ResponseListener() {
                         @Override
                         public void onResponseReceived(Object responseData) {
-                            member.songCache.put(songId, ((File) responseData).getName());
-                            getSongListener.onGotSong(((File) responseData).getAbsolutePath());
+                            member.songCache.put(songId, ((CacheFile) responseData)
+                                    .getFile().getName());
+                            file[0] = (CacheFile) responseData;
+                            countDownLatch.countDown();
                         }
 
                         @Override
                         public void onRequestFailed() {
-                            getSongListener.onFailedGettingSong();
+                            file[0] = null;
+                            countDownLatch.countDown();
                         }
                     });
+
+            try {
+                countDownLatch.await();
+                return file[0];
+            } catch (InterruptedException e) {
+                return null;
+            }
         }
     }
 
-    static void getAlbumArt(String userName, long albumId,
-                                   final GetAlbumArtListener albumArtListener) {
+    static CacheFile getAlbumArt(String userName, long albumId) {
+        if(currentGroup == null) return null;
         String memberId = currentGroup.getMemberId(userName);
 
         ShareGroup group = ShareGroup.shareGroupWeakReference.get();
-
+        final CountDownLatch countDownLatch = new CountDownLatch(1);
+        final CacheFile file[] = {null};
         group.netService.sendRequest(memberId, ACTION_GET_ALBUM_ART, albumId,
                 new ResponseListener() {
                     @Override
                     public void onResponseReceived(Object responseData) {
-                        albumArtListener.onGotAlbumArt((File) responseData);
+                        file[0] = (CacheFile) responseData;
+                        countDownLatch.countDown();
                     }
 
                     @Override
                     public void onRequestFailed() {
-                        albumArtListener.onFailedGettingAlbumArt();
+                        file[0] = null;
+                        countDownLatch.countDown();
                     }
                 });
+        try {
+            countDownLatch.await();
+            return file[0];
+        } catch (InterruptedException e) {
+            return null;
+        }
     }
 
     public static void deleteCacheFile(String fileName) {

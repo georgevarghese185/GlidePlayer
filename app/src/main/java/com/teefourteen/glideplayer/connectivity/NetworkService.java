@@ -43,8 +43,6 @@ import com.teefourteen.glideplayer.connectivity.listeners.WifiP2pBroadcastReceiv
 import com.teefourteen.glideplayer.music.database.Library;
 
 
-//TODO: persistent notification
-//TODO: allow bigger files (right now, can't send Long for file size. fix that)
 //TODO: set some sort of time out on sent and received requests to back off.
 public class NetworkService extends Service {
     private static final String RECORD_LISTEN_PORT = "listen_port";
@@ -84,7 +82,7 @@ public class NetworkService extends Service {
     private RequestListener requestListener;
     private EasyHandler handler;
     private int session = 0;
-    private int fileCacheSize = 0;
+    private long fileCacheSize = 0;
     private int cacheFileName = 0;
 
 
@@ -224,9 +222,9 @@ public class NetworkService extends Service {
                             con.getNextLong());
                     break;
                 case DATA_TYPE_FILE:
-                    int size = con.getNextInt();
+                    long size = con.getNextLong();
                     responseData = requestListener.onNewRequest(senderDeviceAddress, action,
-                            con.getNextFile(getCacheDir()+"/files",size));
+                            con.getNextFile(getCacheDir()+"/files", size));
                     break;
                 default:
                     responseData = requestListener.onNewRequest(senderDeviceAddress, action,
@@ -247,8 +245,8 @@ public class NetworkService extends Service {
                 con.sendLong((Long) responseData);
             } else if(responseData instanceof File) {
                 con.sendString(DATA_TYPE_FILE);
-                int size = (int) (((File) responseData).length());
-                con.sendInt(size);
+                long size = (int) (((File) responseData).length());
+                con.sendLong(size);
                 con.sendFile((File) responseData);
             } else {
                 con.sendString(DATA_TYPE_OBJECT);
@@ -833,9 +831,8 @@ public class NetworkService extends Service {
             } else if (requestData instanceof File){
                 connection.sendString(DATA_TYPE_FILE);
                 long size = ((File) requestData).length();
-                if(size > Integer.MAX_VALUE) throw new Exception("File too big");
 
-                connection.sendInt((int) size);
+                connection.sendLong(size);
                 connection.sendFile((File) requestData);
             }else {
                 connection.sendString(DATA_TYPE_OBJECT);
@@ -847,18 +844,22 @@ public class NetworkService extends Service {
             switch (responseType) {
                 case DATA_TYPE_NULL:
                     responseListener.onResponseReceived(null);
+                    connection.close();
                     break;
                 case DATA_TYPE_STRING:
                     responseListener.onResponseReceived(connection.getNextString());
+                    connection.close();
                     break;
                 case DATA_TYPE_INTEGER:
                     responseListener.onResponseReceived(connection.getNextInt());
+                    connection.close();
                     break;
                 case DATA_TYPE_LONG:
                     responseListener.onResponseReceived(connection.getNextLong());
+                    connection.close();
                     break;
                 case DATA_TYPE_FILE:
-                    int size = connection.getNextInt();
+                    long size = connection.getNextLong();
                     if(size > (MAX_FILE_CACHE_SIZE_MB-fileCacheSize)) {
                         for(int i =0 ; i<cacheFileName
                                 && size>MAX_FILE_CACHE_SIZE_MB-fileCacheSize; i++) {
@@ -873,23 +874,25 @@ public class NetworkService extends Service {
                             throw new Exception("File too big");
                         }
                     }
-                    File file = connection.getNextFile(
-                            Library.FILE_SAVE_LOCATION + "/" + cacheFileName++, size);
+                    CacheFile file = new CacheFile(size,
+                            new File(Library.FILE_SAVE_LOCATION, String.valueOf(cacheFileName++)),
+                            connection);
+
                     fileCacheSize+=size;
                     responseListener.onResponseReceived(file);
                     break;
                 default:
                     responseListener.onResponseReceived(connection.getNextObject());
+                    connection.close();
                     break;
             }
 
         } catch (IOException e) {
             responseListener.onRequestFailed();
+            if(connection != null) connection.close();
         } catch (Exception e) {
             if(e.toString().equals("File too big"))
                 responseListener.onRequestFailed();
-        }finally {
-            if (connection != null) connection.close();
         }
     }
 

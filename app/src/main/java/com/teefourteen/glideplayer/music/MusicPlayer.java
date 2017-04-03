@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
 
 import com.teefourteen.glideplayer.EasyHandler;
+import com.teefourteen.glideplayer.connectivity.CacheFile;
 import com.teefourteen.glideplayer.connectivity.ShareGroup;
 import com.teefourteen.glideplayer.music.database.Library;
 
@@ -160,13 +161,14 @@ public class MusicPlayer implements Closeable{
         if(song.getFilePath().equals(Library.REMOTE_SONG_MISSING_PATH)) {
             final boolean[] fetched = {false};
 
-            ShareGroup.getSong(song.getLibraryUsername(), song.get_id(),
-                    new ShareGroup.GetSongListener() {
+            final CacheFile file = ShareGroup.getSong(song.getLibraryUsername(), song.get_id());
+            if(file == null) return false;
+            file.registerDownloadCompleteListener(new CacheFile.DownloadCompleteListener() {
                 @Override
-                public void onGotSong(String songFilePath) {
+                public void onDownloadComplete() {
                     try {
                         fetched[0] = true;
-                        mediaPlayer.setDataSource(context, Uri.parse(songFilePath));
+                        mediaPlayer.setDataSource(context, Uri.parse(file.getFile().getAbsolutePath()));
                         mediaPlayer.prepare();
                         prepared = true;
                         countDownLatch.countDown();
@@ -177,18 +179,15 @@ public class MusicPlayer implements Closeable{
                 }
 
                 @Override
-                public void onFailedGettingSong() {
+                public void onDownloadFailed() {
+                    prepared = false;
                     countDownLatch.countDown();
                 }
             });
 
             try {
-                countDownLatch.await();
-                if(fetched[0] && prepared) {
-                    return true;
-                } else {
-                    return false;
-                }
+                if(file.isDownloading()) countDownLatch.await();
+                return (fetched[0] && prepared);
             } catch (InterruptedException e) {
                 return false;
             }

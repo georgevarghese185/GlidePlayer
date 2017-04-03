@@ -103,23 +103,24 @@ public class Connection implements Closeable {
         }
     }
 
-    File getNextFile(String filePath, int size)throws IOException {
+    File getNextFile(String filePath, long size)throws IOException {
         File file = new File(filePath);
         if(file.exists()) {
             file.delete();
         }
         file.createNewFile();
 
-        int count;
+        int bytesRead;
+        long bytesSent;
         DataInputStream dataIn = new DataInputStream(clientSocket.getInputStream());
         FileOutputStream fileOut = new FileOutputStream(file);
         byte[] buffer = new byte[8096];
 
         readyWait(TransmissionType.READ);
 
-        for(;size > 0; size -= count) {
-            count = dataIn.read(buffer,0,buffer.length);
-            fileOut.write(buffer, 0, count);
+        for(bytesSent = 0; bytesSent < size; bytesSent += bytesRead) {
+            bytesRead = dataIn.read(buffer,0,buffer.length);
+            fileOut.write(buffer, 0, bytesRead);
         }
 
         fileOut.close();
@@ -155,11 +156,11 @@ public class Connection implements Closeable {
         FileInputStream fin = new FileInputStream(file);
         byte[] buffer = new byte[8096];
         DataOutputStream dataOut = new DataOutputStream(clientSocket.getOutputStream());
-        int count;
+        int bytesRead;
 
         readyWait(TransmissionType.WRITE);
-        while ((count = fin.read(buffer, 0, buffer.length)) > 0) {
-            dataOut.write(buffer, 0, count);
+        while ((bytesRead = fin.read(buffer, 0, buffer.length)) > 0) {
+            dataOut.write(buffer, 0, bytesRead);
         }
 
         fin.close();
@@ -167,10 +168,6 @@ public class Connection implements Closeable {
 
     InetAddress getRemoteInetAddress()throws IOException {
         return clientSocket.getInetAddress();
-    }
-
-    int getRemotePort()throws IOException {
-        return clientSocket.getPort();
     }
 
     void readyWait(TransmissionType nextTransmission) throws IOException {

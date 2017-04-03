@@ -23,7 +23,7 @@ public class RemoteAlbumCoverLoader extends CancellableAsyncTaskHandler{
     public class RemoteCoverTask implements Task{
         private String username;
         private long albumId;
-        private File albumArtFile = null;
+        private CacheFile albumArtFile = null;
         private String filePath;
         private ImageView imageView;
         private AsyncImageLoader.ImageLoadTask imageLoadTask = null;
@@ -38,34 +38,34 @@ public class RemoteAlbumCoverLoader extends CancellableAsyncTaskHandler{
 
         @Override
         public void doBackground() {
-            ShareGroup.getAlbumArt(username, albumId, new ShareGroup.GetAlbumArtListener() {
+            albumArtFile = ShareGroup.getAlbumArt(username, albumId);
+            if(albumArtFile == null) return;
+            albumArtFile.registerDownloadCompleteListener(new CacheFile.DownloadCompleteListener() {
                 @Override
-                public void onGotAlbumArt(File imageFile) {
-                    albumArtFile = imageFile;
+                public void onDownloadComplete() {
                     latch.countDown();
                 }
 
                 @Override
-                public void onFailedGettingAlbumArt() {
-                    albumArtFile = null;
+                public void onDownloadFailed() {
                     latch.countDown();
                 }
             });
 
             try {
-                latch.await();
+                if(albumArtFile.isDownloading()) latch.await();
             } catch (InterruptedException e) {
                 Log.d("doBackground()", "who dares disturb my slumber");
             }
 
-            if (albumArtFile != null) {
+            if (albumArtFile.isDownloadSuccessful()) {
                 File newFile = new File(filePath);
                 if(newFile.exists()) newFile.delete();
                 FileInputStream fin;
                 FileOutputStream fout;
                 try {
                     newFile.createNewFile();
-                    fin = new FileInputStream(albumArtFile);
+                    fin = new FileInputStream(albumArtFile.getFile());
                     fout = new FileOutputStream(newFile);
                     int length;
                     byte[] buffer = new byte[8096];
@@ -74,8 +74,8 @@ public class RemoteAlbumCoverLoader extends CancellableAsyncTaskHandler{
                     }
                     fin.close();
                     fout.close();
-                    ShareGroup.deleteCacheFile(albumArtFile.getName());
-                    albumArtFile = newFile;
+                    ShareGroup.deleteCacheFile(albumArtFile.getFile().getName());
+                    albumArtFile = new CacheFile(newFile);
                 } catch (IOException e) {
                     if(newFile.exists()) { newFile.delete(); }
                 }
@@ -84,19 +84,19 @@ public class RemoteAlbumCoverLoader extends CancellableAsyncTaskHandler{
 
         @Override
         public void doOnMainThread() {
-            if(albumArtFile != null) {
+            if(albumArtFile !=null && albumArtFile.isDownloadSuccessful()) {
                 imageLoadTask = asyncImageLoader.loadImageAsync(
-                        imageView, albumArtFile.getAbsolutePath());
+                        imageView, albumArtFile.getFile().getAbsolutePath());
             }
         }
 
-        public void cancelImageLoad() {
+        public void cancel() {
             if(imageLoadTask != null) {
                 asyncImageLoader.cancelTask(imageLoadTask);
+            } else if(albumArtFile != null){
+                albumArtFile.cancelDownload();
             }
         }
-
-
     }
 
     public RemoteCoverTask loadRemoteCover(ImageView imageView,
@@ -112,6 +112,6 @@ public class RemoteAlbumCoverLoader extends CancellableAsyncTaskHandler{
 
     public synchronized void cancelTask(Task task) {
         super.cancelTask(task,false);
-        ((RemoteCoverTask)task).cancelImageLoad();
+        ((RemoteCoverTask)task).cancel();
     }
 }
