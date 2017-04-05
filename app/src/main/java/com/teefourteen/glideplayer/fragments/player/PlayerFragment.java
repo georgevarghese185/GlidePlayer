@@ -27,6 +27,8 @@ import com.teefourteen.glideplayer.music.PlayQueue;
 import com.teefourteen.glideplayer.music.Song;
 import com.teefourteen.glideplayer.services.PlayerService;
 
+import jp.wasabeef.blurry.Blurry;
+
 import static com.teefourteen.glideplayer.Global.playQueue;
 
 
@@ -34,6 +36,7 @@ public class PlayerFragment extends Fragment implements PlayerService.SongListen
     private static PlayerService.PlayerServiceBinder binder;
     private ImageView albumArtView;
     private ImageView albumArtMini;
+    private ImageView blurredBackground;
     private View rootView;
     private SeekBar seekBar;
     private boolean userSeeking = false;
@@ -58,6 +61,7 @@ public class PlayerFragment extends Fragment implements PlayerService.SongListen
         rootView = inflater.inflate(R.layout.fragment_player, container, false);
         albumArtView = (ImageView) rootView.findViewById(R.id.player_album_art);
         albumArtMini = (ImageView) rootView.findViewById(R.id.player_album_art_mini);
+        blurredBackground = (ImageView)rootView.findViewById(R.id.blur_background);
 
         //Set listeners for buttons
         rootView.findViewById(R.id.player_play_button).setOnClickListener(new View.OnClickListener() {
@@ -214,10 +218,13 @@ public class PlayerFragment extends Fragment implements PlayerService.SongListen
         if(albumArt!=null) {
             albumArtView.setImageDrawable(Drawable.createFromPath(albumArt));
             albumArtMini.setImageDrawable(Drawable.createFromPath(albumArt));
+            blurredBackground.setImageDrawable(Drawable.createFromPath(albumArt));
+            Blurry.with(getContext()).radius(30).capture(blurredBackground).into(blurredBackground);
         }
         else {
             albumArtView.setImageResource(R.drawable.ic_album_white_24dp);
             albumArtMini.setImageResource(R.drawable.ic_album_white_24dp);
+            blurredBackground.setImageDrawable(null);
         }
     }
 

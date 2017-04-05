@@ -130,6 +130,20 @@
             tools:context="com.teefourteen.glideplayer.fragments.player.PlayerFragment">
 
                 <ImageView
+                    android:id="@+id/blur_background"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_marginBottom="0dp"
+                    android:layout_marginLeft="0dp"
+                    android:layout_marginRight="0dp"
+                    android:layout_marginTop="0dp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    android:scaleType="centerCrop"/>
+
+                <ImageView
                     android:id="@+id/player_album_art"
                     android:layout_width="257dp"
                     android:layout_height="251dp"
