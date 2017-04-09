@@ -155,12 +155,10 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
     public class Member{
         public  final String name;
         public  final String deviceName;
-        public LongSparseArray<String> songCache;
 
         Member(String name, String deviceName) {
             this.name = name;
             this.deviceName = deviceName;
-            this.songCache = new LongSparseArray<>();
         }
     }
 
@@ -169,38 +167,28 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
 
         ShareGroup group = ShareGroup.shareGroupWeakReference.get();
 
-        final Member member = currentGroup.getMemberFromUsername(memberName);
-        String cachedSongName = member.songCache.get(songId);
+        final CountDownLatch countDownLatch = new CountDownLatch(1);
+        final CacheFile file[] = {null};
+        group.netService.sendRequest(memberId, ACTION_GET_SONG, songId,
+                new ResponseListener() {
+                    @Override
+                    public void onResponseReceived(Object responseData) {
+                        file[0] = (CacheFile) responseData;
+                        countDownLatch.countDown();
+                    }
 
+                    @Override
+                    public void onRequestFailed() {
+                        file[0] = null;
+                        countDownLatch.countDown();
+                    }
+                });
 
-        if(cachedSongName != null && new File(Library.FILE_SAVE_LOCATION,cachedSongName).exists()) {
-            return new CacheFile(new File(Library.FILE_SAVE_LOCATION,cachedSongName));
-        } else {
-            final CountDownLatch countDownLatch = new CountDownLatch(1);
-            final CacheFile file[] = {null};
-            group.netService.sendRequest(memberId, ACTION_GET_SONG, songId,
-                    new ResponseListener() {
-                        @Override
-                        public void onResponseReceived(Object responseData) {
-                            member.songCache.put(songId, ((CacheFile) responseData)
-                                    .getFile().getName());
-                            file[0] = (CacheFile) responseData;
-                            countDownLatch.countDown();
-                        }
-
-                        @Override
-                        public void onRequestFailed() {
-                            file[0] = null;
-                            countDownLatch.countDown();
-                        }
-                    });
-
-            try {
-                countDownLatch.await();
-                return file[0];
-            } catch (InterruptedException e) {
-                return null;
-            }
+        try {
+            countDownLatch.await();
+            return file[0];
+        } catch (InterruptedException e) {
+            return null;
         }
     }
 
@@ -269,6 +257,11 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
         context.startService(new Intent(context, NetworkService.class));
         networkNotification = AppNotification.getInstance(context);
         networkNotification.displayNetworkNotification(null, false);
+        try {
+            RemoteFileCache.createInstance(context, 300 * 1024 * 1024);
+        } catch (IOException e) {
+            Log.e("ShareGroup", "Failed creating Cache Server. Can't stream downloading files");
+        }
     }
 
     public Mode getMode() { return mode; }
@@ -483,6 +476,7 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
         deleteFiles();
         shareGroupWeakReference = null;
         networkNotification.dismissNetworkNotification();
+        RemoteFileCache.getInstance().destroy();
     }
 
     private void deleteFiles() {

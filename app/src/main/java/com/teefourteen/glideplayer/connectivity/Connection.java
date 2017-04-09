@@ -121,6 +121,7 @@ public class Connection implements Closeable {
         for(bytesSent = 0; bytesSent < size; bytesSent += bytesRead) {
             bytesRead = dataIn.read(buffer,0,buffer.length);
             fileOut.write(buffer, 0, bytesRead);
+            fileOut.flush();
         }
 
         fileOut.close();

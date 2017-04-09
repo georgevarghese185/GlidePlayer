@@ -46,10 +46,11 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
     public interface SongListener {
         void onSongStarted(Song song);
         void onSongPlaybackFailed();
-        void onTrackAutoChanged();
+        void onTrackChanged();
         void onSongStopped();
         /** seek value between 0 and MusicPlayer.MAX_SEEK_VALUE inclusive */
         void onSeekUpdate(int currentSeek);
+        void onBufferUpdate(int buffered);
         void onPlayQueueDestroyed();
     }
 
@@ -279,36 +280,33 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
     }
 
     public void next() {
-        player.reset();
-        onSeekUpdated(0);
-        playQueue.next();
-        editor.putInt(LAST_SEEK, 0).apply();
-        editor.putInt(LAST_SONG_INDEX, playQueue.getIndex()).apply();
+        changeTrack(playQueue.getNextIndex());
     }
 
     public void prev() {
-        player.reset();
-        onSeekUpdated(0);
-        playQueue.prev();
-        editor.putInt(LAST_SEEK, 0).apply();
-        editor.putInt(LAST_SONG_INDEX, playQueue.getIndex()).apply();
+        changeTrack(playQueue.getPrevIndex());
     }
 
     public void changeTrack(int songIndex) {
         player.reset();
         onSeekUpdated(0);
+        onBufferingUpdated(0);
         playQueue.changeTrack(songIndex);
+        for(final SongListener listener : songListenerList) {
+            EasyHandler.executeOnMainThread(new Runnable() {
+                @Override
+                public void run() {listener.onTrackChanged();
+                }
+            });
+        }
         editor.putInt(LAST_SEEK, 0).apply();
         editor.putInt(LAST_SONG_INDEX, playQueue.getIndex()).apply();
     }
 
     public void newQueue(PlayQueue queue) {
-        player.reset();
-        onSeekUpdated(0);
         Global.playQueue = queue;
         playQueue.saveQueueToFile(PLAY_QUEUE_FILE_PATH);
-        editor.putInt(LAST_SEEK, 0).apply();
-        editor.putInt(LAST_SONG_INDEX, playQueue.getIndex()).apply();
+        changeTrack(playQueue.getIndex());
     }
 
     public void seek(int seek){
@@ -335,7 +333,7 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
                 EasyHandler.executeOnMainThread(new Runnable() {
                     @Override
                     public void run() {
-                        listener.onTrackAutoChanged();
+                        listener.onTrackChanged();
                     }
                 });
             }
@@ -365,6 +363,18 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
                 @Override
                 public void run() {
                     listener.onSeekUpdate(newSeek);
+                }
+            });
+        }
+    }
+
+    @Override
+    public void onBufferingUpdated(final int buffered) {
+        for(final SongListener listener : songListenerList) {
+            EasyHandler.executeOnMainThread(new Runnable() {
+                @Override
+                public void run() {
+                    listener.onBufferUpdate(buffered);
                 }
             });
         }

@@ -5,15 +5,14 @@ import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.PowerManager;
+import android.widget.Toast;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.concurrent.CountDownLatch;
 
 import com.teefourteen.glideplayer.EasyHandler;
-import com.teefourteen.glideplayer.connectivity.CacheFile;
-import com.teefourteen.glideplayer.connectivity.ShareGroup;
+import com.teefourteen.glideplayer.connectivity.RemoteFileCache;
 import com.teefourteen.glideplayer.music.database.Library;
 
 
@@ -24,6 +23,9 @@ public class MusicPlayer implements Closeable{
     private MediaPlayer mediaPlayer =null;
     private Context context=null;
     private boolean prepared = false;
+    private int bufferedPercent;
+    private int bufferedTime;
+    private boolean pausedForBuffering = false;
     private boolean monitorSeek = false;
     private EasyHandler handler = new EasyHandler();
     private static final String SEEK_UPDATER_THREAD_NAME = "seek_updater_thread";
@@ -37,6 +39,7 @@ public class MusicPlayer implements Closeable{
     public interface SeekListener {
         /** newSeek between 0 and MAX_SEEK_VALUE inclusive */
         void onSeekUpdated(int newSeek);
+        void onBufferingUpdated(int percent);
     }
 
     public void registerOnCompletionListener(MediaPlayer.OnCompletionListener listener) {
@@ -59,9 +62,6 @@ public class MusicPlayer implements Closeable{
     }
 
     public void unregisterSeekListener(SeekListener listener) {
-        if(seekListenerList.size() == 1) {
-            stopSeekMonitor();
-        }
         seekListenerList.remove(listener);
     }
 
@@ -89,8 +89,8 @@ public class MusicPlayer implements Closeable{
         mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
             public void onCompletion(MediaPlayer mp) {
-                stopSeekMonitor();
-                callSeekListeners();
+                monitorSeek = false;
+                updateSeek();
 
                 for(MediaPlayer.OnCompletionListener listener : onCompletionListenerList) {
                     listener.onCompletion(mediaPlayer);
@@ -103,19 +103,22 @@ public class MusicPlayer implements Closeable{
 
     public void pauseSong() {
         mediaPlayer.pause();
-        stopSeekMonitor();
-        callSeekListeners();
+        monitorSeek = false;
+        updateSeek();
     }
 
     public void seek(int seek){
         if(mediaPlayer!=null && prepared) {
             int actualSeek = (int) ((double) seek / MAX_SEEK_VALUE * mediaPlayer.getDuration());
-            mediaPlayer.seekTo(actualSeek);
+            trueSeek(actualSeek);
         }
     }
 
     public void trueSeek(int seek) {
         if(mediaPlayer != null && prepared) {
+            if(seek > bufferedTime) {
+                seek = ((bufferedTime - 1000) > 0)? bufferedTime - 1000 : 0;
+            }
             mediaPlayer.seekTo(seek);
         }
     }
@@ -137,8 +140,8 @@ public class MusicPlayer implements Closeable{
     }
 
     public void reset() {
-        stopSeekMonitor();
-        callSeekListeners();
+        monitorSeek = false;
+        updateSeek();
 
         if(prepared) {
             mediaPlayer.release();
@@ -147,8 +150,6 @@ public class MusicPlayer implements Closeable{
         }
     }
 
-    //TODO: use listener for remote song, or return a different value for "downloading" instead of boolean.
-    //TODO: or, try wait() notify()
     public boolean prepareSong(final Song song) throws IOException {
         if(mediaPlayer!=null) {
             mediaPlayer.release();
@@ -156,55 +157,57 @@ public class MusicPlayer implements Closeable{
         mediaPlayer = new MediaPlayer();
         mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
 
-        final CountDownLatch countDownLatch = new CountDownLatch(1);
-
         if(song.getFilePath().equals(Library.REMOTE_SONG_MISSING_PATH)) {
-            final boolean[] fetched = {false};
-
-            final CacheFile file = ShareGroup.getSong(song.getLibraryUsername(), song.get_id());
-            if(file == null) return false;
-            file.registerDownloadCompleteListener(new CacheFile.DownloadCompleteListener() {
-                @Override
-                public void onDownloadComplete() {
-                    try {
-                        fetched[0] = true;
-                        mediaPlayer.setDataSource(context, Uri.parse(file.getFile().getAbsolutePath()));
-                        mediaPlayer.prepare();
-                        prepared = true;
-                        countDownLatch.countDown();
-                    } catch (IOException e) {
-                        prepared = false;
-                        countDownLatch.countDown();
-                    }
-                }
-
-                @Override
-                public void onDownloadFailed() {
-                    prepared = false;
-                    countDownLatch.countDown();
-                }
-            });
-
             try {
-                if(file.isDownloading()) countDownLatch.await();
-                return (fetched[0] && prepared);
-            } catch (InterruptedException e) {
+                mediaPlayer.setDataSource(context, RemoteFileCache.getInstance().getSongUri(song));
+                mediaPlayer.setOnBufferingUpdateListener(
+                        new MediaPlayer.OnBufferingUpdateListener() {
+                    @Override
+                    public void onBufferingUpdate(MediaPlayer mp, int percent) {
+                        bufferedPercent = percent;
+                        bufferedTime = (int)(song.getDuration() * percent/100.0);
+                        for(SeekListener listener : seekListenerList) {
+                            listener.onBufferingUpdated(
+                                    (int)(bufferedTime * MAX_SEEK_VALUE / song.getDuration()));
+                        }
+                    }
+                });
+                mediaPlayer.prepare();
+                prepared = true;
+                return true;
+            } catch (RemoteFileCache.BiggerThanCacheException e) {
+                Toast.makeText(context, "File too big. Please increase cache size " +
+                        "in Settings", Toast.LENGTH_LONG).show();
                 return false;
             }
         } else {
             mediaPlayer.setDataSource(context, Uri.parse(song.getFilePath()));
+            bufferedPercent = 100;
+            bufferedTime = (int)song.getDuration();
             mediaPlayer.prepare();
             prepared = true;
             return true;
         }
     }
 
-    private void callSeekListeners() {
+    private void updateSeek() {
         if(mediaPlayer != null && prepared) {
             int currentPos = mediaPlayer.getCurrentPosition();
 
-            for (SeekListener listener : seekListenerList) {
-                listener.onSeekUpdated(currentPos * MAX_SEEK_VALUE / mediaPlayer.getDuration());
+            if((currentPos + SEEK_INTERVAL_MS) > bufferedTime) {
+                mediaPlayer.pause();
+                pausedForBuffering = true;
+            } else if(pausedForBuffering) {
+                mediaPlayer.start();
+                pausedForBuffering = false;
+            }
+
+            if(bufferedPercent == 100 && seekListenerList.size() == 0) {
+                monitorSeek = false;
+            } else {
+                for (SeekListener listener : seekListenerList) {
+                    listener.onSeekUpdated(currentPos * MAX_SEEK_VALUE / mediaPlayer.getDuration());
+                }
             }
         }
     }
@@ -217,7 +220,7 @@ public class MusicPlayer implements Closeable{
             public void run() {
                 while (true) {
                     if(monitorSeek) {
-                        callSeekListeners();
+                        updateSeek();
                         try {
                             Thread.sleep(SEEK_INTERVAL_MS);
                         } catch (InterruptedException e) {
@@ -231,11 +234,6 @@ public class MusicPlayer implements Closeable{
         };
 
         handler.executeAsync(r,SEEK_UPDATER_THREAD_NAME);
-    }
-
-
-    public void stopSeekMonitor() {
-        monitorSeek = false;
     }
 
     public boolean isPlaying() {

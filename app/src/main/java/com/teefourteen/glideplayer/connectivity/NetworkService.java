@@ -860,25 +860,7 @@ public class NetworkService extends Service {
                     break;
                 case DATA_TYPE_FILE:
                     long size = connection.getNextLong();
-                    if(size > (MAX_FILE_CACHE_SIZE_MB-fileCacheSize)) {
-                        for(int i =0 ; i<cacheFileName
-                                && size>MAX_FILE_CACHE_SIZE_MB-fileCacheSize; i++) {
-                            File file = new File(Library.FILE_SAVE_LOCATION,
-                                    String.valueOf(i));
-                            if(file.exists()) {
-                                fileCacheSize -= file.length();
-                                file.delete();
-                            }
-                        }
-                        if(size>(MAX_FILE_CACHE_SIZE_MB-fileCacheSize)) {
-                            throw new Exception("File too big");
-                        }
-                    }
-                    CacheFile file = new CacheFile(size,
-                            new File(Library.FILE_SAVE_LOCATION, String.valueOf(cacheFileName++)),
-                            connection);
-
-                    fileCacheSize+=size;
+                    CacheFile file = new CacheFile(size, connection);
                     responseListener.onResponseReceived(file);
                     break;
                 default:

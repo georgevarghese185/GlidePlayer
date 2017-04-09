@@ -38,7 +38,11 @@ public class RemoteAlbumCoverLoader extends CancellableAsyncTaskHandler{
 
         @Override
         public void doBackground() {
-            albumArtFile = ShareGroup.getAlbumArt(username, albumId);
+            try {
+                albumArtFile = RemoteFileCache.getInstance().getAlbumArt(username, albumId);
+            } catch (RemoteFileCache.BiggerThanCacheException e) {
+                return;
+            }
             if(albumArtFile == null) return;
             albumArtFile.registerDownloadCompleteListener(new CacheFile.DownloadCompleteListener() {
                 @Override
@@ -74,7 +78,7 @@ public class RemoteAlbumCoverLoader extends CancellableAsyncTaskHandler{
                     }
                     fin.close();
                     fout.close();
-                    ShareGroup.deleteCacheFile(albumArtFile.getFile().getName());
+                    RemoteFileCache.getInstance().deleteFile(albumArtFile.getFile().getName());
                     albumArtFile = new CacheFile(newFile);
                 } catch (IOException e) {
                     if(newFile.exists()) { newFile.delete(); }

@@ -110,35 +110,17 @@ public class PlayQueue implements Parcelable {
             return 0;
     }
 
-    synchronized public Song next() {
-        if(currentPlaying< queue.size()-1)
-            return queue.get(++currentPlaying);
-        else {
-            currentPlaying= 0;
-            return queue.get(currentPlaying);
-        }
+    public int getNextIndex() {
+        if(currentPlaying == queue.size()-1) return 0;
+        else return currentPlaying+1;
     }
 
-    public Song getNext() {
-        if(currentPlaying == queue.size()-1) return queue.get(0);
-        else return queue.get(currentPlaying+1);
-    }
-
-    public Song getPrev() {
-        if(currentPlaying == 0) return queue.get(queue.size()-1);
-        return queue.get(currentPlaying-1);
+    public int getPrevIndex() {
+        if(currentPlaying == 0) return queue.size()-1;
+        return currentPlaying-1;
     }
 
     public Song getSongAt(int songIndex) { return queue.get(songIndex); }
-
-    synchronized public Song prev() {
-        if(currentPlaying>0)
-            return queue.get(--currentPlaying);
-        else {
-            currentPlaying = queue.size() - 1;
-            return queue.get(currentPlaying);
-        }
-    }
 
     public boolean isAtLastSong() {
         return (currentPlaying == queue.size()-1);

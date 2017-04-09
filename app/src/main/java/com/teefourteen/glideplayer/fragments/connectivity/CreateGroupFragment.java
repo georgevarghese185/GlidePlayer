@@ -185,8 +185,10 @@ public class CreateGroupFragment extends Fragment implements GroupCreationListen
         if(group != null) {
             group.registerGroupCreationListener(this);
             group.registerGroupMemberListener(this);
-            ((ArrayAdapter) ((ListView) rootView.findViewById(R.id.peer_list))
-                    .getAdapter()).notifyDataSetChanged();
+            if(rootView != null) {
+                ((ArrayAdapter) ((ListView) rootView.findViewById(R.id.peer_list))
+                        .getAdapter()).notifyDataSetChanged();
+            }
         }
     }
 }

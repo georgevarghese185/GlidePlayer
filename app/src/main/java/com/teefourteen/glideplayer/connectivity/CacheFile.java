@@ -8,11 +8,9 @@ import java.io.File;
 import java.io.IOException;
 
 public class CacheFile {
-    private static final String FILE_DOWNLOAD_THREAD_NAME = "cache_file_download_thread";
 
     private long size;
     private File file;
-    private EasyHandler handler = new EasyHandler();
     private Connection connection;
     private boolean downloading = false;
     private boolean downloadSuccessful = false;
@@ -23,42 +21,52 @@ public class CacheFile {
         void onDownloadFailed();
     }
 
-    public CacheFile(long size, File file, Connection connection) {
+    public CacheFile(long size, Connection connection) {
         this.size = size;
-        this.file = file;
         this.connection = connection;
-        downloading = true;
-        handler.executeAsync(new Runnable() {
-            @Override
-            public void run() {
-                startDownload();
-            }
-        }, FILE_DOWNLOAD_THREAD_NAME);
     }
 
     public CacheFile(File file) {
         this.file = file;
+        this.size = file.length();
         this.downloading = false;
         this.downloadSuccessful = true;
     }
 
-    private void startDownload() {
+    void startDownload(final String filePath) {
+        downloading = true;
+        this.file = new File(filePath);
         try {
-            file = connection.getNextFile(file.getAbsolutePath(), size);
-            downloading = false;
-            downloadSuccessful = true;
-            connection.close();
-            if(downloadCompleteListener != null) {
-                downloadCompleteListener.onDownloadComplete();
-            }
+            file.createNewFile();
         } catch (IOException e) {
-            if(downloadCompleteListener != null) {
-                downloading = false;
-                downloadSuccessful = false;
-                downloadCompleteListener.onDownloadFailed();
-                connection.close();
-            }
+            downloading = false;
+            downloadSuccessful = false;
+            return;
         }
+
+        Runnable r = new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    connection.getNextFile(filePath, size);
+                    downloading = false;
+                    downloadSuccessful = true;
+                    connection.close();
+                    if (downloadCompleteListener != null) {
+                        downloadCompleteListener.onDownloadComplete();
+                    }
+                } catch (IOException e) {
+                    downloading = false;
+                    downloadSuccessful = false;
+                    if (downloadCompleteListener != null) {
+                        downloadCompleteListener.onDownloadFailed();
+                    }
+                    connection.close();
+                }
+            }
+        };
+
+        new Thread(r).start();
     }
 
     public File getFile() {
@@ -90,7 +98,7 @@ public class CacheFile {
     }
 
     public void cancelDownload() {
-        if(downloading) {
+        if(connection != null && !connection.getSocket().isClosed()) {
             connection.close();
             Log.d("CacheFile","File download cancelled");
         }

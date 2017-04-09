@@ -264,6 +264,11 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
+    public void onBufferUpdate(int buffered) {
+        peekPlayerSeekBar.setSecondaryProgress(buffered);
+    }
+
+    @Override
     public void onSongStarted(Song song) {
         if(currentSong != song) {
             currentSong = song;
@@ -281,7 +286,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
-    public void onTrackAutoChanged() {
+    public void onTrackChanged() {
         changeTrackInfo(playQueue.getCurrentPlaying());
     }
 

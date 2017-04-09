@@ -231,7 +231,8 @@ public class PlayerFragment extends Fragment implements PlayerService.SongListen
     }
 
     @Override
-    public void onTrackAutoChanged() {
+    public void onTrackChanged() {
+        currentSong = playQueue.getCurrentPlaying();
         changeSongInfo(playQueue.getCurrentPlaying(), rootView);
     }
 
@@ -245,6 +246,11 @@ public class PlayerFragment extends Fragment implements PlayerService.SongListen
         if(!userSeeking) {
             seekBar.setProgress(currentSeek);
         }
+    }
+
+    @Override
+    public void onBufferUpdate(int buffered) {
+        seekBar.setSecondaryProgress(buffered);
     }
 
     @Override

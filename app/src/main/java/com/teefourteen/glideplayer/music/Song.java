@@ -20,10 +20,12 @@ public class Song implements Parcelable {
     private String artist;
     private long artistId;
     private long duration;
+    private long size;
     private String libraryUsername = Library.LOCAL_DATABASE_NAME;
 
     public Song(long _id, String filePath, String title, String album, long albumId,
-                String albumArt, String artist, long artistId, long duration, String libraryUsername) {
+                String albumArt, String artist, long artistId, long duration, long size,
+                String libraryUsername) {
         this._id = _id;
         this.filePath = filePath;
         this.title = title;
@@ -41,6 +43,7 @@ public class Song implements Parcelable {
         }
         this.artistId = artistId;
         this.duration = duration;
+        this.size = size;
         this.libraryUsername = libraryUsername;
     }
 
@@ -66,6 +69,10 @@ public class Song implements Parcelable {
 
     public long getDuration() {
         return duration;
+    }
+
+    public long getSize() {
+        return size;
     }
 
     public String getLibraryUsername(){
@@ -102,6 +109,7 @@ public class Song implements Parcelable {
         dest.writeString(artist);
         dest.writeLong(artistId);
         dest.writeLong(duration);
+        dest.writeLong(size);
         dest.writeString(libraryUsername);
     }
 
@@ -117,9 +125,10 @@ public class Song implements Parcelable {
             String artist = source.readString();
             long artistId = source.readLong();
             long duration = source.readLong();
+            long size = source.readLong();
             String libraryUsername = source.readString();
-            return new Song(_id, filePath, title, album, albumId, albumArt, artist, artistId,duration,
-                    libraryUsername);
+            return new Song(_id, filePath, title, album, albumId, albumArt, artist, artistId,
+                    duration, size, libraryUsername);
         }
 
         @Override
@@ -138,6 +147,7 @@ public class Song implements Parcelable {
         String artist = Library.getString(cursor, ArtistTable.Columns.ARTIST_NAME);
         Long artistId = Library.getLong(cursor, SongTable.Columns.ARTIST_ID);
         Long duration = Library.getLong(cursor, SongTable.Columns.DURATION);
+        Long size = Library.getLong(cursor, SongTable.Columns.SIZE);
         String libraryUserName;
         if(Library.getInt(cursor, SongTable.Columns.IS_REMOTE) == 1) {
             libraryUserName = Library.getString(cursor, SongTable.Columns.REMOTE_USERNAME);
@@ -146,6 +156,6 @@ public class Song implements Parcelable {
         }
 
         return new Song(_id, filePath, title, album, albumId, albumArt, artist, artistId, duration,
-                libraryUserName);
+                size, libraryUserName);
     }
 }
