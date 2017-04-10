@@ -218,13 +218,13 @@ public class PlayerFragment extends Fragment implements PlayerService.SongListen
         if(albumArt!=null) {
             albumArtView.setImageDrawable(Drawable.createFromPath(albumArt));
             albumArtMini.setImageDrawable(Drawable.createFromPath(albumArt));
-            blurredBackground.setImageDrawable(Drawable.createFromPath(albumArt));
-            Blurry.with(getContext()).radius(30).capture(blurredBackground).into(blurredBackground);
+            //blurredBackground.setImageDrawable(Drawable.createFromPath(albumArt));
+            //Blurry.with(getContext()).radius(30).capture(blurredBackground).into(blurredBackground);
         }
         else {
             albumArtView.setImageResource(R.drawable.ic_album_white_24dp);
             albumArtMini.setImageResource(R.drawable.ic_album_white_24dp);
-            blurredBackground.setImageDrawable(null);
+            //blurredBackground.setImageDrawable(null);
         }
     }
 
