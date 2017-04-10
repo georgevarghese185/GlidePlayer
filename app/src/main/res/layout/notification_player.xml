@@ -13,33 +13,33 @@
         android:id="@+id/notification_album_art"/>
 
     <ImageView
-        android:layout_width="45dp"
-        android:layout_height="match_parent"
-        android:gravity="center_vertical"
-        app:srcCompat="@drawable/glideplayer_skip_next_white"
         android:id="@+id/notification_next"
+        android:layout_width="40dp"
+        android:layout_height="match_parent"
         android:layout_alignParentRight="true"
+        android:layout_gravity="center_vertical"
+        android:gravity="center_vertical"
         android:paddingLeft="7dp"
         android:paddingRight="7dp"
-        android:layout_gravity="center_vertical"/>
+        app:srcCompat="@drawable/glideplayer_skip_next_white" />
 
     <ImageView
-        android:layout_height="match_parent"
-        app:srcCompat="@drawable/glideplayer_play_white"
         android:id="@+id/notification_play_pause"
+        android:layout_width="50dp"
+        android:layout_height="match_parent"
         android:layout_toLeftOf="@id/notification_next"
         android:paddingLeft="7dp"
         android:paddingRight="7dp"
-        android:layout_width="60dp" />
+        app:srcCompat="@drawable/glideplayer_play_white" />
 
     <ImageView
-        android:layout_width="45dp"
-        android:layout_height="match_parent"
-        app:srcCompat="@drawable/glideplayer_skip_prev_white"
         android:id="@+id/notification_prev"
+        android:layout_width="40dp"
+        android:layout_height="match_parent"
+        android:layout_toLeftOf="@id/notification_play_pause"
         android:paddingLeft="7dp"
         android:paddingRight="7dp"
-        android:layout_toLeftOf="@id/notification_play_pause"/>
+        app:srcCompat="@drawable/glideplayer_skip_prev_white" />
 
 
     <LinearLayout
