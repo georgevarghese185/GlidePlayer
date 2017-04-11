@@ -41,6 +41,9 @@ public class CacheFile {
         } catch (IOException e) {
             downloading = false;
             downloadSuccessful = false;
+            if(downloadCompleteListener != null) {
+                downloadCompleteListener.onDownloadFailed();
+            }
             return;
         }
 

@@ -13,6 +13,7 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
+import java.util.concurrent.CountDownLatch;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -115,9 +116,43 @@ public class RemoteFileCache {
             Library.getString(cursor, CacheDatabase.SongFileTable.Columns.FILE_NAME));
             cursor.close();
         } else {
-            if (cursor != null) cursor.close();
-            if(!makeSpace(song.getSize())) throw new BiggerThanCacheException();
-            uri = Uri.parse(serverUrl + TYPE_SONG + "/" + username + "/" + songId);
+//            TODO: commented out until buffering issues tested and fixed
+//            if (cursor != null) cursor.close();
+//            if(!makeSpace(song.getSize())) throw new BiggerThanCacheException();
+//            uri = Uri.parse(serverUrl + TYPE_SONG + "/" + username + "/" + songId);
+
+
+            //TODO: temporary code. Downloading entire file and returning file URI
+            final CountDownLatch countDownLatch = new CountDownLatch(1);
+            CacheFile cacheFile = ShareGroup.getSong(username, songId);
+            if(cacheFile == null) return null;
+            cacheFile.registerDownloadCompleteListener(new CacheFile.DownloadCompleteListener() {
+                @Override
+                public void onDownloadComplete() {
+                    countDownLatch.countDown();
+                }
+
+                @Override
+                public void onDownloadFailed() {
+                    countDownLatch.countDown();
+                }
+            });
+
+            cacheFile.startDownload( Library.FILE_SAVE_LOCATION + "/" + String.valueOf(cacheFileName++));
+
+            try {
+                countDownLatch.await();
+            } catch (InterruptedException e) {
+                return null;
+            }
+
+            if(cacheFile.isDownloadSuccessful()) {
+                uri = Uri.parse(cacheFile.getFile().getAbsolutePath());
+            } else {
+                return null;
+            }
+            addNewSongFile(cacheFile, username, songId);
+            //TODO: end of temporary code.
         }
 
         return uri;

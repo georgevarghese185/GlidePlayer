@@ -160,18 +160,25 @@ public class MusicPlayer implements Closeable{
         if(song.getFilePath().equals(Library.REMOTE_SONG_MISSING_PATH)) {
             try {
                 mediaPlayer.setDataSource(context, RemoteFileCache.getInstance().getSongUri(song));
-                mediaPlayer.setOnBufferingUpdateListener(
-                        new MediaPlayer.OnBufferingUpdateListener() {
-                    @Override
-                    public void onBufferingUpdate(MediaPlayer mp, int percent) {
-                        bufferedPercent = percent;
-                        bufferedTime = (int)(song.getDuration() * percent/100.0);
-                        for(SeekListener listener : seekListenerList) {
-                            listener.onBufferingUpdated(
-                                    (int)(bufferedTime * MAX_SEEK_VALUE / song.getDuration()));
-                        }
-                    }
-                });
+                //TODO: temporarily commented till buffering fixed.
+//                mediaPlayer.setOnBufferingUpdateListener(
+//                        new MediaPlayer.OnBufferingUpdateListener() {
+//                    @Override
+//                    public void onBufferingUpdate(MediaPlayer mp, int percent) {
+//                        bufferedPercent = percent;
+//                        bufferedTime = (int)(song.getDuration() * percent/100.0);
+//                        for(SeekListener listener : seekListenerList) {
+//                            listener.onBufferingUpdated(
+//                                    (int)(bufferedTime * MAX_SEEK_VALUE / song.getDuration()));
+//                        }
+//                    }
+//                });
+
+                //TODO: temp code
+                bufferedPercent = 100;
+                bufferedTime = (int)song.getDuration();
+                //TODO: end of temp code
+
                 mediaPlayer.prepare();
                 prepared = true;
                 return true;
