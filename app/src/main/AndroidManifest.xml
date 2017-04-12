@@ -14,13 +14,13 @@
         android:name="android.permission.INTERNET"
         android:required="true" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <uses-permission android:name="android.permission.READ_LOGS"/>
+    <uses-permission android:name="android.permission.READ_LOGS" />
 
     <application
+        android:name=".activities.MyApplication"
         android:allowBackup="true"
         android:icon="@mipmap/glideplayer"
         android:label="@string/app_name"
-        android:name=".activities.MyApplication"
         android:supportsRtl="true"
         android:theme="@style/AppTheme.NoActionBar">
         <activity
@@ -48,7 +48,12 @@
             android:exported="false" />
         <service android:name=".connectivity.NetworkService" />
 
-        <activity android:name=".activities.AboutActivity"></activity>
+        <activity android:name=".activities.AboutActivity" />
+        <activity
+            android:name=".connectivity.SyncSessionActivity"
+            android:label="@string/title_activity_sync_session"
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity android:name=".connectivity.SyncPlayerActivity"></activity>
     </application>
 
 </manifest>
