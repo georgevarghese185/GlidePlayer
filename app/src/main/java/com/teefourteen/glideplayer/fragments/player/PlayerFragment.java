@@ -33,6 +33,7 @@ import static com.teefourteen.glideplayer.Global.playQueue;
 public class PlayerFragment extends Fragment implements PlayerService.SongListener{
     private static PlayerService.PlayerServiceBinder binder;
     private ImageView albumArtView;
+    private ImageView albumArtMini;
     private View rootView;
     private SeekBar seekBar;
     private boolean userSeeking = false;
@@ -56,6 +57,7 @@ public class PlayerFragment extends Fragment implements PlayerService.SongListen
         //inflate view
         rootView = inflater.inflate(R.layout.fragment_player, container, false);
         albumArtView = (ImageView) rootView.findViewById(R.id.player_album_art);
+        albumArtMini = (ImageView) rootView.findViewById(R.id.player_album_art_mini);
 
         //Set listeners for buttons
         rootView.findViewById(R.id.player_play_button).setOnClickListener(new View.OnClickListener() {
@@ -209,9 +211,14 @@ public class PlayerFragment extends Fragment implements PlayerService.SongListen
         textView.setText(song.getArtist());
 
         String albumArt = song.getAlbumArt();
-        if(albumArt!=null)
+        if(albumArt!=null) {
             albumArtView.setImageDrawable(Drawable.createFromPath(albumArt));
-        else albumArtView.setImageResource(R.drawable.ic_album_white_24dp);
+            albumArtMini.setImageDrawable(Drawable.createFromPath(albumArt));
+        }
+        else {
+            albumArtView.setImageResource(R.drawable.ic_album_white_24dp);
+            albumArtMini.setImageResource(R.drawable.ic_album_white_24dp);
+        }
     }
 
     @Override

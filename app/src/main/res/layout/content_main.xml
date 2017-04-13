@@ -7,7 +7,7 @@
     <LinearLayout
         android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="66dp"
+        android:layout_height="wrap_content"
         android:id="@+id/peek_player"
         android:layout_alignParentBottom="true"
         android:background="#434343"
@@ -16,7 +16,7 @@
         <ProgressBar
             style="?android:attr/progressBarStyleHorizontal"
             android:layout_width="match_parent"
-            android:layout_height="2dp"
+            android:layout_height="3dp"
             android:id="@+id/peek_player_seek_bar"
             android:clickable="false"/>
 

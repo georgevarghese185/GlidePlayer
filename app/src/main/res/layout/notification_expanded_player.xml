@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="230dp"
+    android:layout_height="150dp"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:background="@color/notification_player_background">
 
@@ -17,9 +17,11 @@
         android:orientation="vertical"
         android:id="@+id/notification_track_info"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="60dp"
         android:layout_below="@id/notification_expanded_album_art"
-        android:layout_marginLeft="5dp">
+        android:layout_toRightOf="@+id/notification_expanded_album_art"
+        android:layout_toEndOf="@+id/notification_expanded_album_art"
+        android:layout_alignParentTop="true">
 
         <TextView
             android:text="Unknown Artist"
@@ -28,7 +30,7 @@
             android:id="@+id/notification_expanded_track_artist"
             android:textColor="@android:color/darker_gray"
             android:layout_weight="1"
-            android:gravity="bottom" />
+            android:gravity="center" />
 
 
         <TextView
@@ -42,14 +44,14 @@
             android:ellipsize="end"
             android:layout_below="@id/notification_expanded_album_art"
             android:layout_weight="1"
-            android:gravity="top"
+            android:gravity="center"
             android:textSize="18sp" />
 
         <TextView
             android:text="Unknown Album"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center_vertical"
+            android:gravity="center"
             android:id="@+id/notification_expanded_track_album"
             android:textColor="@android:color/darker_gray"
             android:layout_weight="1"
@@ -63,7 +65,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_toRightOf="@id/notification_expanded_album_art"
-        android:layout_alignBottom="@id/notification_expanded_album_art">
+        android:id="@+id/relativeLayout"
+        android:layout_below="@+id/notification_track_info"
+        android:layout_alignBottom="@+id/notification_expanded_album_art">
 
         <ImageView
             android:layout_height="match_parent"
@@ -91,7 +95,9 @@
             android:paddingRight="10dp"
             app:srcCompat="@drawable/glideplayer_skip_prev_white"
             android:id="@+id/notification_expanded_prev"
-            android:layout_toLeftOf="@id/notification_expanded_play_pause"/>
+            android:layout_alignParentTop="true"
+            android:layout_toLeftOf="@+id/notification_expanded_play_pause"
+            android:layout_toStartOf="@+id/notification_expanded_play_pause" />
     </RelativeLayout>
 
 </RelativeLayout>
