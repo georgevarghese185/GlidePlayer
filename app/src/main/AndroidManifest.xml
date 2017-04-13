@@ -14,10 +14,8 @@
         android:name="android.permission.INTERNET"
         android:required="true" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <uses-permission android:name="android.permission.READ_LOGS" />
 
     <application
-        android:name=".activities.MyApplication"
         android:allowBackup="true"
         android:icon="@mipmap/glideplayer"
         android:label="@string/app_name"
@@ -53,7 +51,7 @@
             android:name=".connectivity.SyncSessionActivity"
             android:label="@string/title_activity_sync_session"
             android:theme="@style/AppTheme.NoActionBar" />
-        <activity android:name=".connectivity.SyncPlayerActivity"></activity>
+        <activity android:name=".connectivity.SyncPlayerActivity"/>
     </application>
 
 </manifest>
