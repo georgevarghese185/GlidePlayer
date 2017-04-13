@@ -83,7 +83,7 @@
                     app:layout_constraintRight_toLeftOf="@+id/player_queue_button"
                     android:layout_marginBottom="3dp" />
 
-                <Button
+                <ImageView
                     android:id="@+id/player_queue_button"
                     style="?android:attr/buttonStyleSmall"
                     android:layout_width="wrap_content"
@@ -95,7 +95,7 @@
                     android:layout_marginRight="3dp"
                     android:layout_marginStart="8dp"
                     android:layout_marginTop="8dp"
-                    android:background="@drawable/ic_format_list_bulleted_black_24dp"
+                    app:srcCompat="@drawable/ic_format_list_bulleted_black_24dp"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintRight_toRightOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
