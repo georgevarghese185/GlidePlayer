@@ -46,7 +46,12 @@
             android:exported="false" />
         <service android:name=".connectivity.NetworkService" />
 
-        <activity android:name=".activities.AboutActivity"></activity>
+        <activity android:name=".activities.AboutActivity" />
+        <activity
+            android:name=".connectivity.SyncSessionActivity"
+            android:label="@string/title_activity_sync_session"
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity android:name=".connectivity.SyncPlayerActivity"/>
     </application>
 
 </manifest>
