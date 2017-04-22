@@ -11,14 +11,14 @@ import android.widget.TextView;
 import java.util.ArrayList;
 
 import com.teefourteen.glideplayer.R;
-import com.teefourteen.glideplayer.connectivity.ShareGroup;
+import com.teefourteen.glideplayer.connectivity.Group;
 
 
-public class GroupAdapter extends ArrayAdapter<ShareGroup.GlidePlayerGroup> {
-    ArrayList<ShareGroup.GlidePlayerGroup> groups;
+public class GroupAdapter extends ArrayAdapter<Group.GlidePlayerGroup> {
+    ArrayList<Group.GlidePlayerGroup> groups;
 
 
-    public GroupAdapter(Context context, ArrayList<ShareGroup.GlidePlayerGroup> groups){
+    public GroupAdapter(Context context, ArrayList<Group.GlidePlayerGroup> groups){
         super(context, R.layout.available_group, groups);
         this.groups = groups;
     }
@@ -33,7 +33,7 @@ public class GroupAdapter extends ArrayAdapter<ShareGroup.GlidePlayerGroup> {
             v = inflater.inflate(R.layout.available_group, parent, false);
         }
 
-        ShareGroup.GlidePlayerGroup group = groups.get(position);
+        Group.GlidePlayerGroup group = groups.get(position);
         if(group != null) {
             TextView textView = (TextView)v.findViewById(R.id.group_name);
             textView.setText(group.groupName);

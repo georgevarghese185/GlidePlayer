@@ -2,12 +2,9 @@ package com.teefourteen.glideplayer;
 
 
 import android.graphics.drawable.Drawable;
-import android.os.AsyncTask;
 import android.widget.ImageView;
 
 import java.io.File;
-import java.util.HashMap;
-import java.util.LinkedList;
 
 public class AsyncImageLoader extends CancellableAsyncTaskHandler {
 

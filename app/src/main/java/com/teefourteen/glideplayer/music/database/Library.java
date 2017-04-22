@@ -110,8 +110,14 @@ public class Library {
     public static Cursor getSongs(String userName) { return querySongs(userName, null, null); }
 
     public static Cursor getSong(String userName ,long songId) {
+        String tableName;
+        if(userName == null) {
+            tableName = SongTable.localTableName;
+        } else {
+            tableName = SongTable.remoteTableName;
+        }
         return querySongs(userName,
-                " WHERE " + SongTable.localTableName + "." + SongTable.Columns.SONG_ID + "=?"
+                " WHERE " + tableName + "." + SongTable.Columns.SONG_ID + "=?"
                 , new String[]{String.valueOf(songId)});
     }
 

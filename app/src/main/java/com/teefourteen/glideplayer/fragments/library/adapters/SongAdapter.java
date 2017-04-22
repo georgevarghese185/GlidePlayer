@@ -1,9 +1,6 @@
 package com.teefourteen.glideplayer.fragments.library.adapters;
 
-import android.content.Context;
 import android.database.Cursor;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.widget.PagerSnapHelper;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,13 +14,8 @@ import java.util.ArrayList;
 import com.teefourteen.glideplayer.AsyncImageLoader;
 import com.teefourteen.glideplayer.CancellableAsyncTaskHandler;
 import com.teefourteen.glideplayer.R;
-import com.teefourteen.glideplayer.connectivity.ShareGroup;
 import com.teefourteen.glideplayer.connectivity.RemoteAlbumCoverLoader;
-import com.teefourteen.glideplayer.music.database.AlbumTable;
-import com.teefourteen.glideplayer.music.database.ArtistTable;
-import com.teefourteen.glideplayer.music.database.Library;
 import com.teefourteen.glideplayer.music.Song;
-import com.teefourteen.glideplayer.music.database.SongTable;
 
 public class SongAdapter extends RecyclerView.Adapter<SongAdapter.SongHolder> {
     private Cursor songCursor;
@@ -41,6 +33,7 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.SongHolder> {
     
     public interface SongClickListener {
         void onSongClicked(Cursor songCursor, int position);
+        void onSongLongClicked(Cursor songCursor, int position);
     }
     
     //temporary
@@ -49,7 +42,8 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.SongHolder> {
     }
 
 
-    class SongHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
+    class SongHolder extends RecyclerView.ViewHolder implements View.OnClickListener,
+            View.OnLongClickListener{
         private View trackView;
         private Song song;
         private int position;
@@ -68,6 +62,7 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.SongHolder> {
             trackAlbumArt = (ImageView) trackView.findViewById(R.id.trackAlbumArt);
             
             itemView.setOnClickListener(this);
+            itemView.setOnLongClickListener(this);
         }
 
         void bindView(Cursor songCursor, int position) {
@@ -146,6 +141,16 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.SongHolder> {
                 songClickListener.onSongClicked(songCursor, position);
             } else {
                 songQueueClickListener.onSongClicked(songList, position);
+            }
+        }
+
+        @Override
+        public boolean onLongClick(View v) {
+            if (source == Source.CURSOR) {
+                songClickListener.onSongLongClicked(songCursor, position);
+                return true;
+            } else {
+                return false;
             }
         }
     }

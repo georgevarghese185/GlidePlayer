@@ -9,8 +9,6 @@ import android.net.NetworkInfo;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pManager;
 
-import java.net.InetAddress;
-
 public class WifiP2pBroadcastReceiver extends BroadcastReceiver {
     WifiP2pManager.ConnectionInfoListener connectionInfoListener;
     WifiP2pManager.GroupInfoListener groupInfoListener;

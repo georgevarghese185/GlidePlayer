@@ -2,7 +2,6 @@ package com.teefourteen.glideplayer.music;
 
 import android.content.Context;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.support.annotation.NonNull;
@@ -96,7 +95,6 @@ public class PlayQueue implements Parcelable {
 
     public ArrayList<Song> getQueue() { return queue; }
 
-
     public Song changeTrack(int index) {
         return queue.get(setCurrentPlaying(index));
     }
@@ -108,6 +106,10 @@ public class PlayQueue implements Parcelable {
         }
         else
             return 0;
+    }
+
+    public void appendSong(Song song) {
+        queue.add(song);
     }
 
     public int getNextIndex() {

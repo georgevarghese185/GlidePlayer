@@ -2,7 +2,6 @@ package com.teefourteen.glideplayer.fragments.connectivity;
 
 
 import android.os.Bundle;
-import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -12,7 +11,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import com.teefourteen.glideplayer.R;
-import com.teefourteen.glideplayer.connectivity.ShareGroup;
+import com.teefourteen.glideplayer.connectivity.Group;
 import com.teefourteen.glideplayer.fragments.FragmentSwitcher;
 import com.teefourteen.glideplayer.fragments.connectivity.listeners.ConnectionCloseListener;
 import com.teefourteen.glideplayer.fragments.connectivity.listeners.ConnectivitySelectionListener;
@@ -47,10 +46,9 @@ public class ConnectivityFragment extends Fragment implements ConnectivitySelect
             connectivityFragmentSwitcher = new FragmentSwitcher(getFragmentManager(),
                     R.id.fragment_connectivity_main_container);
 
-            if(ShareGroup.shareGroupWeakReference != null
-                    && ShareGroup.shareGroupWeakReference.get() != null) {
-                ShareGroup group = ShareGroup.shareGroupWeakReference.get();
-                if(group.getMode() == ShareGroup.Mode.CREATE_GROUP) {
+            Group group;
+            if((group = Group.getInstance()) != null) {
+                if(group.getMode() == Group.Mode.CREATE_GROUP) {
                     createFragment = CreateGroupFragment.newInstance(group, this);
                     connectivityFragmentSwitcher.switchTo(createFragment, CREATE_FRAGMENT_TAG);
                 } else {
@@ -83,16 +81,16 @@ public class ConnectivityFragment extends Fragment implements ConnectivitySelect
 
     @Override
     public void OnJoinGroupSelected(String username) {
-        joinFragment = JoinGroupFragment.newInstance(new ShareGroup(getActivity(), username,
-                ShareGroup.Mode.JOIN_GROUP), this);
+        joinFragment = JoinGroupFragment.newInstance(new Group(getActivity(), username,
+                Group.Mode.JOIN_GROUP), this);
 
         connectivityFragmentSwitcher.switchTo(joinFragment, JOIN_FRAGMENT_TAG);
     }
 
     @Override
     public void OnCreateGroupSelected(String username) {
-        createFragment = CreateGroupFragment.newInstance(new ShareGroup(getActivity(), username,
-                ShareGroup.Mode.CREATE_GROUP), this);
+        createFragment = CreateGroupFragment.newInstance(new Group(getActivity(), username,
+                Group.Mode.CREATE_GROUP), this);
 
         connectivityFragmentSwitcher.switchTo(createFragment,CREATE_FRAGMENT_TAG);
     }

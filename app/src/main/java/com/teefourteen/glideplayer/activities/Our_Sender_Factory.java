@@ -2,7 +2,6 @@ package com.teefourteen.glideplayer.activities;
 
 import android.content.Context;
 
-import org.acra.ACRA;
 import org.acra.config.ACRAConfiguration;
 import org.acra.sender.ReportSender;
 import org.acra.sender.ReportSenderFactory;

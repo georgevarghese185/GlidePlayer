@@ -2,8 +2,6 @@ package com.teefourteen.glideplayer.connectivity;
 
 import android.util.Log;
 
-import com.teefourteen.glideplayer.EasyHandler;
-
 import java.io.File;
 import java.io.IOException;
 

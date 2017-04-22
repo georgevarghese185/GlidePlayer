@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="layout.PlayQueueFragment">
+    tools:context=".fragments.player.PlayQueueFragment">
 
     <android.support.design.widget.AppBarLayout
         android:id="@+id/queue_appBarLayout"
@@ -14,8 +14,10 @@
         app:layout_constraintTop_toTopOf="parent">
 
         <android.support.v7.widget.Toolbar
+            android:id="@+id/play_queue_toolbar"
             android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"/>
+            android:layout_height="?attr/actionBarSize"
+            />
 
     </android.support.design.widget.AppBarLayout>
 
@@ -26,5 +28,6 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/queue_appBarLayout"/>
+        app:layout_constraintTop_toBottomOf="@+id/queue_appBarLayout"
+        tools:listitem="@layout/track"/>
 </android.support.constraint.ConstraintLayout>

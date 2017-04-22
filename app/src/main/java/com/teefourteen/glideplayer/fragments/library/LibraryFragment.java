@@ -23,7 +23,7 @@ import android.widget.Spinner;
 import com.teefourteen.glideplayer.R;
 import com.teefourteen.glideplayer.activities.MainActivity;
 import com.teefourteen.glideplayer.activities.PlayerActivity;
-import com.teefourteen.glideplayer.connectivity.ShareGroup;
+import com.teefourteen.glideplayer.connectivity.Group;
 import com.teefourteen.glideplayer.connectivity.listeners.GroupConnectionListener;
 import com.teefourteen.glideplayer.connectivity.listeners.GroupMemberListener;
 import com.teefourteen.glideplayer.fragments.library.adapters.AlbumAdapter;
@@ -33,7 +33,6 @@ import com.teefourteen.glideplayer.music.database.AlbumTable;
 import com.teefourteen.glideplayer.music.database.Library;
 
 import static com.teefourteen.glideplayer.Global.playQueue;
-import static com.teefourteen.glideplayer.connectivity.ShareGroup.shareGroupWeakReference;
 
 public class LibraryFragment extends Fragment implements GroupMemberListener,
         GroupConnectionListener, SongAdapter.SongClickListener, AlbumAdapter.AlbumClickListener {
@@ -51,6 +50,9 @@ public class LibraryFragment extends Fragment implements GroupMemberListener,
     private static final String SONGS_TAB_TITLE = "Songs";
     private static final String ALBUMS_TAB_TITLE = "Albums";
 
+    private SongAdapter.SongClickListener customSongClickListener = null;
+    private AlbumAdapter.AlbumClickListener customAlbumClickListener = null;
+
     public LibraryFragment() {
     }
 
@@ -60,6 +62,14 @@ public class LibraryFragment extends Fragment implements GroupMemberListener,
 
     public interface CloseCursorsListener {
         void closeCursors();
+    }
+
+    public static LibraryFragment newInstance(SongAdapter.SongClickListener songClickListener,
+                                              AlbumAdapter.AlbumClickListener albumClickListener) {
+        LibraryFragment fragment = new LibraryFragment();
+        fragment.customAlbumClickListener = albumClickListener;
+        fragment.customSongClickListener = songClickListener;
+        return fragment;
     }
 
 
@@ -143,13 +153,15 @@ public class LibraryFragment extends Fragment implements GroupMemberListener,
 
         mainActivity.setSupportActionBar(toolbar);
 
-        DrawerLayout drawerLayout = (DrawerLayout) mainActivity.findViewById(R.id.drawer_layout);
-        ActionBarDrawerToggle drawerToggle = new ActionBarDrawerToggle(mainActivity,
-                drawerLayout, toolbar,
-                R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+        DrawerLayout drawerLayout = (DrawerLayout) getActivity().findViewById(R.id.drawer_layout);
+        if(drawerLayout != null) {
+            ActionBarDrawerToggle drawerToggle = new ActionBarDrawerToggle(mainActivity,
+                    drawerLayout, toolbar,
+                    R.string.navigation_drawer_open, R.string.navigation_drawer_close);
 
-        drawerLayout.addDrawerListener(drawerToggle);
-        drawerToggle.syncState();
+            drawerLayout.addDrawerListener(drawerToggle);
+            drawerToggle.syncState();
+        }
 
         ViewPager viewPager = (ViewPager) rootView.findViewById(R.id.library_view_pager);
         pagerAdapter = new LibraryPagerAdapter(getChildFragmentManager(), songsFragment, albumsFragment);
@@ -163,9 +175,9 @@ public class LibraryFragment extends Fragment implements GroupMemberListener,
 
     private void initSpinner() {
 
-        if(shareGroupWeakReference != null
-                && shareGroupWeakReference.get() != null) {
-            final ShareGroup group = shareGroupWeakReference.get();
+        final Group group;
+        if((group = Group.getInstance()) != null) {
+
 
             group.registerGroupMemberListener(this);
             group.registerGroupConnectionListener(this);
@@ -193,7 +205,7 @@ public class LibraryFragment extends Fragment implements GroupMemberListener,
                     }
                     String name = group.getMemberList().get(position);
 
-                    if (name.equals(ShareGroup.userName)) {
+                    if (name.equals(Group.userName)) {
                         name = null;
                     }
 
@@ -224,50 +236,66 @@ public class LibraryFragment extends Fragment implements GroupMemberListener,
 
     @Override
     public void onSongClicked(Cursor songCursor, int position) {
-        songCursor.moveToPosition(position);
+        if(customSongClickListener != null) {
+            customSongClickListener.onSongClicked(songCursor, position);
+        } else {
 
-        playQueue = new PlayQueue(songCursor);
+            songCursor.moveToPosition(position);
 
-        Intent intent = new Intent(getContext(), PlayerActivity.class);
-        intent.putExtra(PlayerActivity.EXTRA_PLAY_QUEUE, playQueue);
-        getActivity().startActivity(intent);
+            playQueue = new PlayQueue(songCursor);
+
+            Intent intent = new Intent(getContext(), PlayerActivity.class);
+            intent.putExtra(PlayerActivity.EXTRA_PLAY_QUEUE, playQueue);
+            getActivity().startActivity(intent);
+        }
+    }
+
+    @Override
+    public void onSongLongClicked(Cursor songCursor, int position) {
+        if(customSongClickListener != null) {
+            customSongClickListener.onSongLongClicked(songCursor, position);
+        }
     }
 
     @Override
     public void onAlbumClicked(Cursor albumCursor, int position) {
-        String username = null;
-        albumCursor.moveToPosition(position);
-        if(Library.getInt(albumCursor, AlbumTable.Columns.IS_REMOTE) == 1) {
-            username = Library.getString(albumCursor, AlbumTable.Columns.REMOTE_USERNAME);
-        }
-        Cursor albumSongsCursor = Library.getAlbumSongs(username,
-                Library.getLong(albumCursor, AlbumTable.Columns.ALBUM_ID));
+        if(customAlbumClickListener != null) {
 
-        final SongsFragment albumSongsFragment = SongsFragment.newInstance(albumSongsCursor, this);
-        pagerAdapter.changeAlbumsFragment(albumSongsFragment);
+        } else {
 
-        final MainActivity mainActivity = (MainActivity) getActivity();
-
-        backAction = new Runnable() {
-            @Override
-            public void run() {
-                backAction = null;
-                pagerAdapter.changeAlbumsFragment(albumsFragment);
-                albumSongsFragment.closeCursors();
-                mainActivity.overrideBackButton(null);
+            String username = null;
+            albumCursor.moveToPosition(position);
+            if (Library.getInt(albumCursor, AlbumTable.Columns.IS_REMOTE) == 1) {
+                username = Library.getString(albumCursor, AlbumTable.Columns.REMOTE_USERNAME);
             }
-        };
+            Cursor albumSongsCursor = Library.getAlbumSongs(username,
+                    Library.getLong(albumCursor, AlbumTable.Columns.ALBUM_ID));
 
-        mainActivity.overrideBackButton(backAction);
+            final SongsFragment albumSongsFragment = SongsFragment.newInstance(albumSongsCursor, this);
+            pagerAdapter.changeAlbumsFragment(albumSongsFragment);
+
+            final MainActivity mainActivity = (MainActivity) getActivity();
+
+            backAction = new Runnable() {
+                @Override
+                public void run() {
+                    backAction = null;
+                    pagerAdapter.changeAlbumsFragment(albumsFragment);
+                    albumSongsFragment.closeCursors();
+                    mainActivity.overrideBackButton(null);
+                }
+            };
+
+            mainActivity.overrideBackButton(backAction);
+        }
     }
 
     @Override
     public void onPause() {
         super.onPause();
 
-        if(shareGroupWeakReference != null
-                &&shareGroupWeakReference.get() != null) {
-            ShareGroup group = shareGroupWeakReference.get();
+        Group group;
+        if((group = Group.getInstance()) != null) {
             group.unregisterGroupMemberListener(this);
             group.unregisterGroupConnectionListener(this);
         }
@@ -277,9 +305,8 @@ public class LibraryFragment extends Fragment implements GroupMemberListener,
     public void onResume() {
         super.onResume();
 
-        if(shareGroupWeakReference != null
-                &&shareGroupWeakReference.get() != null) {
-            ShareGroup group = shareGroupWeakReference.get();
+        Group group;
+        if((group = Group.getInstance()) != null) {
             group.registerGroupMemberListener(this);
             group.registerGroupConnectionListener(this);
 

@@ -22,9 +22,12 @@ import android.util.Log;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -60,6 +63,7 @@ public class NetworkService extends Service {
     private static final int ACTION_CLIENT_LEFT = 2104;
     public static final int ACTION_RAW_SOCKET = 2125;
     public static final int ACTION_PEACEOUT = 2100;
+    public static final int ACTION_PTP_SYNC = 2102;
     private static final String DATA_TYPE_INTEGER = "integer";
     private static final String DATA_TYPE_LONG = "long";
     private static final String DATA_TYPE_STRING = "string";
@@ -192,6 +196,9 @@ public class NetworkService extends Service {
                 } else if(action == ACTION_RAW_SOCKET) {
                     requestListener.onNewRequest(senderDeviceAddress, ACTION_RAW_SOCKET,
                             con.getSocket());
+                } else if(action == ACTION_PTP_SYNC){
+                    PTPSync.handleSyncRequest(con.getSocket());
+                    con.close();
                 } else {
                     handleRequest(action);
                 }
@@ -327,7 +334,15 @@ public class NetworkService extends Service {
             Runnable r = new Runnable() {
                 @Override
                 public void run() {
-                    service.sendRequest(deviceId, action, requestData, responseListener);
+                    service.sendRequest(deviceId, action, requestData,
+                            (responseListener != null)? responseListener
+                                    : new ResponseListener() {
+                                @Override
+                                public void onResponseReceived(Object responseData) {}
+
+                                @Override
+                                public void onRequestFailed() {}
+                            });
                 }
             };
             handler.executeAsync(r, THREAD_REQUEST+session++);
@@ -343,12 +358,8 @@ public class NetworkService extends Service {
             handler.executeAsync(r, THREAD_NETWORK_MANAGER);
         }
 
-        public void deleteCacheFile(String fileName) {
-            File file = new File(Library.FILE_SAVE_LOCATION, fileName);
-            if(file.exists()) {
-                fileCacheSize -= file.length();
-                file.delete();
-            }
+        public long ptpSync(String deviceId) {
+            return service.ptpSync(deviceId);
         }
     }
 
@@ -878,6 +889,27 @@ public class NetworkService extends Service {
         }
     }
 
+    public long ptpSync(String deviceId) {
+        Connection connection = null;
+        try {
+            connection = new Connection(clientMap.get(deviceId).inetAddress,
+                    clientMap.get(deviceId).port);
+
+            connection.sendString(p2pBroadcastReceiver.myDevice.deviceAddress);
+
+            connection.sendInt(ACTION_PTP_SYNC);
+
+            long offset = PTPSync.sync(connection.getSocket());
+
+            connection.close();
+
+            return offset;
+        } catch (IOException e) {
+            if(connection != null) connection.close();
+            return -1;
+        }
+    }
+
     private String standardErrors(int reason) {
         if(reason == WifiP2pManager.ERROR) {
             return "Internal error occured";
@@ -896,5 +928,58 @@ public class NetworkService extends Service {
         binder = null;
         stopForeground(false);
         unregisterReceiver(p2pBroadcastReceiver);
+    }
+
+    private static class PTPSync {
+        static long sync(Socket socket) throws IOException {
+            DataInputStream inputStream = new DataInputStream(socket.getInputStream());
+            DataOutputStream outputStream = new DataOutputStream(socket.getOutputStream());
+            long avgOffset, offsets[] = new long[4];
+            for(int i=0;i<4;i++) {
+
+                inputStream.readByte();                     //get Sync
+                long t1d = System.currentTimeMillis();      //T1`
+                long t1 = inputStream.readLong();           //get T1
+
+                long t2 = System.currentTimeMillis();       //T2
+                outputStream.writeByte(0);                  //Delay_Req
+                long t2d = inputStream.readLong();          //get T2' (Delay_Resp)
+
+                offsets[i] = (t1d - t1 - t2d + t2) / 2;                   //return offset
+
+                String string = "T1=" + t1 + "\n"
+                        + "T1'=" + t1d + "\n"
+                        + "T2=" + t2 + "\n"
+                        + "T2'=" + t2d + "\n";
+                Log.d("PTP sync", string);
+                try {
+                    Thread.sleep(10);
+                } catch (InterruptedException e) {
+                    //
+                }
+            }
+            avgOffset = (offsets[0] + offsets[1] + offsets[2] + offsets[3])/4;
+            Log.d("PTP sync","average offset = " + avgOffset);
+            return avgOffset;
+        }
+
+        static void handleSyncRequest(Socket socket) throws IOException {
+            DataInputStream inputStream = new DataInputStream(socket.getInputStream());
+            DataOutputStream outputStream = new DataOutputStream(socket.getOutputStream());
+
+            for(int i = 0; i<4; i++) {
+                long t1 = System.currentTimeMillis();
+                outputStream.writeByte(0);              //send Sync
+                outputStream.writeLong(t1);             //send T1
+
+                inputStream.readByte();                 //Wait for Delay_Req
+                long t2d = System.currentTimeMillis();  //T2'
+                outputStream.writeLong(t2d);            //Send T2' (Delay_Resp)
+
+                String string = "T1=" + t1 + "\n"
+                        + "T2'=" + t2d + "\n";
+                Log.d("PTP sync", string);
+            }
+        }
     }
 }

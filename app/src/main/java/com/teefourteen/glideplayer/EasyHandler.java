@@ -51,6 +51,10 @@ public class EasyHandler {
         handler.post(r);
     }
 
+    public Handler getHandler(String handlerName) {
+        return handlerMap.get(handlerName);
+    }
+
     /**
      * Safely close all handlersQuits a specific handler's looper. The task of quitting the thread
      * is posted onto that thread's queue itself so that any remaining tasks finish first (since

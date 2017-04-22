@@ -8,7 +8,6 @@ import android.content.ServiceConnection;
 import android.database.Cursor;
 import android.os.IBinder;
 import android.util.Log;
-import android.util.LongSparseArray;
 import android.widget.ArrayAdapter;
 import android.widget.Toast;
 
@@ -36,20 +35,23 @@ import com.teefourteen.glideplayer.music.Song;
 import com.teefourteen.glideplayer.music.database.Library;
 import com.teefourteen.glideplayer.services.PlayerService;
 
-public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberListener,
+public class Group implements NewGroupListener, ErrorListener, GroupMemberListener,
         RequestListener, Closeable {
+
     class HOOMAN{
 
     }
-    //TODO: change method parameters to be relevant to sharegroup (eg: memberId in place of deviceId)
+    //TODO: change method parameters to be relevant to group (eg: memberId in place of deviceId)
 
     private static final int ACTION_GET_USERNAME = 1000;
     private static final int ACTION_GET_SONG = 1002;
     private static final int ACTION_GET_ALBUM_ART = 1004;
     private static final int ACTION_NOTIFY_USERNAME_TAKEN = 1005;
+    private static final int ACTION_HEADER_MASK = 0xF000;
+    private static final int ACTION_HEADER_SYNC_REQUEST = 0xD000;
     private boolean isOwner = false;
     private Mode mode;
-    public static WeakReference<ShareGroup> shareGroupWeakReference;
+    private static WeakReference<Group> groupWeakReference;
     private NetworkService.ServiceBinder netService;
     public static String userName;
     private static GlidePlayerGroup currentGroup;
@@ -151,6 +153,10 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
         }
     }
 
+    public interface RequestListener {
+        Object onNewRequest(String username, int action, Object requestData);
+    }
+
 
     public class Member{
         public  final String name;
@@ -162,10 +168,18 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
         }
     }
 
-    public static CacheFile getSong(String memberName, final long songId) {
+    public static Group getInstance() {
+        if(groupWeakReference != null) {
+            return groupWeakReference.get();
+        } else {
+            return null;
+        }
+    }
+
+    public CacheFile getSong(String memberName, final long songId) {
         String memberId = currentGroup.getMemberId(memberName);
 
-        ShareGroup group = ShareGroup.shareGroupWeakReference.get();
+        Group group = Group.groupWeakReference.get();
 
         final CountDownLatch countDownLatch = new CountDownLatch(1);
         final CacheFile file[] = {null};
@@ -192,11 +206,11 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
         }
     }
 
-    static CacheFile getAlbumArt(String userName, long albumId) {
+    CacheFile getAlbumArt(String userName, long albumId) {
         if(currentGroup == null) return null;
         String memberId = currentGroup.getMemberId(userName);
 
-        ShareGroup group = ShareGroup.shareGroupWeakReference.get();
+        Group group = Group.groupWeakReference.get();
         final CountDownLatch countDownLatch = new CountDownLatch(1);
         final CacheFile file[] = {null};
         group.netService.sendRequest(memberId, ACTION_GET_ALBUM_ART, albumId,
@@ -221,9 +235,8 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
         }
     }
 
-    public static void deleteCacheFile(String fileName) {
-        ShareGroup group = ShareGroup.shareGroupWeakReference.get();
-        group.netService.deleteCacheFile(fileName);
+    long getClockOffset(String username) {
+        return netService.ptpSync(currentGroup.getMemberId(username));
     }
 
     private File albumArtRequest(Long albumId) {
@@ -239,14 +252,14 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
         }
     }
 
-    public ShareGroup(Context context, String userName, Mode mode){
+    public Group(Context context, String userName, Mode mode){
         this.mode = mode;
-        shareGroupWeakReference = new WeakReference<ShareGroup>(this);
+        groupWeakReference = new WeakReference<Group>(this);
 
         deleteFiles();
 
         this.context = context;
-        ShareGroup.userName = userName;
+        Group.userName = userName;
 
         memberList = new ArrayList<>();
         memberList.add(userName);
@@ -260,7 +273,7 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
         try {
             RemoteFileCache.createInstance(context, 300 * 1024 * 1024);
         } catch (IOException e) {
-            Log.e("ShareGroup", "Failed creating Cache Server. Can't stream downloading files");
+            Log.e("Group", "Failed creating Cache Server. Can't stream downloading files");
         }
     }
 
@@ -286,6 +299,7 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
                         }
                     });
                 }
+                Synchronization.createInstance();
             }
 
             @Override
@@ -369,6 +383,7 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
                 for(GroupConnectionListener listener : groupConnectionListenerList) {
                     listener.onExchangingInfo();
                 }
+                Synchronization.createInstance();
             }
 
             @Override
@@ -408,6 +423,7 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
                         }
                     });
                 }
+                Synchronization.getInstance().destroy();
             }
         };
 
@@ -474,7 +490,7 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
         context.stopService(new Intent(context, NetworkService.class));
         handler.closeAllHandlers();
         deleteFiles();
-        shareGroupWeakReference = null;
+        groupWeakReference = null;
         networkNotification.dismissNetworkNotification();
         RemoteFileCache.getInstance().destroy();
     }
@@ -622,9 +638,20 @@ public class ShareGroup implements NewGroupListener, ErrorListener, GroupMemberL
         }
     }
 
+    public void sendSyncRequest(String memberName, int action, Object requestData,
+                                ResponseListener responseListener) {
+        String memberId = currentGroup.getMemberId(memberName);
+        action = action| ACTION_HEADER_SYNC_REQUEST;
+
+        netService.sendRequest(memberId, action, requestData, responseListener);
+    }
+
     @Override //always on a separate thread
     public Object onNewRequest(String deviceId, int action, Object requestData) {
-        if(action == ACTION_GET_USERNAME) {
+        if((action & ACTION_HEADER_MASK) == ACTION_HEADER_SYNC_REQUEST) {
+            return Synchronization.getInstance()
+                    .onNewRequest(currentGroup.groupMembers.get(deviceId).name, action & ~ACTION_HEADER_MASK, requestData);
+        } else if(action == ACTION_GET_USERNAME) {
             currentGroup.addMember(deviceId, (String) requestData);
             return userName;
         } else if(action == NetworkService.ACTION_RAW_SOCKET) {

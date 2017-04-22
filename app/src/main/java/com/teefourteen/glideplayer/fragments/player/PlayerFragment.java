@@ -8,8 +8,6 @@ import android.content.ServiceConnection;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.os.Message;
-import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,13 +17,17 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.teefourteen.glideplayer.AsyncImageLoader;
 import com.teefourteen.glideplayer.R;
 import com.teefourteen.glideplayer.activities.PlayerActivity;
 import com.teefourteen.glideplayer.Global;
+import com.teefourteen.glideplayer.connectivity.RemoteAlbumCoverLoader;
 import com.teefourteen.glideplayer.music.MusicPlayer;
 import com.teefourteen.glideplayer.music.PlayQueue;
 import com.teefourteen.glideplayer.music.Song;
 import com.teefourteen.glideplayer.services.PlayerService;
+
+import java.io.File;
 
 import static com.teefourteen.glideplayer.Global.playQueue;
 
@@ -39,12 +41,16 @@ public class PlayerFragment extends Fragment implements PlayerService.SongListen
     private boolean userSeeking = false;
     private ServiceConnection serviceConnection = null;
     private Song currentSong = null;
-    private PlayerActivity.Navigator navigator;
+    protected ShowQueueListener showQueueListener;
 
-    public static PlayerFragment newInstance(PlayerActivity.Navigator navigator) {
+    public static PlayerFragment newInstance(ShowQueueListener showQueueListener) {
         PlayerFragment fragment = new PlayerFragment();
-        fragment.navigator = navigator;
+        fragment.showQueueListener = showQueueListener;
         return fragment;
+    }
+
+    public interface ShowQueueListener {
+        void showQueue();
     }
 
     public PlayerFragment() {
@@ -78,7 +84,7 @@ public class PlayerFragment extends Fragment implements PlayerService.SongListen
         rootView.findViewById(R.id.player_queue_button).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                navigator.showQueue();
+                showQueueListener.showQueue();
             }
         });
 
@@ -142,10 +148,14 @@ public class PlayerFragment extends Fragment implements PlayerService.SongListen
             if(binder.isPlaying()) {
                 showPause();
             } else {
-                binder.restoreSavedQueue();
-                seekBar.setProgress(binder.getSeek());
+                initializeDefault();
             }
         }
+    }
+
+    protected void initializeDefault() {
+        binder.restoreSavedQueue();
+        seekBar.setProgress(binder.getSeek());
     }
 
     public void play(View view) {
@@ -211,11 +221,17 @@ public class PlayerFragment extends Fragment implements PlayerService.SongListen
         textView.setText(song.getArtist());
 
         String albumArt = song.getAlbumArt();
-        if(albumArt!=null) {
+        if(albumArt!=null && new File(albumArt).exists()) {
             albumArtView.setImageDrawable(Drawable.createFromPath(albumArt));
             albumArtMini.setImageDrawable(Drawable.createFromPath(albumArt));
         }
-        else {
+        else if(song.isRemote()) {
+            RemoteAlbumCoverLoader loader = new RemoteAlbumCoverLoader(2, new AsyncImageLoader(2));
+            loader.loadRemoteCover(albumArtView, song.getLibraryUsername(), song.getAlbumId(),
+                    albumArt);
+            loader.loadRemoteCover(albumArtMini, song.getLibraryUsername(), song.getAlbumId(),
+                    albumArt);
+        } else {
             albumArtView.setImageResource(R.drawable.ic_album_white_24dp);
             albumArtMini.setImageResource(R.drawable.ic_album_white_24dp);
         }
@@ -286,4 +302,6 @@ public class PlayerFragment extends Fragment implements PlayerService.SongListen
     public void onPlayQueueDestroyed() {
         getActivity().finish();
     }
+
+
 }

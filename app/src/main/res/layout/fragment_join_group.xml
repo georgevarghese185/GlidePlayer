@@ -17,7 +17,8 @@
         android:id="@+id/group_list"
         android:layout_below="@+id/group_members_caption"
         android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true" />
+        android:layout_alignParentStart="true"
+        tools:listitem="@layout/available_group"/>
 
     <LinearLayout
         android:orientation="vertical"

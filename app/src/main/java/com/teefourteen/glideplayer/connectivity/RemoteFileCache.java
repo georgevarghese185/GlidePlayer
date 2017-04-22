@@ -81,7 +81,7 @@ public class RemoteFileCache {
     }
 
     public CacheFile getAlbumArt(String username, long albumId) throws BiggerThanCacheException {
-        CacheFile albumArt = ShareGroup.getAlbumArt(username, albumId);
+        CacheFile albumArt = Group.getInstance().getAlbumArt(username, albumId);
         if(albumArt != null) {
             if(!makeSpace(albumArt.size()))  {
                 albumArt.cancelDownload();
@@ -124,7 +124,7 @@ public class RemoteFileCache {
 
             //TODO: temporary code. Downloading entire file and returning file URI
             final CountDownLatch countDownLatch = new CountDownLatch(1);
-            CacheFile cacheFile = ShareGroup.getSong(username, songId);
+            CacheFile cacheFile = Group.getInstance().getSong(username, songId);
             if(cacheFile == null) return null;
             cacheFile.registerDownloadCompleteListener(new CacheFile.DownloadCompleteListener() {
                 @Override
@@ -397,7 +397,7 @@ public class RemoteFileCache {
 
                 String type = params[0];
                 if(type.equals(TYPE_SONG)) {
-                    cacheFile = ShareGroup.getSong(params[1], Long.parseLong(params[2]));
+                    cacheFile = Group.getInstance().getSong(params[1], Long.parseLong(params[2]));
                 }
 
                 if(cacheFile == null) return 0;

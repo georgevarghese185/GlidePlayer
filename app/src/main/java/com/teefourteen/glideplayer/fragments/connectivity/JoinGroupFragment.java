@@ -14,7 +14,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.teefourteen.glideplayer.R;
-import com.teefourteen.glideplayer.connectivity.ShareGroup;
+import com.teefourteen.glideplayer.connectivity.Group;
 import com.teefourteen.glideplayer.connectivity.listeners.GroupConnectionListener;
 import com.teefourteen.glideplayer.connectivity.listeners.GroupMemberListener;
 import com.teefourteen.glideplayer.fragments.connectivity.adapters.GroupAdapter;
@@ -24,22 +24,22 @@ import com.teefourteen.glideplayer.fragments.connectivity.listeners.ConnectionCl
 public class JoinGroupFragment extends Fragment implements GroupConnectionListener,
         GroupMemberListener{
     private View rootView;
-    private ShareGroup group;
+    private Group group;
     private GroupAdapter groupAdapter;
     private ConnectionCloseListener closeListener;
-    ShareGroup.JoinStatus joinStatus = ShareGroup.JoinStatus.NOT_CONNECTED;
+    Group.JoinStatus joinStatus = Group.JoinStatus.NOT_CONNECTED;
     String connectedGroupName;
 
     public JoinGroupFragment() {
         // Required empty public constructor
     }
 
-    public static JoinGroupFragment newInstance(ShareGroup group,
+    public static JoinGroupFragment newInstance(Group group,
                                                 ConnectionCloseListener closeListener) {
         JoinGroupFragment fragment = new JoinGroupFragment();
         fragment.group = group;
 
-        if(group.getJoinStatus() != ShareGroup.JoinStatus.NOT_CONNECTED) {
+        if(group.getJoinStatus() != Group.JoinStatus.NOT_CONNECTED) {
             fragment.connectedGroupName = group.getGroupName();
             fragment.joinStatus = group.getJoinStatus();
         }
@@ -95,7 +95,7 @@ public class JoinGroupFragment extends Fragment implements GroupConnectionListen
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 group.connectToGroup(position, fragment, fragment);
                 setStatusConnecting();
-                joinStatus = ShareGroup.JoinStatus.CONNECTING;
+                joinStatus = Group.JoinStatus.CONNECTING;
             }
         });
     }
@@ -115,7 +115,7 @@ public class JoinGroupFragment extends Fragment implements GroupConnectionListen
         TextView connectionStatus = (TextView)rootView.findViewById(R.id.connection_status);
         connectionStatus.setText("Not Connected");
         connectionStatus.setTextColor(Color.parseColor("#0a5900"));
-        this.joinStatus = ShareGroup.JoinStatus.NOT_CONNECTED;
+        this.joinStatus = Group.JoinStatus.NOT_CONNECTED;
         initializeViews();
     }
 
@@ -124,10 +124,10 @@ public class JoinGroupFragment extends Fragment implements GroupConnectionListen
         this.connectedGroupName = connectedGroup;
         ((ListView)rootView.findViewById(R.id.group_list)).setOnItemClickListener(null);
         setStatusConnected();
-        joinStatus = ShareGroup.JoinStatus.CONNECTED;
+        joinStatus = Group.JoinStatus.CONNECTED;
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(getContext(),
                 android.R.layout.simple_list_item_1,
-                ShareGroup.shareGroupWeakReference.get().getMemberList());
+                Group.getInstance().getMemberList());
         ((ListView)rootView.findViewById(R.id.group_list)).setAdapter(adapter);
         ((TextView) rootView.findViewById(R.id.group_members_caption)).setText("Group Members");
     }
@@ -170,7 +170,7 @@ public class JoinGroupFragment extends Fragment implements GroupConnectionListen
     @Override
     public void onOwnerDisconnected() {
         Toast.makeText(getContext(), "Owner disconnected. Group closed", Toast.LENGTH_LONG).show();
-        joinStatus = ShareGroup.JoinStatus.RECENTLY_DISCONNECTED;
+        joinStatus = Group.JoinStatus.RECENTLY_DISCONNECTED;
         ((TextView) rootView.findViewById(R.id.group_members_caption)).setText("Nearby Groups");
         initializeViews();
     }
@@ -182,7 +182,7 @@ public class JoinGroupFragment extends Fragment implements GroupConnectionListen
             group.unregisterGroupConnectionListener(this);
             group.unregisterGroupMemberListener(this);
 
-            if(joinStatus == ShareGroup.JoinStatus.NOT_CONNECTED
+            if(joinStatus == Group.JoinStatus.NOT_CONNECTED
                     && getContext() != null) {
                 group.stopFindingGroups();
             }

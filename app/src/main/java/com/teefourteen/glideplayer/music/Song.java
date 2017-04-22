@@ -158,4 +158,11 @@ public class Song implements Parcelable {
         return new Song(_id, filePath, title, album, albumId, albumArt, artist, artistId, duration,
                 size, libraryUserName);
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        return obj instanceof Song
+                && ((Song)obj).libraryUsername.equals(libraryUsername)
+                && ((Song)obj)._id == _id;
+    }
 }

@@ -174,6 +174,8 @@ public class MainActivity extends AppCompatActivity
             Toast.makeText(this,"Settings coming soon(ish)", Toast.LENGTH_LONG).show();
         } else if (id == R.id.nav_about) {
             startActivity(new Intent(this, AboutActivity.class));
+        } else if (id == R.id.nav_music_sync_play) {
+            startActivity(new Intent(this, SyncSessionActivity.class));
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);

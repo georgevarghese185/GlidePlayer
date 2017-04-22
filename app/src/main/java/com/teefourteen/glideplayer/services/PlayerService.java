@@ -36,6 +36,7 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
 
     public static final String PLAY_QUEUE_FILE_PATH = Library.DATABASE_LOCATION + "/" + "last_play_queue";
     public final static String EXTRA_PLAY_CONTROL = "play_control";
+    public final static String EXTRA_CLEAR_PLAYER = "clear_player";
     private static final String LAST_SONG_INDEX = "last_song";
     private static final String LAST_SEEK = "last_seek";
     public final static String PLAY = "play";
@@ -186,8 +187,26 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
             return player.getSeek();
         }
 
+        public int getTrueSeek(){
+            return player.getTrueSeek();
+        }
+
         public boolean isPlaying() {
             return player.isPlaying();
+        }
+
+        public void prepare(int queueIndex) {
+            try {
+                playQueue.changeTrack(queueIndex);
+                player.prepareSong(playQueue.getCurrentPlaying());
+            } catch (IOException e) {
+                //
+            }
+        }
+
+        public void changeTrackAndPrepare(final int songIndex) {
+            service.changeTrack(songIndex);
+            prepare(songIndex);
         }
     }
 
@@ -228,6 +247,8 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
                     ((PlayerServiceBinder)binder).prev();
                     break;
             }
+        } else if(intent != null && intent.hasExtra(EXTRA_CLEAR_PLAYER)) {
+            if(player.isPlaying()) pause();
         }
 
         return START_STICKY;

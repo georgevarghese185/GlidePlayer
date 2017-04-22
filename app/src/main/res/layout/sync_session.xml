@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="wrap_content"
     xmlns:tools="http://schemas.android.com/tools"
     android:orientation="vertical">
 
@@ -12,6 +12,7 @@
             android:text="UserName's Session"
             android:textColor="@android:color/black"
             android:textSize="25sp"
+            android:layout_marginLeft="5dp"
             tools:layout_conversion_absoluteX="0dp"
             tools:layout_conversion_absoluteY="0dp"
             tools:layout_conversion_absoluteWidth="360dp"
@@ -24,6 +25,7 @@
             android:id="@+id/session_participants"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginLeft="15dp"
             android:text="Participants: "
             tools:textStyle="italic"
             tools:layout_conversion_absoluteX="0dp"
@@ -31,17 +33,19 @@
             tools:layout_conversion_absoluteWidth="79dp"
             tools:layout_conversion_absoluteHeight="16dp" />
 
-    <TextView
-        android:id="@+id/session_current"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Now Playing :"
-        tools:textStyle="italic"
-        android:textColor="@color/group_details_color"
-        tools:layout_conversion_absoluteHeight="16dp"
-        tools:layout_conversion_absoluteWidth="103dp"
-        tools:layout_conversion_absoluteX="79dp"
-        tools:layout_conversion_absoluteY="29dp" />
+        <TextView
+            android:id="@+id/session_current"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="15dp"
+            android:text="Now Playing :"
+            tools:textStyle="italic"
+            android:textColor="@color/group_details_color"
+            tools:layout_conversion_absoluteHeight="16dp"
+            tools:layout_conversion_absoluteWidth="103dp"
+            tools:layout_conversion_absoluteX="79dp"
+            tools:layout_conversion_absoluteY="29dp"
+            android:layout_marginBottom="20dp"/>
 
 
     </LinearLayout>

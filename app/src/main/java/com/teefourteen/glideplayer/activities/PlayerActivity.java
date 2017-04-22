@@ -23,35 +23,19 @@ public class PlayerActivity extends AppCompatActivity {
     private FragmentSwitcher playerFragmentSwitcher;
     private PlayerFragment playerFragment;
 
-    public interface Navigator {
-        void showQueue();
-        void returnToPlayer();
-        void returnToPlayer(int changeTrack);
-    }
-
-    Navigator playerNavigator = new Navigator() {
+    PlayerFragment.ShowQueueListener showQueueListener = new PlayerFragment.ShowQueueListener() {
         @Override
         public void showQueue() {
             SongsFragment songsFragment = SongsFragment.newInstance(playQueue.getQueue(),
                     new SongAdapter.SongQueueClickListener() {
                         @Override
                         public void onSongClicked(ArrayList<Song> songList, int position) {
-                            returnToPlayer(position);
+                            getIntent().putExtra(EXTRA_CHANGE_TRACK, position);
+                            playerFragmentSwitcher.switchTo(playerFragment, PLAYER_FRAGMENT_TAG, true);
                         }
                     });
 
             playerFragmentSwitcher.switchTo(songsFragment, SONGS_FRAGMENT_TAG);
-        }
-
-        @Override
-        public void returnToPlayer() {
-            playerFragmentSwitcher.switchTo(playerFragment, PLAYER_FRAGMENT_TAG, true);
-        }
-
-        @Override
-        public void returnToPlayer(int changeTrack) {
-            getIntent().putExtra(EXTRA_CHANGE_TRACK, changeTrack);
-            returnToPlayer();
         }
     };
 
@@ -62,7 +46,7 @@ public class PlayerActivity extends AppCompatActivity {
 
         playerFragmentSwitcher = new FragmentSwitcher(getSupportFragmentManager(),
                 R.id.fragment_player_main_container);
-        playerFragment = PlayerFragment.newInstance(playerNavigator);
+        playerFragment = PlayerFragment.newInstance(showQueueListener);
         playerFragmentSwitcher.switchTo(playerFragment, PLAYER_FRAGMENT_TAG);
     }
 
@@ -71,7 +55,7 @@ public class PlayerActivity extends AppCompatActivity {
         if(playerFragmentSwitcher.getCurrentFragment() == playerFragment)
             super.onBackPressed();
         else {
-            playerNavigator.returnToPlayer();
+            playerFragmentSwitcher.switchTo(playerFragment, PLAYER_FRAGMENT_TAG, true);
         }
     }
 }

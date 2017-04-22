@@ -15,7 +15,7 @@ import android.widget.Toast;
 
 import com.teefourteen.glideplayer.Global;
 import com.teefourteen.glideplayer.R;
-import com.teefourteen.glideplayer.connectivity.ShareGroup;
+import com.teefourteen.glideplayer.connectivity.Group;
 import com.teefourteen.glideplayer.connectivity.listeners.GroupCreationListener;
 import com.teefourteen.glideplayer.connectivity.listeners.GroupMemberListener;
 import com.teefourteen.glideplayer.fragments.connectivity.listeners.ConnectionCloseListener;
@@ -23,9 +23,9 @@ import com.teefourteen.glideplayer.fragments.connectivity.listeners.ConnectionCl
 public class CreateGroupFragment extends Fragment implements GroupCreationListener,
         GroupMemberListener{
     private View rootView;
-    private ShareGroup.CreationStatus groupCreationStatus
-            = ShareGroup.CreationStatus.GROUP_NOT_CREATED;
-    private ShareGroup group;
+    private Group.CreationStatus groupCreationStatus
+            = Group.CreationStatus.GROUP_NOT_CREATED;
+    private Group group;
     private String groupName;
     private ConnectionCloseListener closeListener;
 
@@ -33,13 +33,13 @@ public class CreateGroupFragment extends Fragment implements GroupCreationListen
         // Required empty public constructor
     }
 
-    public static CreateGroupFragment newInstance(ShareGroup group,
+    public static CreateGroupFragment newInstance(Group group,
                                                   ConnectionCloseListener closeListener) {
         CreateGroupFragment fragment = new CreateGroupFragment();
         fragment.group = group;
         fragment.closeListener = closeListener;
 
-        if(group.getCreationStatus() != ShareGroup.CreationStatus.GROUP_NOT_CREATED) {
+        if(group.getCreationStatus() != Group.CreationStatus.GROUP_NOT_CREATED) {
             fragment.groupName = group.getGroupName();
             fragment.groupCreationStatus = group.getCreationStatus();
         }
@@ -83,7 +83,7 @@ public class CreateGroupFragment extends Fragment implements GroupCreationListen
 
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(getContext(),
                 android.R.layout.simple_list_item_1,
-                ShareGroup.shareGroupWeakReference.get().getMemberList());
+                Group.getInstance().getMemberList());
         ((ListView)rootView.findViewById(R.id.peer_list)).setAdapter(adapter);
 
         rootView.findViewById(R.id.close_connection).setOnClickListener(new View.OnClickListener() {
@@ -110,7 +110,7 @@ public class CreateGroupFragment extends Fragment implements GroupCreationListen
             editor.apply();
 
             group.createGroup(groupName, this, this);
-            groupCreationStatus = ShareGroup.CreationStatus.GROUP_WAITING_FOR_CREATION;
+            groupCreationStatus = Group.CreationStatus.GROUP_WAITING_FOR_CREATION;
             onWaitingForGroupCreation();
         }
     }
@@ -142,7 +142,7 @@ public class CreateGroupFragment extends Fragment implements GroupCreationListen
         rootView.findViewById(R.id.creating_group_progress_bar).setVisibility(View.INVISIBLE);
         rootView.findViewById(R.id.create_group).setVisibility(View.INVISIBLE);
         rootView.findViewById(R.id.group_created_message).setVisibility(View.VISIBLE);
-        groupCreationStatus = ShareGroup.CreationStatus.GROUP_CREATED;
+        groupCreationStatus = Group.CreationStatus.GROUP_CREATED;
     }
 
     @Override
@@ -152,7 +152,7 @@ public class CreateGroupFragment extends Fragment implements GroupCreationListen
         editText.setFocusable(true);
         editText.setFocusableInTouchMode(true);
         editText.setClickable(true);
-        groupCreationStatus = ShareGroup.CreationStatus.GROUP_NOT_CREATED;
+        groupCreationStatus = Group.CreationStatus.GROUP_NOT_CREATED;
         rootView.findViewById(R.id.creating_group_progress_bar).setVisibility(View.INVISIBLE);
         rootView.findViewById(R.id.create_group).setEnabled(true);
     }

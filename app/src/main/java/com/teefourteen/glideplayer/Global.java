@@ -1,8 +1,5 @@
 package com.teefourteen.glideplayer;
 
-import android.database.Cursor;
-
-import com.teefourteen.glideplayer.connectivity.ShareGroup;
 import com.teefourteen.glideplayer.music.PlayQueue;
 
 /**

@@ -23,7 +23,8 @@
         android:layout_below="@id/group_members_caption"
         android:layout_centerHorizontal="true"
         android:layout_height="300dp"
-        android:id="@+id/peer_list" />
+        android:id="@+id/peer_list"
+        tools:listitem="@layout/available_group"/>
 
     <Button
         android:text="Create Group"

@@ -5,7 +5,6 @@ import com.teefourteen.glideplayer.R;
 
 import org.acra.*;
 import org.acra.annotation.*;
-import org.acra.sender.ReportSenderFactory;
 
 /**
  * Created by Karan D'souza on 11-04-2017.

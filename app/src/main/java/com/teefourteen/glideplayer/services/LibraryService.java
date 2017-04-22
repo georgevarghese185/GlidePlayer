@@ -2,7 +2,6 @@ package com.teefourteen.glideplayer.services;
 
 import android.app.IntentService;
 import android.content.Intent;
-import android.database.sqlite.SQLiteDatabase;
 import android.support.v4.content.LocalBroadcastManager;
 
 import java.io.File;
