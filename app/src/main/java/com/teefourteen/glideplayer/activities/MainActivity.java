@@ -171,7 +171,7 @@ public class MainActivity extends AppCompatActivity
         } else if (id == R.id.connectivity){
             mainFragmentSwitcher.switchTo(connectivityFragment, CONNECTIVITY_FRAGMENT_TAG);
         } else if (id == R.id.nav_settings) {
-            Toast.makeText(this,"Settings coming soon(ish)", Toast.LENGTH_LONG).show();
+            startActivity(new Intent(this, SettingsActivity.class));
         } else if (id == R.id.nav_about) {
             startActivity(new Intent(this, AboutActivity.class));
         }
