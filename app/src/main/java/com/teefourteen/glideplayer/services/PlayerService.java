@@ -16,7 +16,7 @@ import com.teefourteen.glideplayer.EasyHandler;
 import com.teefourteen.glideplayer.music.MusicPlayer;
 import com.teefourteen.glideplayer.music.PlayQueue;
 import com.teefourteen.glideplayer.music.Song;
-import com.teefourteen.glideplayer.music.database.Library;
+import com.teefourteen.glideplayer.database.Library;
 
 import static com.teefourteen.glideplayer.Global.SHARED_PREFS_NAME;
 import static com.teefourteen.glideplayer.Global.playQueue;

@@ -15,7 +15,7 @@ import com.teefourteen.glideplayer.EasyHandler;
 import com.teefourteen.glideplayer.connectivity.listeners.ResponseListener;
 import com.teefourteen.glideplayer.music.PlayQueue;
 import com.teefourteen.glideplayer.music.Song;
-import com.teefourteen.glideplayer.music.database.Library;
+import com.teefourteen.glideplayer.database.Library;
 import com.teefourteen.glideplayer.services.PlayerService;
 
 import org.json.JSONArray;

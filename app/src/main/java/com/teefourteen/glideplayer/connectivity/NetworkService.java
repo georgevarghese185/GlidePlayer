@@ -43,7 +43,7 @@ import com.teefourteen.glideplayer.connectivity.listeners.RequestListener;
 import com.teefourteen.glideplayer.connectivity.listeners.NewGroupListener;
 import com.teefourteen.glideplayer.connectivity.listeners.ResponseListener;
 import com.teefourteen.glideplayer.connectivity.listeners.WifiP2pBroadcastReceiver;
-import com.teefourteen.glideplayer.music.database.Library;
+import com.teefourteen.glideplayer.database.Library;
 
 
 //TODO: set some sort of time out on sent and received requests to back off.

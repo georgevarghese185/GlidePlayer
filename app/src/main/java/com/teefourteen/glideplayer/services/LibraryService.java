@@ -10,7 +10,7 @@ import java.io.IOException;
 import com.teefourteen.glideplayer.activities.SplashActivity;
 import com.teefourteen.glideplayer.Global;
 import com.teefourteen.glideplayer.music.PlayQueue;
-import com.teefourteen.glideplayer.music.database.Library;
+import com.teefourteen.glideplayer.database.Library;
 
 
 public class LibraryService extends IntentService {

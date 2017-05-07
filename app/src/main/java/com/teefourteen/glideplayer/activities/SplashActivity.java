@@ -20,7 +20,7 @@ import java.io.IOException;
 
 import com.teefourteen.glideplayer.dialogs.NeedPermissionsDialog;
 import com.teefourteen.glideplayer.R;
-import com.teefourteen.glideplayer.music.database.Library;
+import com.teefourteen.glideplayer.database.Library;
 import com.teefourteen.glideplayer.services.LibraryService;
 
 public class SplashActivity extends AppCompatActivity {

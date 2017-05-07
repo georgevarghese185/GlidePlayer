@@ -28,7 +28,7 @@ import android.os.Looper;
 import android.util.Log;
 
 import com.teefourteen.glideplayer.music.Song;
-import com.teefourteen.glideplayer.music.database.Library;
+import com.teefourteen.glideplayer.database.Library;
 
 
 public class RemoteFileCache {

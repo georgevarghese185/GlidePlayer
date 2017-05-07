@@ -29,8 +29,8 @@ import com.teefourteen.glideplayer.connectivity.listeners.GroupMemberListener;
 import com.teefourteen.glideplayer.fragments.library.adapters.AlbumAdapter;
 import com.teefourteen.glideplayer.music.PlayQueue;
 import com.teefourteen.glideplayer.fragments.library.adapters.SongAdapter;
-import com.teefourteen.glideplayer.music.database.AlbumTable;
-import com.teefourteen.glideplayer.music.database.Library;
+import com.teefourteen.glideplayer.database.AlbumTable;
+import com.teefourteen.glideplayer.database.Library;
 
 import static com.teefourteen.glideplayer.Global.playQueue;
 

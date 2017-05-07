@@ -14,8 +14,8 @@ import com.teefourteen.glideplayer.AsyncImageLoader;
 import com.teefourteen.glideplayer.CancellableAsyncTaskHandler;
 import com.teefourteen.glideplayer.R;
 import com.teefourteen.glideplayer.connectivity.RemoteAlbumCoverLoader;
-import com.teefourteen.glideplayer.music.database.AlbumTable;
-import com.teefourteen.glideplayer.music.database.Library;
+import com.teefourteen.glideplayer.database.AlbumTable;
+import com.teefourteen.glideplayer.database.Library;
 
 /**
  * Created by george on 2/11/16.

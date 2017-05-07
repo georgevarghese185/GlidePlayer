@@ -4,10 +4,10 @@ import android.database.Cursor;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import com.teefourteen.glideplayer.music.database.AlbumTable;
-import com.teefourteen.glideplayer.music.database.ArtistTable;
-import com.teefourteen.glideplayer.music.database.Library;
-import com.teefourteen.glideplayer.music.database.SongTable;
+import com.teefourteen.glideplayer.database.AlbumTable;
+import com.teefourteen.glideplayer.database.ArtistTable;
+import com.teefourteen.glideplayer.database.Library;
+import com.teefourteen.glideplayer.database.SongTable;
 
 
 public class Song implements Parcelable {

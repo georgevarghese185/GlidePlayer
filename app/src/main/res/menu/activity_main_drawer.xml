@@ -8,13 +8,27 @@
     <item android:title="Music">
         <menu>
             <item
-                android:id="@+id/nav_library"
+                android:id="@+id/nav_music_library"
                 android:icon="@drawable/ic_library_music_black_24dp"
                 android:title="Music Library" />
             <item
                 android:id="@+id/nav_music_sync_play"
                 android:icon="@drawable/ic_all_inclusive_black_24dp"
-                android:title="SyncPlay"/>
+                android:title="Music SyncPlay"/>
+        </menu>
+
+
+    </item>
+    <item android:title="Music">
+        <menu>
+            <item
+                android:id="@+id/nav_video_library"
+                android:icon="@drawable/ic_video_library_black_24dp"
+                android:title="Video Library" />
+            <item
+                android:id="@+id/nav_video_sync_play"
+                android:icon="@drawable/ic_all_inclusive_black_24dp"
+                android:title="Video SyncPlay"/>
         </menu>
 
 

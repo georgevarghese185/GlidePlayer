@@ -1,4 +1,4 @@
-package com.teefourteen.glideplayer.music.database;
+package com.teefourteen.glideplayer.database;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -52,13 +52,15 @@ public class Library {
         tables = new Table[]{
                 new SongTable(context.getContentResolver()),
                 new AlbumTable(context.getContentResolver()),
-                new ArtistTable(context.getContentResolver())
+                new ArtistTable(context.getContentResolver()),
+                new VideoTable(context.getContentResolver())
         };
 
         remoteTables = new Table[] {
                 new SongTable(null),
                 new AlbumTable(null),
-                new ArtistTable(null)
+                new ArtistTable(null),
+                new VideoTable(null)
         };
     }
 

@@ -24,7 +24,7 @@ import java.util.ArrayList;
 
 import com.teefourteen.glideplayer.AsyncImageLoader;
 import com.teefourteen.glideplayer.R;
-import com.teefourteen.glideplayer.music.database.Library;
+import com.teefourteen.glideplayer.database.Library;
 
 /**
  * Created by george on 15/10/16.

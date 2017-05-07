@@ -166,7 +166,7 @@ public class MainActivity extends AppCompatActivity
         // Handle navigation view item clicks here.
         int id = item.getItemId();
 
-        if (id == R.id.nav_library) {
+        if (id == R.id.nav_music_library) {
             mainFragmentSwitcher.switchTo(libraryFragment, LIBRARY_FRAGMENT_TAG);
         } else if (id == R.id.connectivity){
             mainFragmentSwitcher.switchTo(connectivityFragment, CONNECTIVITY_FRAGMENT_TAG);

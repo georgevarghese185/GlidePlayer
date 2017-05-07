@@ -1,4 +1,4 @@
-package com.teefourteen.glideplayer.music.database;
+package com.teefourteen.glideplayer.database;
 
 import android.content.ContentValues;
 import android.database.Cursor;

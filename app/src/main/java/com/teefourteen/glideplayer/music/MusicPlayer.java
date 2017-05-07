@@ -13,7 +13,7 @@ import java.util.ArrayList;
 
 import com.teefourteen.glideplayer.EasyHandler;
 import com.teefourteen.glideplayer.connectivity.RemoteFileCache;
-import com.teefourteen.glideplayer.music.database.Library;
+import com.teefourteen.glideplayer.database.Library;
 
 
 public class MusicPlayer implements Closeable{

@@ -32,7 +32,7 @@ import com.teefourteen.glideplayer.connectivity.listeners.NewGroupListener;
 import com.teefourteen.glideplayer.connectivity.listeners.RequestListener;
 import com.teefourteen.glideplayer.connectivity.listeners.ResponseListener;
 import com.teefourteen.glideplayer.music.Song;
-import com.teefourteen.glideplayer.music.database.Library;
+import com.teefourteen.glideplayer.database.Library;
 import com.teefourteen.glideplayer.services.PlayerService;
 
 public class Group implements NewGroupListener, ErrorListener, GroupMemberListener,
