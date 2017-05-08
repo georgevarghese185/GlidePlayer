@@ -13,8 +13,8 @@ import android.view.ViewGroup;
 import com.teefourteen.glideplayer.R;
 import com.teefourteen.glideplayer.fragments.library.adapters.AlbumAdapter;
 
-public class AlbumsFragment extends Fragment implements LibraryFragment.LibraryChangedListener,
-        LibraryFragment.CloseCursorsListener {
+public class AlbumsFragment extends Fragment implements MusicLibraryFragment.LibraryChangedListener,
+        MusicLibraryFragment.CloseCursorsListener {
     private AlbumAdapter albumAdapter;
     private int savedPosition = -1;
     private View rootView;

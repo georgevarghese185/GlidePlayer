@@ -109,6 +109,56 @@ public class Library {
         }
     }
 
+    public static Cursor getVideos(String userName) { return queryVideos(userName, null, null); }
+
+    public static Cursor getVideo(String username, long videoId) {
+        String tableName;
+        if(username == null) {
+            tableName = VideoTable.localTableName;
+        } else {
+            tableName = VideoTable.remoteTableName;
+        }
+        return queryVideos(username,
+                " WHERE " + tableName + "." + VideoTable.Columns.VIDEO_ID + "=?"
+                , new String[]{String.valueOf(videoId)});
+    }
+
+    public static Cursor queryVideos(String username, String selection, String[] selectionArgs) {
+        String videoTable;
+        if(username != null) {
+            videoTable = VideoTable.remoteTableName;
+
+            if(selection == null) {
+                selection = " WHERE ";
+            } else {
+                selection = selection + " AND ";
+            }
+
+            selection = selection + videoTable + "." + VideoTable.Columns.REMOTE_USERNAME + "=?";
+
+            String newArgs[];
+            if(selectionArgs != null) {
+                newArgs = new String[selectionArgs.length + 3];
+                System.arraycopy(selectionArgs, 0, newArgs, 0, selectionArgs.length);
+                System.arraycopy(new String[]{username, username, username}, 0, newArgs,
+                        selectionArgs.length, 3);
+            } else {
+                newArgs = new String[]{username, username, username};
+            }
+
+            selectionArgs = newArgs;
+        } else {
+            videoTable = VideoTable.localTableName;
+        }
+
+        String query = "SELECT * FROM "
+                + videoTable
+                + ((selection==null)? "" : selection)
+                + " ORDER BY " + videoTable + "." + VideoTable.Columns.TITLE;
+
+        return library.getReadableDb().rawQuery(query,selectionArgs);
+    }
+
     public static Cursor getSongs(String userName) { return querySongs(userName, null, null); }
 
     public static Cursor getSong(String userName ,long songId) {

@@ -21,8 +21,9 @@ import android.widget.Toast;
 
 import com.teefourteen.glideplayer.fragments.FragmentSwitcher;
 import com.teefourteen.glideplayer.fragments.connectivity.ConnectivityFragment;
-import com.teefourteen.glideplayer.fragments.library.LibraryFragment;
+import com.teefourteen.glideplayer.fragments.library.MusicLibraryFragment;
 import com.teefourteen.glideplayer.R;
+import com.teefourteen.glideplayer.fragments.library.VideoLibraryFragment;
 import com.teefourteen.glideplayer.music.MusicPlayer;
 import com.teefourteen.glideplayer.music.Song;
 import com.teefourteen.glideplayer.services.PlayerService;
@@ -33,10 +34,12 @@ public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener,
         PlayerService.SongListener{
 
-    private LibraryFragment libraryFragment;
+    private MusicLibraryFragment musicLibraryFragment;
+    private VideoLibraryFragment videoLibraryFragment;
     private ConnectivityFragment connectivityFragment;
     public static final String EXTRA_JUMP_TO_CONNECTIVITY_FRAGMENT = "jump_to_connectivity_fragment";
-    private static final String LIBRARY_FRAGMENT_TAG ="songs";
+    private static final String MUSIC_LIBRARY_FRAGMENT_TAG ="songs";
+    private static final String VIDEO_LIBRARY_FRAGMENT_TAG = "videos";
     private static final String CONNECTIVITY_FRAGMENT_TAG = "connectivity";
     private FragmentSwitcher mainFragmentSwitcher;
     private ServiceConnection serviceConnection;
@@ -83,14 +86,15 @@ public class MainActivity extends AppCompatActivity
         navigationView.setNavigationItemSelectedListener(this);
 
         mainFragmentSwitcher = new FragmentSwitcher(getSupportFragmentManager(), R.id.main_container);
-        libraryFragment = new LibraryFragment();
+        musicLibraryFragment = new MusicLibraryFragment();
+        videoLibraryFragment = new VideoLibraryFragment();
         connectivityFragment = new ConnectivityFragment();
 
         if(getIntent().hasExtra(EXTRA_JUMP_TO_CONNECTIVITY_FRAGMENT)) {
             mainFragmentSwitcher.switchTo(connectivityFragment, CONNECTIVITY_FRAGMENT_TAG);
             getIntent().removeExtra(EXTRA_JUMP_TO_CONNECTIVITY_FRAGMENT);
         } else {
-            mainFragmentSwitcher.switchTo(libraryFragment, LIBRARY_FRAGMENT_TAG);
+            mainFragmentSwitcher.switchTo(musicLibraryFragment, MUSIC_LIBRARY_FRAGMENT_TAG);
         }
 
         serviceConnection = new ServiceConnection() {
@@ -167,13 +171,15 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
 
         if (id == R.id.nav_music_library) {
-            mainFragmentSwitcher.switchTo(libraryFragment, LIBRARY_FRAGMENT_TAG);
+            mainFragmentSwitcher.switchTo(musicLibraryFragment, MUSIC_LIBRARY_FRAGMENT_TAG);
         } else if (id == R.id.connectivity){
             mainFragmentSwitcher.switchTo(connectivityFragment, CONNECTIVITY_FRAGMENT_TAG);
         } else if (id == R.id.nav_settings) {
             Toast.makeText(this,"Settings coming soon(ish)", Toast.LENGTH_LONG).show();
         } else if (id == R.id.nav_about) {
             startActivity(new Intent(this, AboutActivity.class));
+        } else if(id == R.id.nav_video_library){
+            mainFragmentSwitcher.switchTo(videoLibraryFragment, VIDEO_LIBRARY_FRAGMENT_TAG);
         } else if (id == R.id.nav_music_sync_play) {
             startActivity(new Intent(this, SyncSessionActivity.class));
         }

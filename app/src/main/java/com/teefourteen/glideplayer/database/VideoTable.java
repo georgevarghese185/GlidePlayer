@@ -68,7 +68,7 @@ public class VideoTable extends Table{
     ContentValues putValues(Cursor cursor) {
         ContentValues values = new ContentValues();
 
-        values.put(Columns.VIDEO_ID, Library.getLong(cursor, Columns.VIDEO_ID));
+        values.put(Columns.VIDEO_ID, Library.getLong(cursor, Columns._ID));
         values.put(Columns.DATE_ADDED, Library.getLong(cursor, Columns.DATE_ADDED));
         values.put(Columns.DATE_MODIFIED, Library.getLong(cursor, Columns.DATE_MODIFIED));
         values.put(Columns.DURATION, Library.getLong(cursor, Columns.DURATION));

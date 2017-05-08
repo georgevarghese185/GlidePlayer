@@ -12,7 +12,7 @@ import com.teefourteen.glideplayer.R;
 import com.teefourteen.glideplayer.connectivity.Synchronization;
 import com.teefourteen.glideplayer.dialogs.QuitSyncSessionDialog;
 import com.teefourteen.glideplayer.fragments.FragmentSwitcher;
-import com.teefourteen.glideplayer.fragments.library.LibraryFragment;
+import com.teefourteen.glideplayer.fragments.library.MusicLibraryFragment;
 import com.teefourteen.glideplayer.fragments.library.adapters.AlbumAdapter;
 import com.teefourteen.glideplayer.fragments.library.adapters.SongAdapter;
 import com.teefourteen.glideplayer.fragments.player.PlayQueueFragment;
@@ -80,7 +80,7 @@ public class SyncPlayerActivity extends AppCompatActivity implements SongAdapter
 
                     @Override
                     public void showLibrary() {
-                        fragmentSwitcher.switchTo(LibraryFragment.newInstance(
+                        fragmentSwitcher.switchTo(MusicLibraryFragment.newInstance(
                                 SyncPlayerActivity.this, SyncPlayerActivity.this),
                                 LIBRARY_FRAGMENT_TAG, true);
                     }
@@ -93,7 +93,7 @@ public class SyncPlayerActivity extends AppCompatActivity implements SongAdapter
 
     @Override
     public void onBackPressed() {
-        if(fragmentSwitcher.getCurrentFragment() instanceof LibraryFragment) {
+        if(fragmentSwitcher.getCurrentFragment() instanceof MusicLibraryFragment) {
             switchToPlayQueue();
         } else {
             QuitSyncSessionDialog.newInstance(new QuitSyncSessionDialog.UserOptionListener() {

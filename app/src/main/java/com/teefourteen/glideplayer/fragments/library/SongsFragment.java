@@ -14,8 +14,8 @@ import com.teefourteen.glideplayer.R;
 import com.teefourteen.glideplayer.music.*;
 import com.teefourteen.glideplayer.fragments.library.adapters.SongAdapter;
 
-public class SongsFragment extends Fragment implements LibraryFragment.LibraryChangedListener,
-        LibraryFragment.CloseCursorsListener {
+public class SongsFragment extends Fragment implements MusicLibraryFragment.LibraryChangedListener,
+        MusicLibraryFragment.CloseCursorsListener {
     private SongAdapter songAdapter = null;
     private View rootView;
 
