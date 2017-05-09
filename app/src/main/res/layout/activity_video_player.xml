@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.teefourteen.glideplayer.activities.VideoPlayerActivity">
+
+    <FrameLayout
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="#000000"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/constraintLayout2">
+
+        <SurfaceView
+            android:id="@+id/videoSurface"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="center_vertical"/>
+
+    </FrameLayout>
+
+    <android.support.constraint.ConstraintLayout xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/constraintLayout2"
+        android:layout_width="0dp"
+        android:layout_height="98dp"
+        android:background="#686868"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        tools:context="com.teefourteen.glideplayer.fragments.player.MusicPlayerFragment"
+        android:layout_marginBottom="-10dp">
+
+        <SeekBar
+            android:id="@+id/player_track_seek"
+            android:layout_width="379dp"
+            android:layout_height="21dp"
+            android:layout_marginLeft="8dp"
+            android:layout_marginStart="8dp"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            android:layout_marginTop="4dp" />
+
+        <ImageView
+            android:id="@+id/player_play_button"
+            android:layout_width="45dp"
+            android:layout_height="45dp"
+            android:layout_marginTop="0dp"
+            android:clickable="true"
+            android:foreground="?attr/selectableItemBackground"
+            android:onClick="play"
+            app:srcCompat="@drawable/glideplayer_play_white"
+            tools:layout_conversion_absoluteHeight="60dp"
+            tools:layout_conversion_absoluteWidth="60dp"
+            tools:layout_conversion_absoluteX="162dp"
+            tools:layout_conversion_absoluteY="579dp"
+            app:layout_constraintVertical_bias="0.3"
+            app:layout_constraintTop_toBottomOf="@+id/player_track_seek"
+            android:layout_marginLeft="0dp"
+            app:layout_constraintLeft_toLeftOf="parent"
+            android:layout_marginRight="0dp"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintHorizontal_bias="0.500"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:layout_marginBottom="0dp" />
+
+        <ImageView
+            android:id="@+id/player_prev_button"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            app:srcCompat="@drawable/glideplayer_skip_prev_white"
+            tools:layout_conversion_absoluteHeight="60dp"
+            tools:layout_conversion_absoluteWidth="60dp"
+            tools:layout_conversion_absoluteX="68dp"
+            tools:layout_conversion_absoluteY="579dp"
+            app:layout_constraintRight_toLeftOf="@+id/player_play_button"
+            android:layout_marginRight="8dp"
+            android:layout_marginLeft="8dp"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintHorizontal_bias="0.700"
+            app:layout_constraintTop_toTopOf="@+id/player_play_button"
+            android:layout_marginTop="0dp"
+            app:layout_constraintBottom_toBottomOf="@+id/player_play_button"
+            android:layout_marginBottom="0dp"
+            app:layout_constraintVertical_bias="0.5" />
+
+        <ImageView
+            android:id="@+id/player_next_button"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            app:srcCompat="@drawable/glideplayer_skip_next_white"
+            tools:layout_conversion_absoluteHeight="60dp"
+            tools:layout_conversion_absoluteWidth="60dp"
+            tools:layout_conversion_absoluteX="254dp"
+            tools:layout_conversion_absoluteY="579dp"
+            app:layout_constraintLeft_toRightOf="@+id/player_play_button"
+            android:layout_marginLeft="8dp"
+            android:layout_marginRight="8dp"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintHorizontal_bias="0.3"
+            app:layout_constraintTop_toTopOf="@+id/player_play_button"
+            android:layout_marginTop="0dp"
+            app:layout_constraintBottom_toBottomOf="@+id/player_play_button"
+            android:layout_marginBottom="0dp"
+            app:layout_constraintVertical_bias="0.5" />
+
+
+    </android.support.constraint.ConstraintLayout>
+</android.support.constraint.ConstraintLayout>

@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import com.teefourteen.glideplayer.AppNotification;
 import com.teefourteen.glideplayer.Global;
 import com.teefourteen.glideplayer.EasyHandler;
+import com.teefourteen.glideplayer.Player;
 import com.teefourteen.glideplayer.music.MusicPlayer;
 import com.teefourteen.glideplayer.music.PlayQueue;
 import com.teefourteen.glideplayer.music.Song;
@@ -22,7 +23,7 @@ import static com.teefourteen.glideplayer.Global.SHARED_PREFS_NAME;
 import static com.teefourteen.glideplayer.Global.playQueue;
 
 public class PlayerService extends Service implements MediaPlayer.OnCompletionListener,
-        MusicPlayer.SeekListener{
+        Player.SeekListener {
 
     //TODO: All stuff in media player guide
     private MusicPlayer player=null;
@@ -144,7 +145,7 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
 
             playQueue.changeTrack(sharedPreferences.getInt(LAST_SONG_INDEX, 0));
             try {
-                player.prepareSong(playQueue.getCurrentPlaying());
+                player.prepareMedia(playQueue.getCurrentPlaying());
                 player.trueSeek(sharedPreferences.getInt(LAST_SEEK, 0));
                 onSeekUpdated(player.getSeek());
             } catch (IOException e) {
@@ -198,7 +199,7 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
         public void prepare(int queueIndex) {
             try {
                 playQueue.changeTrack(queueIndex);
-                player.prepareSong(playQueue.getCurrentPlaying());
+                player.prepareMedia(playQueue.getCurrentPlaying());
             } catch (IOException e) {
                 //
             }
@@ -255,7 +256,7 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
     }
 
     public void play(){
-        boolean playbackSuccessful = player.playSong(playQueue.getCurrentPlaying());
+        boolean playbackSuccessful = player.playMedia(playQueue.getCurrentPlaying());
 
         if(playbackSuccessful) {
             startForeground(0, null);
@@ -282,7 +283,7 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
     }
 
     public void pause(){
-        player.pauseSong();
+        player.pause();
         playerNotification.displayPlayerNotification(playQueue.getCurrentPlaying(), false, false);
         editor.putInt(LAST_SEEK, player.getTrueSeek()).apply();
 

@@ -32,7 +32,7 @@ import java.io.File;
 import static com.teefourteen.glideplayer.Global.playQueue;
 
 
-public class PlayerFragment extends Fragment implements PlayerService.SongListener{
+public class MusicPlayerFragment extends Fragment implements PlayerService.SongListener{
     private static PlayerService.PlayerServiceBinder binder;
     private ImageView albumArtView;
     private ImageView albumArtMini;
@@ -43,8 +43,8 @@ public class PlayerFragment extends Fragment implements PlayerService.SongListen
     private Song currentSong = null;
     protected ShowQueueListener showQueueListener;
 
-    public static PlayerFragment newInstance(ShowQueueListener showQueueListener) {
-        PlayerFragment fragment = new PlayerFragment();
+    public static MusicPlayerFragment newInstance(ShowQueueListener showQueueListener) {
+        MusicPlayerFragment fragment = new MusicPlayerFragment();
         fragment.showQueueListener = showQueueListener;
         return fragment;
     }
@@ -53,7 +53,7 @@ public class PlayerFragment extends Fragment implements PlayerService.SongListen
         void showQueue();
     }
 
-    public PlayerFragment() {
+    public MusicPlayerFragment() {
         // Required empty public constructor
     }
 
@@ -61,7 +61,7 @@ public class PlayerFragment extends Fragment implements PlayerService.SongListen
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         //inflate view
-        rootView = inflater.inflate(R.layout.fragment_player, container, false);
+        rootView = inflater.inflate(R.layout.fragment_music_player, container, false);
         albumArtView = (ImageView) rootView.findViewById(R.id.player_album_art);
         albumArtMini = (ImageView) rootView.findViewById(R.id.player_album_art_mini);
 

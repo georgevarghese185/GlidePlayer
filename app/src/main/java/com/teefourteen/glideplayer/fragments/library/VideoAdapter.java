@@ -58,6 +58,8 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoHolder>
             this.videoTitle = (TextView) itemView.findViewById(R.id.vid_name);
             this.path = (TextView) itemView.findViewById(R.id.vid_path);
             this.length = (TextView) itemView.findViewById(R.id.vid_length);
+            itemView.setOnClickListener(this);
+            itemView.setOnLongClickListener(this);
         }
 
         @SuppressLint("DefaultLocale")

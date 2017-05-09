@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import com.teefourteen.glideplayer.R;
 import com.teefourteen.glideplayer.fragments.FragmentSwitcher;
 import com.teefourteen.glideplayer.fragments.library.adapters.SongAdapter;
-import com.teefourteen.glideplayer.fragments.player.PlayerFragment;
+import com.teefourteen.glideplayer.fragments.player.MusicPlayerFragment;
 import com.teefourteen.glideplayer.fragments.library.SongsFragment;
 import com.teefourteen.glideplayer.music.Song;
 
@@ -21,9 +21,9 @@ public class PlayerActivity extends AppCompatActivity {
     private static final String PLAYER_FRAGMENT_TAG = "player_fragment";
     private static final String SONGS_FRAGMENT_TAG = "songs_fragment";
     private FragmentSwitcher playerFragmentSwitcher;
-    private PlayerFragment playerFragment;
+    private MusicPlayerFragment playerFragment;
 
-    PlayerFragment.ShowQueueListener showQueueListener = new PlayerFragment.ShowQueueListener() {
+    MusicPlayerFragment.ShowQueueListener showQueueListener = new MusicPlayerFragment.ShowQueueListener() {
         @Override
         public void showQueue() {
             SongsFragment songsFragment = SongsFragment.newInstance(playQueue.getQueue(),
@@ -46,7 +46,7 @@ public class PlayerActivity extends AppCompatActivity {
 
         playerFragmentSwitcher = new FragmentSwitcher(getSupportFragmentManager(),
                 R.id.fragment_player_main_container);
-        playerFragment = PlayerFragment.newInstance(showQueueListener);
+        playerFragment = MusicPlayerFragment.newInstance(showQueueListener);
         playerFragmentSwitcher.switchTo(playerFragment, PLAYER_FRAGMENT_TAG);
     }
 

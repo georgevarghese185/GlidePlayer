@@ -29,6 +29,7 @@ import android.util.Log;
 
 import com.teefourteen.glideplayer.music.Song;
 import com.teefourteen.glideplayer.database.Library;
+import com.teefourteen.glideplayer.video.Video;
 
 
 public class RemoteFileCache {
@@ -118,7 +119,7 @@ public class RemoteFileCache {
         } else {
 //            TODO: commented out until buffering issues tested and fixed
 //            if (cursor != null) cursor.close();
-//            if(!makeSpace(song.getSize())) throw new BiggerThanCacheException();
+            if(!makeSpace(song.getSize())) throw new BiggerThanCacheException();
 //            uri = Uri.parse(serverUrl + TYPE_SONG + "/" + username + "/" + songId);
 
 
@@ -157,6 +158,68 @@ public class RemoteFileCache {
 
         return uri;
     }
+
+    public Uri getVideoUri(Video video)throws BiggerThanCacheException {
+        if(!video.isRemote) return null;
+        Uri uri = null;
+        String username = video.libraryUsername;
+        long videoId = video.videoId;
+
+        String whereClause = CacheDatabase.VideoFileTable.Columns.USERNAME + "=?"
+                + " AND " + CacheDatabase.VideoFileTable.Columns.VIDEO_ID +"=?";
+        String[] whereArgs = {username, String.valueOf(videoId)};
+
+        Cursor cursor = cacheDb.query(true, CacheDatabase.VideoFileTable.TABLE_NAME,
+                new String[]{CacheDatabase.VideoFileTable.Columns.FILE_NAME},
+                whereClause, whereArgs,
+                null, null, null, null);
+
+        if(cursor != null && cursor.moveToFirst()) {
+            uri = Uri.parse(Library.FILE_SAVE_LOCATION + "/" +
+                    Library.getString(cursor, CacheDatabase.VideoFileTable.Columns.FILE_NAME));
+            cursor.close();
+        } else {
+//            TODO: commented out until buffering issues tested and fixed
+//            if (cursor != null) cursor.close();
+            if(!makeSpace(video.size)) throw new BiggerThanCacheException();
+//            uri = Uri.parse(serverUrl + TYPE_VIDEO + "/" + username + "/" + videoId);
+
+
+            //TODO: temporary code. Downloading entire file and returning file URI
+            final CountDownLatch countDownLatch = new CountDownLatch(1);
+            CacheFile cacheFile = Group.getInstance().getVideo(username, videoId);
+            if(cacheFile == null) return null;
+            cacheFile.registerDownloadCompleteListener(new CacheFile.DownloadCompleteListener() {
+                @Override
+                public void onDownloadComplete() {
+                    countDownLatch.countDown();
+                }
+
+                @Override
+                public void onDownloadFailed() {
+                    countDownLatch.countDown();
+                }
+            });
+
+            cacheFile.startDownload( Library.FILE_SAVE_LOCATION + "/" + String.valueOf(cacheFileName++));
+
+            try {
+                countDownLatch.await();
+            } catch (InterruptedException e) {
+                return null;
+            }
+
+            if(cacheFile.isDownloadSuccessful()) {
+                uri = Uri.parse(cacheFile.getFile().getAbsolutePath());
+            } else {
+                return null;
+            }
+            addNewVideoFile(cacheFile, username, videoId);
+            //TODO: end of temporary code.
+        }
+
+        return uri;
+    }
     
     private void addNewFile(CacheFile file) {
         ContentValues v = new ContentValues();
@@ -175,6 +238,15 @@ public class RemoteFileCache {
         cacheDb.insert(CacheDatabase.SongFileTable.TABLE_NAME, null, v);
     }
 
+    private void addNewVideoFile(CacheFile file, String username, long videoId) {
+        addNewFile(file);
+        ContentValues v = new ContentValues();
+        v.put(CacheDatabase.VideoFileTable.Columns.FILE_NAME, file.getFile().getName());
+        v.put(CacheDatabase.VideoFileTable.Columns.USERNAME, username);
+        v.put(CacheDatabase.VideoFileTable.Columns.VIDEO_ID, videoId);
+        cacheDb.insert(CacheDatabase.VideoFileTable.TABLE_NAME, null, v);
+    }
+
     public void deleteFile(String fileName) {
         Cursor cursor = cacheDb.query(true, CacheDatabase.FileTable.TABLE_NAME,
                 new String[]{CacheDatabase.FileTable.Columns.FILE_SIZE},
@@ -186,6 +258,10 @@ public class RemoteFileCache {
 
             cacheDb.delete(CacheDatabase.SongFileTable.TABLE_NAME,
                     CacheDatabase.SongFileTable.Columns.FILE_NAME + "=?",
+                    new String[]{fileName});
+
+            cacheDb.delete(CacheDatabase.VideoFileTable.TABLE_NAME,
+                    CacheDatabase.VideoFileTable.Columns.FILE_NAME + "=?",
                     new String[]{fileName});
 
             cacheDb.delete(CacheDatabase.FileTable.TABLE_NAME,
@@ -253,6 +329,15 @@ public class RemoteFileCache {
             }
         }
         
+        class VideoFileTable {
+            static final String TABLE_NAME = "video_file";
+            class Columns {
+                static final String USERNAME = "username";
+                static final String VIDEO_ID = "video_id";
+                static final String FILE_NAME = "file_name";
+            }
+        }
+        
         @Override
         public void onCreate(SQLiteDatabase db) {
             String query = "CREATE TABLE " + FileTable.TABLE_NAME + "("
@@ -266,6 +351,13 @@ public class RemoteFileCache {
                     + SongFileTable.Columns.SONG_ID + " INTEGER" + ", "
                     + SongFileTable.Columns.FILE_NAME + " TEXT" + ")";
             
+            db.execSQL(query);
+
+            query = "CREATE TABLE " + VideoFileTable.TABLE_NAME + "("
+                    + VideoFileTable.Columns.USERNAME + " TEXT" + ", "
+                    + VideoFileTable.Columns.VIDEO_ID + " INTEGER" + ", "
+                    + VideoFileTable.Columns.FILE_NAME + " TEXT" + ")";
+
             db.execSQL(query);
         }
 

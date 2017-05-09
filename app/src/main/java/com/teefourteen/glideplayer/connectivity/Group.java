@@ -34,6 +34,7 @@ import com.teefourteen.glideplayer.connectivity.listeners.ResponseListener;
 import com.teefourteen.glideplayer.music.Song;
 import com.teefourteen.glideplayer.database.Library;
 import com.teefourteen.glideplayer.services.PlayerService;
+import com.teefourteen.glideplayer.video.Video;
 
 public class Group implements NewGroupListener, ErrorListener, GroupMemberListener,
         RequestListener, Closeable {
@@ -47,6 +48,7 @@ public class Group implements NewGroupListener, ErrorListener, GroupMemberListen
     private static final int ACTION_GET_SONG = 1002;
     private static final int ACTION_GET_ALBUM_ART = 1004;
     private static final int ACTION_NOTIFY_USERNAME_TAKEN = 1005;
+    private static final int ACTION_GET_VIDEO = 1006;
     private static final int ACTION_HEADER_MASK = 0xF000;
     private static final int ACTION_HEADER_SYNC_REQUEST = 0xD000;
     private boolean isOwner = false;
@@ -177,13 +179,21 @@ public class Group implements NewGroupListener, ErrorListener, GroupMemberListen
     }
 
     public CacheFile getSong(String memberName, final long songId) {
+        return getMedia(memberName, songId, ACTION_GET_SONG);
+    }
+
+    public CacheFile getVideo(String memberName, long videoId) {
+        return getMedia(memberName, videoId, ACTION_GET_VIDEO);
+    }
+
+    private CacheFile getMedia(String memberName, long mediaId, int getAction) {
         String memberId = currentGroup.getMemberId(memberName);
 
         Group group = Group.groupWeakReference.get();
 
         final CountDownLatch countDownLatch = new CountDownLatch(1);
         final CacheFile file[] = {null};
-        group.netService.sendRequest(memberId, ACTION_GET_SONG, songId,
+        group.netService.sendRequest(memberId, getAction, mediaId,
                 new ResponseListener() {
                     @Override
                     public void onResponseReceived(Object responseData) {
@@ -249,6 +259,15 @@ public class Group implements NewGroupListener, ErrorListener, GroupMemberListen
             return new File(Song.toSong(cursor).getFilePath());
         } else {
             return null; //TODO: something less destructive. This will cause the receiver to throw an exception due to null file
+        }
+    }
+
+    private File videoRequest(long videoId) {
+        Cursor cursor = Library.getVideo(null, videoId);
+        if(cursor.moveToFirst()) {
+            return new File(Video.toVideo(cursor).filePath);
+        } else {
+            return null;
         }
     }
 
@@ -669,6 +688,8 @@ public class Group implements NewGroupListener, ErrorListener, GroupMemberListen
             return null;
         } else if(action == ACTION_GET_SONG) {
             return songRequest((Long)requestData);
+        } else if(action == ACTION_GET_VIDEO) {
+            return videoRequest((Long)requestData);
         } else if(action == ACTION_NOTIFY_USERNAME_TAKEN) {
             EasyHandler.executeOnMainThread(new Runnable() {
                 @Override

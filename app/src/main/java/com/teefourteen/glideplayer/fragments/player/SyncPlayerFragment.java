@@ -6,7 +6,7 @@ import com.teefourteen.glideplayer.Global;
 import com.teefourteen.glideplayer.connectivity.Synchronization;
 
 
-public class SyncPlayerFragment extends PlayerFragment {
+public class SyncPlayerFragment extends MusicPlayerFragment {
     private Synchronization.MusicSession session =
             (Synchronization.MusicSession) Synchronization.getInstance().getActiveSession();
 

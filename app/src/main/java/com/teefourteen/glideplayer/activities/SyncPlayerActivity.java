@@ -16,7 +16,7 @@ import com.teefourteen.glideplayer.fragments.library.MusicLibraryFragment;
 import com.teefourteen.glideplayer.fragments.library.adapters.AlbumAdapter;
 import com.teefourteen.glideplayer.fragments.library.adapters.SongAdapter;
 import com.teefourteen.glideplayer.fragments.player.PlayQueueFragment;
-import com.teefourteen.glideplayer.fragments.player.PlayerFragment;
+import com.teefourteen.glideplayer.fragments.player.MusicPlayerFragment;
 import com.teefourteen.glideplayer.fragments.player.SyncPlayerFragment;
 import com.teefourteen.glideplayer.music.PlayQueue;
 import com.teefourteen.glideplayer.music.Song;
@@ -51,7 +51,7 @@ public class SyncPlayerActivity extends AppCompatActivity implements SongAdapter
             }
         }, this);
         fragmentSwitcher = new FragmentSwitcher(getSupportFragmentManager(),  R.id.sync_main_container);
-        playerFragment = SyncPlayerFragment.newInstance(new PlayerFragment.ShowQueueListener() {
+        playerFragment = SyncPlayerFragment.newInstance(new MusicPlayerFragment.ShowQueueListener() {
             @Override
             public void showQueue() {
                 switchToPlayQueue();
