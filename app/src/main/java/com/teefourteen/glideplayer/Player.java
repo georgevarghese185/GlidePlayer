@@ -153,7 +153,7 @@ public abstract class Player<MediaType> implements Closeable{
         mediaPlayer = new MediaPlayer();
         mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
 
-        if(getFilePath(media).equals(Library.REMOTE_SONG_MISSING_PATH)) {
+        if(getFilePath(media).equals(Library.REMOTE_MEDIA_MISSING_PATH)) {
             try {
                 mediaPlayer.setDataSource(context, getRemoteMediaUri(media));
                 //TODO: temporarily commented till buffering fixed.

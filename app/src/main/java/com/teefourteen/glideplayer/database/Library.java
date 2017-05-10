@@ -22,7 +22,7 @@ import java.util.Iterator;
 
 public class Library {
     public static final String LOCAL_DATABASE_NAME = "music_library.db";
-    public static final String REMOTE_SONG_MISSING_PATH = "@missing_remote_song@";
+    public static final String REMOTE_MEDIA_MISSING_PATH = "@missing_remote_media@";
     public static String FILE_SAVE_LOCATION;
     public static String DATABASE_LOCATION;
     public static String REMOTE_COVERS_LOCATION;
@@ -138,12 +138,12 @@ public class Library {
 
             String newArgs[];
             if(selectionArgs != null) {
-                newArgs = new String[selectionArgs.length + 3];
+                newArgs = new String[selectionArgs.length + 1];
                 System.arraycopy(selectionArgs, 0, newArgs, 0, selectionArgs.length);
-                System.arraycopy(new String[]{username, username, username}, 0, newArgs,
-                        selectionArgs.length, 3);
+                System.arraycopy(new String[]{username}, 0, newArgs,
+                        selectionArgs.length, 1);
             } else {
-                newArgs = new String[]{username, username, username};
+                newArgs = new String[]{username};
             }
 
             selectionArgs = newArgs;
@@ -349,10 +349,14 @@ public class Library {
 
         //set userName
         v = new ContentValues();
-        v.put(SongTable.Columns.FILE_PATH, REMOTE_SONG_MISSING_PATH);
-
+        v.put(SongTable.Columns.FILE_PATH, REMOTE_MEDIA_MISSING_PATH);
         libraryDb.update(SongTable.remoteTableName,v,
                 SongTable.Columns.REMOTE_USERNAME + "=?", new String[]{userName});
+
+        v = new ContentValues();
+        v.put(VideoTable.Columns.FILE_PATH, REMOTE_MEDIA_MISSING_PATH);
+        libraryDb.update(VideoTable.remoteTableName, v,
+                VideoTable.Columns.REMOTE_USERNAME + "=?", new String[]{userName});
 
         Cursor cursor = libraryDb.query(true, AlbumTable.remoteTableName,
                 new String[]{AlbumTable.Columns.ALBUM_ID, AlbumTable.Columns.ALBUM_ART},

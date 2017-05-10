@@ -13,7 +13,7 @@ public class VideoTable extends Table{
     ContentResolver resolver;
 
     public class Columns implements BaseColumns, RemoteColumns {
-        public static final String VIDEO_ID = "song_id";
+        public static final String VIDEO_ID = "video_id";
         public static final String DATE_ADDED = MediaStore.Audio.Media.DATE_ADDED;
         public static final String DATE_MODIFIED = MediaStore.Audio.Media.DATE_MODIFIED;
         public static final String DURATION = MediaStore.Audio.Media.DURATION;
@@ -35,6 +35,8 @@ public class VideoTable extends Table{
         return "CREATE TABLE " + TABLE_NAME + "("
                 + BaseColumns._ID + " INTEGER" + ", "
                 + BaseColumns._COUNT + " INTEGER" + ", "
+                + RemoteColumns.IS_REMOTE + " INTEGER" + ", "
+                + RemoteColumns.REMOTE_USERNAME + " INTEGER" + ", "
                 + Columns.VIDEO_ID + " INTEGER" + ", "
                 + Columns.DATE_ADDED + " INTEGER" + ", "
                 + Columns.DATE_MODIFIED + " INTEGER" + ", "

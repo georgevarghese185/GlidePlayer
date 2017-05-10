@@ -18,7 +18,7 @@ public class Video {
     final public String libraryUsername;
 
     public Video(long videoId, String title, long duration, String filePath, int width, int height,
-                 long size, boolean isRemote, String libraryUsername) {
+                 long size, String libraryUsername) {
         this.videoId = videoId;
         this.title = title;
         this.duration = duration;
@@ -26,8 +26,8 @@ public class Video {
         this.width = width;
         this.height = height;
         this.size = size;
-        this.isRemote = isRemote;
         this.libraryUsername = libraryUsername;
+        isRemote = (libraryUsername != null);
     }
     
     public static Video toVideo(Cursor cursor) {
@@ -39,8 +39,7 @@ public class Video {
                 Library.getInt(cursor, VideoTable.Columns.WIDTH),
                 Library.getInt(cursor, VideoTable.Columns.HEIGHT),
                 Library.getLong(cursor, VideoTable.Columns.SIZE),
-                false,
-                null
+                Library.getString(cursor, VideoTable.Columns.REMOTE_USERNAME)
         );
     }
 }

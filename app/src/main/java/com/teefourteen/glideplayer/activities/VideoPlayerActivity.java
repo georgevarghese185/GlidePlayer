@@ -169,7 +169,7 @@ public class VideoPlayerActivity extends AppCompatActivity implements SurfaceHol
             params.height = (int) (((double)height/width) * params.width);
         } else {
             params.height = displayMetrics.heightPixels;
-            params.width = (int) ((double)width/height) * height;
+            params.width = (int) ((double)width/height) * params.height;
         }
         videoSurface.getHolder().setFixedSize(params.width, params.height);
     }
