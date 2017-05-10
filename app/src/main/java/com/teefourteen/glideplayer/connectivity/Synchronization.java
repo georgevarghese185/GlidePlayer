@@ -720,4 +720,28 @@ public class Synchronization implements Group.RequestListener {
             }
         }
     }
+
+    public class VideoSession extends Session {
+
+
+        @Override
+        JSONArray getQueueAsJSON() {
+            return null;
+        }
+
+        @Override
+        void buildQueueFromJSON(JSONArray jsonArray) {
+
+        }
+
+        @Override
+        void removeFromPlayQueue(String memberName) {
+
+        }
+
+        @Override
+        public String getCurrentPlaying() {
+            return null;
+        }
+    }
 }

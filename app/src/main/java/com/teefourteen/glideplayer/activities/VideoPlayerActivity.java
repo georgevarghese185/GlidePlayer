@@ -27,7 +27,7 @@ import com.teefourteen.glideplayer.video.Video;
 import com.teefourteen.glideplayer.video.VideoPlayer;
 
 public class VideoPlayerActivity extends AppCompatActivity implements SurfaceHolder.Callback,
-        VideoPlayer.VideoSizeChangedListener, Player.SeekListener {
+        VideoPlayer.VideoSizeChangedListener, Player.SeekListener, MediaPlayer.OnCompletionListener {
     public static final String EXTRA_VIDEO_ID = "video_id";
     public static final String EXTRA_VIDEO_USERNAME = "video_username";
 
@@ -44,6 +44,7 @@ public class VideoPlayerActivity extends AppCompatActivity implements SurfaceHol
 
         videoPlayer = new VideoPlayer(this, this);
         videoPlayer.registerSeekListener(this);
+        videoPlayer.registerOnCompletionListener(this);
 
         seekBar = (SeekBar) findViewById(R.id.player_track_seek);
         seekBar.setMax(MusicPlayer.MAX_SEEK_VALUE);
@@ -202,5 +203,12 @@ public class VideoPlayerActivity extends AppCompatActivity implements SurfaceHol
     @Override
     public void onBufferingUpdated(int percent) {
         seekBar.setSecondaryProgress(percent);
+    }
+
+    @Override
+    public void onCompletion(MediaPlayer mp) {
+        showPlay();
+        seekBar.setProgress(0);
+        videoPlayer.trueSeek(0);
     }
 }

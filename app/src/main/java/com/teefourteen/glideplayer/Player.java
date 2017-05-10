@@ -60,7 +60,19 @@ public abstract class Player<MediaType> implements Closeable{
 
     protected void play() {
         mediaPlayer.setWakeMode(context, PowerManager.PARTIAL_WAKE_LOCK);
+        mediaPlayer.setLooping(false);
         mediaPlayer.start();
+        mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mp) {
+                monitorSeek = false;
+                updateSeek();
+
+                for(MediaPlayer.OnCompletionListener listener : onCompletionListenerList) {
+                    listener.onCompletion(mediaPlayer);
+                }
+            }
+        });
         startSeekMonitor();
     }
 
@@ -78,18 +90,6 @@ public abstract class Player<MediaType> implements Closeable{
         catch (IOException e) {
             return false;
         }
-
-        mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-            @Override
-            public void onCompletion(MediaPlayer mp) {
-                monitorSeek = false;
-                updateSeek();
-
-                for(MediaPlayer.OnCompletionListener listener : onCompletionListenerList) {
-                    listener.onCompletion(mediaPlayer);
-                }
-            }
-        });
 
         return true;
     }
