@@ -23,6 +23,11 @@ public abstract class Table {
         return db.rawQuery("SELECT * FROM " + TABLE_NAME, null);
     }
 
+    Cursor getFullTable(SQLiteDatabase db, String condition) {
+        if(condition == null) return getFullTable(db);
+        return db.rawQuery("SELECT * FROM " + TABLE_NAME + " WHERE " + condition, null);
+    }
+
     abstract Cursor getMediaStoreCursor();
 
     void initialize(SQLiteDatabase db) {

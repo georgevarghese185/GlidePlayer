@@ -2,11 +2,17 @@ package com.teefourteen.glideplayer.music.database;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.provider.BaseColumns;
+import android.provider.MediaStore;
 
+import com.teefourteen.glideplayer.Global;
+import com.teefourteen.glideplayer.activities.PrivateFoldersActivity;
+
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -205,6 +211,26 @@ public class Library {
         return cursor.getInt(cursor.getColumnIndex(column));
     }
 
+    private String generatePrivateFoldersClause(String tableName) {
+        try {
+            SharedPreferences sharedPreferences = context.getSharedPreferences(Global.SHARED_PREFS_NAME, Context.MODE_PRIVATE);
+            if(!sharedPreferences.contains(PrivateFoldersActivity.PRIVATE_FOLDERS_KEY)) return null;
+            JSONArray folders = new JSONArray(sharedPreferences.getString(PrivateFoldersActivity.PRIVATE_FOLDERS_KEY, null));
+            String path = tableName + "." + MediaStore.MediaColumns.DATA;
+            String clause = "";
+
+            for (int i = 0; i < folders.length(); i++) {
+                String dir = folders.getString(i);
+                clause += " " + path + " NOT LIKE '" + dir + "%'";
+                if(i<folders.length()-1) clause += " AND";
+            }
+
+            return clause;
+        } catch (JSONException e) {
+            return "";
+        }
+    }
+
     public static boolean sendOverStream(OutputStream out)throws JSONException, IOException {
         SQLiteDatabase libraryDb = library.openHelper.getReadableDatabase();
 
@@ -213,7 +239,13 @@ public class Library {
         JSONObject jsonObject;
 
         for(int i = 0; i < library.tables.length; i++) {
-            Cursor cursor = library.tables[i].getFullTable(libraryDb);
+            Cursor cursor;
+            if(library.tables[i] instanceof SongTable) {
+                cursor = library.tables[i].getFullTable(libraryDb,
+                        library.generatePrivateFoldersClause(library.tables[i].TABLE_NAME));
+            } else {
+                cursor = library.tables[i].getFullTable(libraryDb);
+            }
             cursor.moveToFirst(); //TODO: if false do something
 
             //send number of rows
