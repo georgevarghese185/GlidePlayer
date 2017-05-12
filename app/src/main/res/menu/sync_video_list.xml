@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/switch_to_video_player"
+        android:title="Back To Player"
+        android:icon="@drawable/glideplayer_play_white"
+        app:showAsAction="always"/>
+</menu>

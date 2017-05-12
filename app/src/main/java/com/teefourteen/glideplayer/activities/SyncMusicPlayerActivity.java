@@ -26,7 +26,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
-public class SyncPlayerActivity extends AppCompatActivity implements SongAdapter.SongClickListener,
+public class SyncMusicPlayerActivity extends AppCompatActivity implements SongAdapter.SongClickListener,
         AlbumAdapter.AlbumClickListener, SongAdapter.SongQueueClickListener,
         Synchronization.MusicSession.EventListener{
     private SyncPlayerFragment playerFragment;
@@ -81,7 +81,7 @@ public class SyncPlayerActivity extends AppCompatActivity implements SongAdapter
                     @Override
                     public void showLibrary() {
                         fragmentSwitcher.switchTo(MusicLibraryFragment.newInstance(
-                                SyncPlayerActivity.this, SyncPlayerActivity.this),
+                                SyncMusicPlayerActivity.this, SyncMusicPlayerActivity.this),
                                 LIBRARY_FRAGMENT_TAG, true);
                     }
                 };
@@ -101,9 +101,9 @@ public class SyncPlayerActivity extends AppCompatActivity implements SongAdapter
                 public void okay() {
                     Synchronization.getInstance().leaveSession();
 
-                    Intent intent = new Intent(SyncPlayerActivity.this, PlayerService.class);
+                    Intent intent = new Intent(SyncMusicPlayerActivity.this, PlayerService.class);
                     intent.putExtra(PlayerService.EXTRA_CLEAR_PLAYER, 0);
-                    SyncPlayerActivity.this.startService(intent);
+                    SyncMusicPlayerActivity.this.startService(intent);
 
                     Global.playQueue = null;
 
@@ -118,7 +118,7 @@ public class SyncPlayerActivity extends AppCompatActivity implements SongAdapter
                         }
                     }
 
-                    SyncPlayerActivity.super.onBackPressed();
+                    SyncMusicPlayerActivity.super.onBackPressed();
                 }
             }).show(getFragmentManager(), "quit_sync_session_dialog");
         }
@@ -148,7 +148,7 @@ public class SyncPlayerActivity extends AppCompatActivity implements SongAdapter
                 EasyHandler.executeOnMainThread(new Runnable() {
                     @Override
                     public void run() {
-                        Toast.makeText(SyncPlayerActivity.this,
+                        Toast.makeText(SyncMusicPlayerActivity.this,
                                 song.getTitle() + " added to queue",
                                 Toast.LENGTH_SHORT).show();
                     }
@@ -160,7 +160,7 @@ public class SyncPlayerActivity extends AppCompatActivity implements SongAdapter
                 EasyHandler.executeOnMainThread(new Runnable() {
                     @Override
                     public void run() {
-                        Toast.makeText(SyncPlayerActivity.this,
+                        Toast.makeText(SyncMusicPlayerActivity.this,
                                 "Failed to add song",
                                 Toast.LENGTH_SHORT).show();
                     }

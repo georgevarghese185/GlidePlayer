@@ -28,9 +28,11 @@ import java.util.ArrayList;
 
 public class SyncSessionActivity extends AppCompatActivity {
     private static final String SESSION_FETCH_THREAD_NAME = "session_fetch_thread";
+    public static final String EXTRA_SESSION_TYPE = "session_type";
     private EasyHandler handler = new EasyHandler();
 
-    @Override
+    private Synchronization.SessionType type;
+
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sync_sessions);
@@ -45,6 +47,10 @@ public class SyncSessionActivity extends AppCompatActivity {
             }
         });
 
+        if(getIntent().hasExtra(EXTRA_SESSION_TYPE)) {
+            type = (Synchronization.SessionType) getIntent().getSerializableExtra(EXTRA_SESSION_TYPE);
+        }
+
         handler.createHandler(SESSION_FETCH_THREAD_NAME);
     }
 
@@ -55,10 +61,16 @@ public class SyncSessionActivity extends AppCompatActivity {
     }
 
     private void createSession() {
-        Synchronization.MusicSession session =
-                (Synchronization.MusicSession) Synchronization.getInstance().createMusicSession();
-        clearQueue(session.getPlayQueue());
-        startActivity(new Intent(SyncSessionActivity.this, SyncPlayerActivity.class));
+        if(type == Synchronization.SessionType.MUSIC) {
+            Synchronization.MusicSession session =
+                    (Synchronization.MusicSession) Synchronization.getInstance().createMusicSession();
+            clearQueue(session.getPlayQueue());
+            startActivity(new Intent(this, SyncMusicPlayerActivity.class));
+        } else {
+            Synchronization.getInstance().createVideoSession();
+            clearQueue(null);
+            startActivity(new Intent(this, SyncVideoPlayerActivity.class));
+        }
         Toast.makeText(SyncSessionActivity.this, "Created new session",
                 Toast.LENGTH_LONG).show();
     }
@@ -75,7 +87,8 @@ public class SyncSessionActivity extends AppCompatActivity {
             fab.setVisibility(View.INVISIBLE);
         } else {
             fab.setVisibility(View.VISIBLE);
-            Synchronization.getInstance().fetchMusicSessions(new Synchronization.FetchSessionsListener() {
+            Synchronization.FetchSessionsListener fetchListener =
+                    new Synchronization.FetchSessionsListener() {
                 @Override
                 public void sessionsFetched(final ArrayList<Synchronization.Session> sessionList) {
                     if(sessionList.size() == 0) {
@@ -96,11 +109,17 @@ public class SyncSessionActivity extends AppCompatActivity {
                                         new Synchronization.JoinSessionListener() {
                                             @Override
                                             public void sessionJoined(Synchronization.Session s) {
-                                                clearQueue(((Synchronization.MusicSession)s)
-                                                        .getPlayQueue());
+                                                if(type == Synchronization.SessionType.MUSIC) {
+                                                    clearQueue(((Synchronization.MusicSession) s)
+                                                            .getPlayQueue());
 
-                                                startActivity(new Intent(SyncSessionActivity.this,
-                                                        SyncPlayerActivity.class));
+                                                    startActivity(new Intent(SyncSessionActivity.this,
+                                                            SyncMusicPlayerActivity.class));
+                                                } else {
+                                                    clearQueue(null);
+                                                    startActivity(new Intent(SyncSessionActivity.this,
+                                                            SyncVideoPlayerActivity.class));
+                                                }
                                                 Toast.makeText(SyncSessionActivity.this, "Joined session",
                                                         Toast.LENGTH_LONG).show();
                                             }
@@ -122,7 +141,13 @@ public class SyncSessionActivity extends AppCompatActivity {
                     statusTextView.setText("Failed to fetch sessions");
                     statusTextView.setVisibility(View.VISIBLE);
                 }
-            });
+            };
+            if(type == Synchronization.SessionType.MUSIC) {
+                Synchronization.getInstance().fetchMusicSessions(fetchListener);
+            } else {
+                Synchronization.getInstance().fetchVideoSessions(fetchListener);
+            }
+
         }
 
 

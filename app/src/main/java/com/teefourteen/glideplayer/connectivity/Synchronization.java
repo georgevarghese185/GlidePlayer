@@ -17,6 +17,7 @@ import com.teefourteen.glideplayer.music.PlayQueue;
 import com.teefourteen.glideplayer.music.Song;
 import com.teefourteen.glideplayer.database.Library;
 import com.teefourteen.glideplayer.services.PlayerService;
+import com.teefourteen.glideplayer.video.Video;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -26,7 +27,12 @@ import java.util.concurrent.CountDownLatch;
 
 @SuppressWarnings("ConstantConditions")
 public class Synchronization implements Group.RequestListener {
-    private static final int ACTION_FETCH_SESSION = 1000;
+    private static final int ACTION_FETCH_MUSIC_SESSION = 1000;
+    private static final int ACTION_FETCH_VIDEO_SESSION = 1001;
+    public enum SessionType {
+        MUSIC,
+        VIDEO
+    }
 
     private static Synchronization instance;
     private Session activeSession = null;
@@ -62,6 +68,14 @@ public class Synchronization implements Group.RequestListener {
     }
 
     public void fetchMusicSessions(final FetchSessionsListener listener) {
+        fetchSessions(listener, SessionType.MUSIC);
+    }
+
+    public void fetchVideoSessions(final FetchSessionsListener listener) {
+        fetchSessions(listener, SessionType.VIDEO);
+    }
+
+    private void fetchSessions(final FetchSessionsListener listener, final SessionType type) {
         Group group = Group.getInstance();
         final ArrayList<Session> sessions = new ArrayList<>();
 
@@ -70,13 +84,20 @@ public class Synchronization implements Group.RequestListener {
             listener.sessionsFetched(sessions);
             return;
         }
+
+        int action = (type == SessionType.MUSIC) ?
+                ACTION_FETCH_MUSIC_SESSION : ACTION_FETCH_VIDEO_SESSION;
         for(final String member : memberList) {
             if(member.equals(Group.userName)) continue;
-            group.sendSyncRequest(member, ACTION_FETCH_SESSION, null, new ResponseListener() {
+            group.sendSyncRequest(member, action, null, new ResponseListener() {
                 @Override
                 public void onResponseReceived(Object responseData) {
                     if(responseData != null) {
-                        sessions.add(MusicSession.fromJSON((String)responseData));
+                        if(type == SessionType.MUSIC) {
+                            sessions.add(MusicSession.fromJSON((String) responseData));
+                        } else if(type == SessionType.VIDEO) {
+                            sessions.add(VideoSession.fromJSON((String) responseData));
+                        }
                     }
                     if(memberList.indexOf(member) == memberList.size() -1) {
                         EasyHandler.executeOnMainThread(new Runnable() {
@@ -122,6 +143,16 @@ public class Synchronization implements Group.RequestListener {
         }
     }
 
+    public Session createVideoSession() {
+        if(activeSession == null) {
+            VideoSession videoSession = new VideoSession(Group.userName);
+            activeSession = videoSession;
+            return videoSession;
+        } else {
+            throw new IllegalStateException("Active session already exists. Cannot create new Session");
+        }
+    }
+
     public void joinSession(final Session session, final JoinSessionListener listener) {
         session.join(new JoinSessionListener() {
             @Override
@@ -147,8 +178,10 @@ public class Synchronization implements Group.RequestListener {
 
     @Override
     public Object onNewRequest(String username, int action, Object requestData) {
-        if(action == ACTION_FETCH_SESSION) {
-            return fetchSessionsRequest();
+        if(action == ACTION_FETCH_MUSIC_SESSION) {
+            return fetchMusicSessionsRequest();
+        } else if(action == ACTION_FETCH_VIDEO_SESSION) {
+            return fetchVideoSessionsRequest();
         } else if(activeSession != null) {
             return activeSession.onNewRequest(username, action, requestData);
         } else {
@@ -156,8 +189,16 @@ public class Synchronization implements Group.RequestListener {
         }
     }
 
-    private String fetchSessionsRequest() {
-        if(activeSession != null && activeSession.isOwner()) {
+    private String fetchMusicSessionsRequest() {
+        if(activeSession != null && activeSession instanceof MusicSession && activeSession.isOwner()) {
+            return activeSession.toJSONArray().toString();
+        } else {
+            return null;
+        }
+    }
+
+    private String fetchVideoSessionsRequest() {
+        if(activeSession != null && activeSession instanceof VideoSession && activeSession.isOwner()) {
             return activeSession.toJSONArray().toString();
         } else {
             return null;
@@ -255,7 +296,7 @@ public class Synchronization implements Group.RequestListener {
                             if (responseData != null) {
                                 try {
                                     JSONArray jsonArray = new JSONArray((String) responseData);
-                                    MusicSession session = MusicSession.fromJSON(jsonArray);
+                                    Session session = newSession(jsonArray);
                                     memberList.add(Group.userName);
                                     listener.sessionJoined(session);
                                 } catch (JSONException e) {
@@ -272,6 +313,8 @@ public class Synchronization implements Group.RequestListener {
                         }
                     });
         }
+
+        abstract Session newSession(JSONArray jsonArray);
 
         void leave() {
             Group group = Group.getInstance();
@@ -423,6 +466,11 @@ public class Synchronization implements Group.RequestListener {
             super.ownerName = ownerName;
             memberList.add(ownerName);
             handler.createHandler(SYNC_PLAY_THREAD);
+        }
+
+        @Override
+        Session newSession(JSONArray jsonArray) {
+            return MusicSession.fromJSON(jsonArray);
         }
 
         private MusicSession() {
@@ -721,27 +769,183 @@ public class Synchronization implements Group.RequestListener {
         }
     }
 
-    public class VideoSession extends Session {
+    public static class VideoSession extends Session {
+        private static final String SYNC_PLAY_THREAD = "sync_play_thread";
+        private static final int ACTION_PLAY = 1200;
+        private static final int ACTION_PREPARE_VIDEO = 1201;
+        private static final int ACTION_PAUSE_VIDEO = 1202;
+        private EasyHandler handler = new EasyHandler();
+        private EventListener eventListener;
+        String currentVideoTitle;
 
+        public interface EventListener {
+            void prepareVideo(Video video);
+            void play();
+            int pause();
+            void seek(int seek);
+        }
+
+        private VideoSession() {
+            handler = new EasyHandler();
+            handler.createHandler(SYNC_PLAY_THREAD);
+        }
+
+        @Override
+        Session newSession(JSONArray jsonArray) {
+            return fromJSON(jsonArray);
+        }
+
+        VideoSession(String ownerName) {
+            super.ownerName = ownerName;
+            memberList.add(ownerName);
+            handler.createHandler(SYNC_PLAY_THREAD);
+        }
+
+        public void setEventListener(EventListener listener) {
+            eventListener = listener;
+        }
+
+        static VideoSession fromJSON(String jsonArrayString) {
+            try {
+                JSONArray jsonArray = new JSONArray(jsonArrayString);
+                return VideoSession.fromJSON(jsonArray);
+            } catch(JSONException e) {
+                return null;
+            }
+        }
+
+        static VideoSession fromJSON(JSONArray jsonArray) {
+            VideoSession videoSession = new VideoSession();
+            videoSession.setFields(jsonArray);
+            return videoSession;
+        }
+
+        public void play(final Video video) {
+            final JSONArray videoInfo = new JSONArray();
+            currentVideoTitle = video.title;
+            videoInfo.put(video.videoId);
+            videoInfo.put((video.libraryUsername == null) ? Group.userName : video.libraryUsername);
+
+            final BroadcastListener broadcastListener = new BroadcastListener() {
+                @Override
+                public void onBroadcastComplete(int successes, int failures) {
+                    syncAndPlay(new Runnable() {
+                        @Override
+                        public void run() {
+                            if(eventListener!=null) eventListener.play();
+                        }
+                    });
+                }
+            };
+
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    if(eventListener!=null) eventListener.prepareVideo(video);
+                    broadcastMessage(ACTION_PREPARE_VIDEO, videoInfo, broadcastListener);
+                }
+            }).start();
+        }
+
+        public void syncAndPlay(Runnable play) {
+            JSONArray data = new JSONArray();
+            Handler handler = this.handler.getHandler(SYNC_PLAY_THREAD);
+
+            data.put(System.currentTimeMillis() + 1000 - clockOffset);
+            handler.postDelayed(play, 1000);
+
+            broadcastMessage(ACTION_PLAY, data, null);
+        }
+
+        public void pause() {
+            int seek = eventListener.pause();
+            JSONArray data = new JSONArray();
+            data.put(seek);
+
+            broadcastMessage(ACTION_PAUSE_VIDEO, data, null);
+        }
 
         @Override
         JSONArray getQueueAsJSON() {
-            return null;
+            JSONArray jsonArray = new JSONArray();
+            jsonArray.put(currentVideoTitle);
+            return jsonArray;
         }
 
         @Override
         void buildQueueFromJSON(JSONArray jsonArray) {
-
+            try {
+                currentVideoTitle = jsonArray.getString(0);
+            } catch (JSONException e) {/*ignore*/}
         }
 
         @Override
-        void removeFromPlayQueue(String memberName) {
-
-        }
+        void removeFromPlayQueue(String memberName) {}
 
         @Override
         public String getCurrentPlaying() {
-            return null;
+            return (currentVideoTitle == null) ? "-" : currentVideoTitle;
+        }
+
+        @Override
+        public Object onNewRequest(String username, int action, Object requestData) {
+            if(action == ACTION_PREPARE_VIDEO) {
+                return prepareVideoRequest((String) requestData);
+            } else if(action == ACTION_PLAY) {
+                return playRequest((String)requestData);
+            } else if(action == ACTION_PAUSE_VIDEO) {
+                return pauseRequest((String) requestData);
+            } else {
+                return super.onNewRequest(username, action, requestData);
+            }
+        }
+
+        private String prepareVideoRequest(String jsonArrayString) {
+            try {
+                JSONArray data = new JSONArray(jsonArrayString);
+                Cursor cursor = Library.getVideo((data.getString(1).equals(Group.userName)) ?
+                        null : data.getString(1), data.getLong(0));
+                if(!cursor.moveToFirst()) return null;
+                Video video = Video.toVideo(cursor);
+                cursor.close();
+                if(eventListener != null) eventListener.prepareVideo(video);
+                return "success";
+            } catch(JSONException e) {
+                return null;
+            }
+        }
+
+        private String playRequest(String data) {
+            try {
+                JSONArray jsonArray = new JSONArray(data);
+                long execTime = jsonArray.getLong(0);
+                Runnable r = new Runnable() {
+                    @Override
+                    public void run() {
+                        if(eventListener != null) eventListener.play();
+                    }
+                };
+
+                handler.getHandler(SYNC_PLAY_THREAD)
+                        .postDelayed(r, execTime - System.currentTimeMillis() + clockOffset);
+                return "success";
+            } catch (JSONException e) {
+                return null;
+            }
+        }
+
+        private String pauseRequest(String dataString) {
+            try {
+                if(eventListener != null) eventListener.pause();
+                int seek = new JSONArray(dataString).getInt(0);
+                if(eventListener != null) {
+                    eventListener.seek(seek);
+                    eventListener.pause();
+                }
+                return "success";
+            } catch (JSONException e) {
+                return null;
+            }
         }
     }
 }

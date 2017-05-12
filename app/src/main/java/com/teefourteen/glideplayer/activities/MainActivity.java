@@ -19,6 +19,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.teefourteen.glideplayer.connectivity.Synchronization;
 import com.teefourteen.glideplayer.fragments.FragmentSwitcher;
 import com.teefourteen.glideplayer.fragments.connectivity.ConnectivityFragment;
 import com.teefourteen.glideplayer.fragments.library.MusicLibraryFragment;
@@ -181,7 +182,13 @@ public class MainActivity extends AppCompatActivity
         } else if(id == R.id.nav_video_library){
             mainFragmentSwitcher.switchTo(videoLibraryFragment, VIDEO_LIBRARY_FRAGMENT_TAG);
         } else if (id == R.id.nav_music_sync_play) {
-            startActivity(new Intent(this, SyncSessionActivity.class));
+            Intent intent = new Intent(this, SyncSessionActivity.class);
+            intent.putExtra(SyncSessionActivity.EXTRA_SESSION_TYPE, Synchronization.SessionType.MUSIC);
+            startActivity(intent);
+        } else if(id == R.id.nav_video_sync_play) {
+            Intent intent = new Intent(this, SyncSessionActivity.class);
+            intent.putExtra(SyncSessionActivity.EXTRA_SESSION_TYPE, Synchronization.SessionType.VIDEO);
+            startActivity(intent);
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);

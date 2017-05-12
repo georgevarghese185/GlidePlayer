@@ -42,4 +42,9 @@ public class Video {
                 Library.getString(cursor, VideoTable.Columns.REMOTE_USERNAME)
         );
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        return (obj != null) && (obj instanceof Video) && (((Video) obj).videoId == videoId);
+    }
 }

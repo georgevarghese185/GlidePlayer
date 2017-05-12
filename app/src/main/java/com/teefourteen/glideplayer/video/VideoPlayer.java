@@ -47,6 +47,14 @@ public class VideoPlayer extends Player<Video> implements MediaPlayer.OnVideoSiz
         }
     }
 
+    public boolean playMedia(SurfaceHolder holder) {
+        if(prepared && !mediaPlayer.isPlaying()) {
+            mediaPlayer.setDisplay(holder);
+            play();
+            return true;
+        } else return prepared;
+    }
+
     public boolean prepareMedia(Video media, SurfaceHolder holder) throws IOException {
         boolean result = super.prepareMedia(media);
         if(result) {

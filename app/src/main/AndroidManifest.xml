@@ -51,8 +51,9 @@
             android:name=".activities.SyncSessionActivity"
             android:label="@string/title_activity_sync_session"
             android:theme="@style/AppTheme.NoActionBar" />
-        <activity android:name=".activities.SyncPlayerActivity" />
-        <activity android:name=".activities.VideoPlayerActivity"></activity>
+        <activity android:name=".activities.SyncMusicPlayerActivity" />
+        <activity android:name=".activities.VideoPlayerActivity" />
+        <activity android:name=".activities.SyncVideoPlayerActivity"></activity>
     </application>
 
 </manifest>
