@@ -53,7 +53,7 @@ public class SyncVideoPlayerActivity extends AppCompatActivity implements VideoA
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        MenuInflater inflater = new MenuInflater(this);
+        MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.sync_video_list, menu);
         return true;
     }
