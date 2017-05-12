@@ -5,7 +5,6 @@ import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.PowerManager;
-import android.view.SurfaceHolder;
 import android.widget.Toast;
 
 import java.io.Closeable;

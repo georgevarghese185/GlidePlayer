@@ -1,14 +1,9 @@
 package com.teefourteen.glideplayer.fragments.library;
 
 
-import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
-import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentStatePagerAdapter;
-import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
@@ -21,20 +16,9 @@ import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 
 import com.teefourteen.glideplayer.R;
-import com.teefourteen.glideplayer.activities.MainActivity;
-import com.teefourteen.glideplayer.activities.PlayerActivity;
 import com.teefourteen.glideplayer.connectivity.Group;
 import com.teefourteen.glideplayer.connectivity.listeners.GroupConnectionListener;
 import com.teefourteen.glideplayer.connectivity.listeners.GroupMemberListener;
-import com.teefourteen.glideplayer.database.AlbumTable;
-import com.teefourteen.glideplayer.database.Library;
-import com.teefourteen.glideplayer.fragments.library.adapters.AlbumAdapter;
-import com.teefourteen.glideplayer.fragments.library.adapters.SongAdapter;
-import com.teefourteen.glideplayer.music.PlayQueue;
-
-import java.util.zip.Inflater;
-
-import static com.teefourteen.glideplayer.Global.playQueue;
 
 public abstract class LibraryFragment extends Fragment implements GroupMemberListener,
         GroupConnectionListener {

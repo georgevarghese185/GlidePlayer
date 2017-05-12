@@ -1,4 +1,4 @@
-package com.teefourteen.glideplayer.fragments.library;
+package com.teefourteen.glideplayer.fragments.library.adapters;
 
 import android.annotation.SuppressLint;
 import android.database.Cursor;
@@ -67,7 +67,11 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoHolder>
             this.position = position;
 
             videoTitle.setText(video.title);
-            path.setText(video.filePath);
+            if(video.isRemote) {
+                path.setText("From " + video.libraryUsername + "'s Device");
+            } else {
+                path.setText(video.filePath);
+            }
             length.setText(
                     String.format("%02d:%02d:%02d",
                     TimeUnit.MILLISECONDS.toHours(video.duration),

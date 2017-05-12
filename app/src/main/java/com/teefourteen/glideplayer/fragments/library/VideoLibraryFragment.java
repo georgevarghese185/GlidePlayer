@@ -3,23 +3,19 @@ package com.teefourteen.glideplayer.fragments.library;
 
 import android.content.Intent;
 import android.database.Cursor;
-import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
 import com.teefourteen.glideplayer.R;
 import com.teefourteen.glideplayer.activities.VideoPlayerActivity;
 import com.teefourteen.glideplayer.database.Library;
+import com.teefourteen.glideplayer.fragments.library.adapters.VideoAdapter;
 import com.teefourteen.glideplayer.fragments.player.VideoPlayerFragment;
 import com.teefourteen.glideplayer.video.Video;
-import com.teefourteen.glideplayer.video.VideoPlayer;
 
 /**
  * A simple {@link Fragment} subclass.

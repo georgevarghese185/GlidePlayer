@@ -1,6 +1,5 @@
 package com.teefourteen.glideplayer.activities;
 
-import android.content.Intent;
 import android.database.Cursor;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -13,7 +12,7 @@ import com.teefourteen.glideplayer.R;
 import com.teefourteen.glideplayer.connectivity.Synchronization;
 import com.teefourteen.glideplayer.dialogs.QuitSyncSessionDialog;
 import com.teefourteen.glideplayer.fragments.FragmentSwitcher;
-import com.teefourteen.glideplayer.fragments.library.VideoAdapter;
+import com.teefourteen.glideplayer.fragments.library.adapters.VideoAdapter;
 import com.teefourteen.glideplayer.fragments.library.VideoLibraryFragment;
 import com.teefourteen.glideplayer.fragments.player.VideoPlayerFragment;
 import com.teefourteen.glideplayer.music.PlayQueue;

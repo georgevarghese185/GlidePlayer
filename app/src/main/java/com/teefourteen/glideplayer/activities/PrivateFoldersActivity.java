@@ -1,6 +1,5 @@
 package com.teefourteen.glideplayer.activities;
 
-import android.Manifest;
 import android.app.Activity;
 import android.app.Dialog;
 import android.app.DialogFragment;
@@ -13,8 +12,6 @@ import android.net.Uri;
 import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.util.ArraySet;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -32,19 +29,16 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.nononsenseapps.filepicker.FilePickerActivity;
-import com.nononsenseapps.filepicker.FilePickerFragment;
 import com.nononsenseapps.filepicker.Utils;
 import com.teefourteen.glideplayer.Global;
 import com.teefourteen.glideplayer.R;
 
 import org.json.JSONArray;
 import org.json.JSONException;
-import org.w3c.dom.Text;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.zip.Inflater;
 
 public class PrivateFoldersActivity extends AppCompatActivity {
     private static final int REQUEST_CODE = 1;

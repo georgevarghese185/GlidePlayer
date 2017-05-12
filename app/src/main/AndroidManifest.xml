@@ -53,7 +53,7 @@
             android:theme="@style/AppTheme.NoActionBar" />
         <activity android:name=".activities.SyncMusicPlayerActivity" />
         <activity android:name=".activities.VideoPlayerActivity" />
-        <activity android:name=".activities.SyncVideoPlayerActivity"></activity>
+        <activity android:name=".activities.SyncVideoPlayerActivity"/>
         <activity
             android:name=".activities.ExampleSettingsActivity"
             android:label="@string/title_activity_settings" />

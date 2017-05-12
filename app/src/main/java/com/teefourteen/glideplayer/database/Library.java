@@ -298,7 +298,8 @@ public class Library {
 
         for(int i = 0; i < library.tables.length; i++) {
             Cursor cursor;
-            if(library.tables[i] instanceof SongTable) {
+            if(library.tables[i] instanceof SongTable
+                    || library.tables[i] instanceof VideoTable) {
                 cursor = library.tables[i].getFullTable(libraryDb,
                         library.generatePrivateFoldersClause(library.tables[i].TABLE_NAME));
             } else {

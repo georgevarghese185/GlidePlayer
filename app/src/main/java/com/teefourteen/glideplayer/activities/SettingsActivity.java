@@ -15,7 +15,6 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 
 import com.teefourteen.glideplayer.R;
-import com.teefourteen.glideplayer.fragments.FragmentSwitcher;
 
 public class SettingsActivity extends AppCompatActivity {
     private static final String PREFERENCES_FRAGMENT_TAG = "preferences_fragment";
