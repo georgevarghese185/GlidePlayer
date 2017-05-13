@@ -24,7 +24,7 @@ public abstract class Table {
     }
 
     Cursor getFullTable(SQLiteDatabase db, String condition) {
-        if(condition == null) return getFullTable(db);
+        if(condition == null || condition.isEmpty()) return getFullTable(db);
         return db.rawQuery("SELECT * FROM " + TABLE_NAME + " WHERE " + condition, null);
     }
 
