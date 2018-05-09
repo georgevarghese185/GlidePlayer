@@ -2,10 +2,18 @@ package com.teefourteen.glideplayer.connectivity;
 
 import android.util.Log;
 
+import com.teefourteen.glideplayer.EasyHandler;
+import com.teefourteen.glideplayer.StateListener;
+
 import java.io.File;
 import java.io.IOException;
 
-public class CacheFile {
+import static com.teefourteen.glideplayer.connectivity.CacheFile.DownloadState.DOWNLOADED;
+import static com.teefourteen.glideplayer.connectivity.CacheFile.DownloadState.DOWNLOADING;
+import static com.teefourteen.glideplayer.connectivity.CacheFile.DownloadState.FAILED;
+import static com.teefourteen.glideplayer.connectivity.CacheFile.DownloadState.INIT;
+
+public class CacheFile extends StateListener<CacheFile.DownloadListener, CacheFile.DownloadState>{
 
     private long size;
     private File file;
@@ -19,12 +27,29 @@ public class CacheFile {
         void onDownloadFailed();
     }
 
+    public interface DownloadListener {
+        void onDownloading();
+        void onDownloadComplete();
+        void onDownloadFail();
+    }
+
+    public enum DownloadState {
+        INIT,
+        DOWNLOADING,
+        DOWNLOADED,
+        FAILED
+    }
+
     public CacheFile(long size, Connection connection) {
+        super(null, INIT);
+
         this.size = size;
         this.connection = connection;
     }
 
     public CacheFile(File file) {
+        super(null, INIT);
+
         this.file = file;
         this.size = file.length();
         this.downloading = false;
@@ -33,11 +58,13 @@ public class CacheFile {
 
     void startDownload(final String filePath) {
         downloading = true;
+        updateState(DOWNLOADING);
         this.file = new File(filePath);
         try {
             file.createNewFile();
         } catch (IOException e) {
             downloading = false;
+            updateState(FAILED);
             downloadSuccessful = false;
             if(downloadCompleteListener != null) {
                 downloadCompleteListener.onDownloadFailed();
@@ -50,6 +77,7 @@ public class CacheFile {
             public void run() {
                 try {
                     connection.getNextFile(filePath, size);
+                    updateState(DOWNLOADED);
                     downloading = false;
                     downloadSuccessful = true;
                     connection.close();
@@ -58,6 +86,7 @@ public class CacheFile {
                     }
                 } catch (IOException e) {
                     downloading = false;
+                    updateState(FAILED);
                     downloadSuccessful = false;
                     if (downloadCompleteListener != null) {
                         downloadCompleteListener.onDownloadFailed();
@@ -103,5 +132,23 @@ public class CacheFile {
             connection.close();
             Log.d("CacheFile","File download cancelled");
         }
+    }
+
+    @Override
+    protected void notifyListener(DownloadListener downloadListener, DownloadState downloadState) {
+        EasyHandler.executeOnMainThread(() -> {
+            switch (downloadState) {
+
+                case DOWNLOADING:
+                    downloadListener.onDownloading();
+                    break;
+                case DOWNLOADED:
+                    downloadListener.onDownloadComplete();
+                    break;
+                case FAILED:
+                    downloadListener.onDownloadFail();
+                    break;
+            }
+        });
     }
 }

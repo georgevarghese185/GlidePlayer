@@ -18,6 +18,14 @@ import java.net.Socket;
 import java.net.SocketException;
 
 public class Connection implements Closeable {
+    public static final int DATA_TYPE_INTEGER = 100;
+    public static final int DATA_TYPE_LONG = 101;
+    public static final int DATA_TYPE_STRING = 102;
+    public static final int DATA_TYPE_OBJECT = 103;
+    public static final int DATA_TYPE_FILE = 104;
+    public static final int DATA_TYPE_NULL = 105;
+    public static final int DATA_TYPE_STREAM = 106;
+    
     private Socket clientSocket;
     private TransmissionType lastTransmission = null;
 
@@ -27,7 +35,7 @@ public class Connection implements Closeable {
     }
 
 
-    static class ListenServer implements Closeable{
+    public static class ListenServer implements Closeable{
         private ServerSocket serverSocket;
         private int listenPort;
 
@@ -75,17 +83,17 @@ public class Connection implements Closeable {
     }
 
 
-    int getNextInt()throws IOException {
+    public int getNextInt()throws IOException {
         return (int) getNextLong();
     }
 
-    long getNextLong()throws IOException {
+    public long getNextLong()throws IOException {
         readyWait(TransmissionType.READ);
         BufferedReader reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
         return Long.parseLong(reader.readLine());
     }
 
-    String getNextString()throws IOException {
+    public String getNextString()throws IOException {
         readyWait(TransmissionType.READ);
         BufferedReader input = new BufferedReader(
                 new InputStreamReader(clientSocket.getInputStream()));
@@ -93,7 +101,7 @@ public class Connection implements Closeable {
         return input.readLine();
     }
 
-    Object getNextObject()throws IOException {
+    public  Object getNextObject()throws IOException {
         readyWait(TransmissionType.READ);
         ObjectInputStream input = new ObjectInputStream(clientSocket.getInputStream());
         try {
@@ -103,7 +111,7 @@ public class Connection implements Closeable {
         }
     }
 
-    File getNextFile(String filePath, long size)throws IOException {
+    public File getNextFile(String filePath, long size)throws IOException {
         File file = new File(filePath);
         if(file.exists()) {
             file.delete();
@@ -129,31 +137,31 @@ public class Connection implements Closeable {
         return file;
     }
 
-    void sendInt(int n)throws IOException {
+    public void sendInt(int n)throws IOException {
         readyWait(TransmissionType.WRITE);
         PrintWriter pw = new PrintWriter(clientSocket.getOutputStream(), true);
         pw.println(n);
     }
 
-    void sendLong(long n)throws IOException {
+    public void sendLong(long n)throws IOException {
         readyWait(TransmissionType.WRITE);
         PrintWriter pw = new PrintWriter(clientSocket.getOutputStream(), true);
         pw.println(n);
     }
 
-    void sendString(String string)throws IOException {
+    public void sendString(String string)throws IOException {
         readyWait(TransmissionType.WRITE);
         PrintWriter output = new PrintWriter(clientSocket.getOutputStream(), true);
         output.println(string);
     }
 
-    void sendObject(Object obj)throws IOException {
+    public void sendObject(Object obj)throws IOException {
         readyWait(TransmissionType.WRITE);
         ObjectOutputStream output = new ObjectOutputStream(clientSocket.getOutputStream());
         output.writeObject(obj);
     }
 
-    void sendFile(File file) throws IOException {
+    public void sendFile(File file) throws IOException {
         FileInputStream fin = new FileInputStream(file);
         byte[] buffer = new byte[8096];
         DataOutputStream dataOut = new DataOutputStream(clientSocket.getOutputStream());

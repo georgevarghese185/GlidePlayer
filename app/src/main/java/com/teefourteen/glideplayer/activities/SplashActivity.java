@@ -2,10 +2,9 @@ package com.teefourteen.glideplayer.activities;
 
 import android.Manifest;
 import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.os.AsyncTask;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -15,13 +14,23 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.Toast;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.util.HashMap;
+import java.util.Map;
 
+import com.teefourteen.glideplayer.connectivity.network.Client;
+import com.teefourteen.glideplayer.connectivity.network.server.GPServer;
+import com.teefourteen.glideplayer.connectivity.network.server.Request;
+import com.teefourteen.glideplayer.connectivity.network.server.Response;
 import com.teefourteen.glideplayer.dialogs.NeedPermissionsDialog;
-import com.teefourteen.glideplayer.R;
 import com.teefourteen.glideplayer.database.Library;
 import com.teefourteen.glideplayer.services.LibraryService;
+
+import org.json.JSONObject;
 
 public class SplashActivity extends AppCompatActivity {
     public static final String LIBRARY_INIT_THREAD_NAME = "lib-init-thread";
@@ -33,23 +42,70 @@ public class SplashActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        libInitCompleteReceiver = new BroadcastReceiver() {
+        GPServer server = new GPServer(
+                8081, request -> {
+                    for(Map.Entry<String, String> param : request.requestParams.entrySet()) {
+                        Log.d("Server Test", param.getKey() + ":" + param.getValue());
+                    }
+                    File cache = getExternalCacheDir();
+                    if(cache != null && cache.exists()) {
+                        FileOutputStream fOut = null;
+                        BufferedWriter writer = null;
+                        try {
+                            File file = new File(cache, "sometxt");
+                            fOut = new FileOutputStream(file);
+                            writer = new BufferedWriter(new OutputStreamWriter(fOut));
+
+                            writer.write(request.requestParams.get("id"));
+                            writer.flush();
+                            writer.close();
+
+                            return new Response(file);
+                        } catch (Exception e) {
+                            try {
+                                fOut.close();
+                                writer.close();
+                            } catch (Exception e1) {/*watever*/}
+                            return new Response("I DONT SERVER N00BS");
+                        }
+                    } else {
+                        return new Response("I DONT SERVER N00BS");
+                    }
+                });
+
+        try {
+            server.start();
+        } catch (IOException e) {
+            Log.e("Server Test", "Error while starting server", e);
+        }
+
+        new AsyncTask<Object, Object, Object>() {
             @Override
-            public void onReceive(Context context, Intent intent) {
-                Intent mainActivityIntent = new Intent(context, MainActivity.class);
-                mainActivityIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP|Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(mainActivityIntent);
-                finish();
+            protected Object doInBackground(Object... objects) {
+                Client c = new Client("1", "192.168.0.4", 8081);
+                HashMap<String, String> req = new HashMap<>(1);
+                req.put("id", "1234");
+                Response r = server.requestFile(c, "/media/song", req, new File(getExternalCacheDir(), "sometxt").getAbsolutePath());
+                return r;
             }
-        };
-
-        LocalBroadcastManager.getInstance(this).registerReceiver(libInitCompleteReceiver,
-                new IntentFilter("library_initialized"));
-
-        setContentView(R.layout.activity_splash);
-
-        if(readPermissionGranted())
-                    startService(new Intent(getApplicationContext(), LibraryService.class));
+        }.execute((Object) null);
+//        libInitCompleteReceiver = new BroadcastReceiver() {
+//            @Override
+//            public void onReceive(Context context, Intent intent) {
+//                Intent mainActivityIntent = new Intent(context, MainActivity.class);
+//                mainActivityIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP|Intent.FLAG_ACTIVITY_NEW_TASK);
+//                startActivity(mainActivityIntent);
+//                finish();
+//            }
+//        };
+//
+//        LocalBroadcastManager.getInstance(this).registerReceiver(libInitCompleteReceiver,
+//                new IntentFilter("library_initialized"));
+//
+//        setContentView(R.layout.activity_splash);
+//
+//        if(readPermissionGranted())
+//                    startService(new Intent(getApplicationContext(), LibraryService.class));
     }
 
     private boolean readPermissionGranted() {

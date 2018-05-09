@@ -45,6 +45,7 @@
             android:name=".services.LibraryService"
             android:exported="false" />
         <service android:name=".connectivity.NetworkService" />
+        <service android:name=".connectivity.group.GroupService" />
 
         <activity android:name=".activities.AboutActivity" />
         <activity
@@ -54,9 +55,6 @@
         <activity android:name=".activities.SyncMusicPlayerActivity" />
         <activity android:name=".activities.VideoPlayerActivity" />
         <activity android:name=".activities.SyncVideoPlayerActivity"/>
-        <activity
-            android:name=".activities.ExampleSettingsActivity"
-            android:label="@string/title_activity_settings" />
         <activity android:name=".activities.SettingsActivity" />
         <activity android:name=".activities.PrivateFoldersActivity"></activity>
         <provider
