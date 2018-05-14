@@ -4,6 +4,7 @@ import android.net.Uri;
 
 import org.json.JSONObject;
 
+import java.io.File;
 import java.util.Map;
 
 import fi.iki.elonen.NanoHTTPD;
@@ -20,7 +21,12 @@ public class Request {
     Response respond(JSONObject responseObject) {
         return new Response(responseObject);
     }
-
+    Response respond(File file) {
+        return new Response(file);
+    }
+    Response respond() {
+        return new Response(new JSONObject());
+    }
     Response reject(String reason) {
         return new Response(reason);
     }

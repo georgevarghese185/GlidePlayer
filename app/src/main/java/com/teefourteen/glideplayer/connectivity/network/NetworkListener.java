@@ -1,5 +1,7 @@
 package com.teefourteen.glideplayer.connectivity.network;
 
+import com.teefourteen.glideplayer.connectivity.network.server.Request;
+
 public interface NetworkListener {
     void onCreating();
     void onCreate();
@@ -9,5 +11,5 @@ public interface NetworkListener {
     void onClientDisconnect(String clientId);
     void onDisconnect();
 
-//    void onRequestReceived(String clientId, int requestType, Response response);
+    void onRequestReceived(Client client, int requestType, Request request);
 }

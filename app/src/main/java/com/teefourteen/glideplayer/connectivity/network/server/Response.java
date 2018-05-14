@@ -37,6 +37,12 @@ public class Response {
         this.jsonResponse = makeErrorJSON(errorMessage);
     }
 
+    public Response() {
+        this.error = false;
+        this.fileResponse = null;
+        this.jsonResponse = null;
+    }
+
     private JSONObject makeErrorJSON(String errorMessage) {
         JSONObject jsonObject = new JSONObject();
         try {

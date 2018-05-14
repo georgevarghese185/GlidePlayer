@@ -1,13 +1,31 @@
 package com.teefourteen.glideplayer.connectivity.network;
 
+import android.support.annotation.Nullable;
+import android.util.SparseArray;
+
 import com.teefourteen.glideplayer.EasyHandler;
 import com.teefourteen.glideplayer.StateListener;
+import com.teefourteen.glideplayer.connectivity.network.server.GPServer;
+import com.teefourteen.glideplayer.connectivity.network.server.RequestTask;
+
+import org.json.JSONObject;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static com.teefourteen.glideplayer.connectivity.network.Network.NetworkState.DISCONNECTED;
 
 public abstract class Network extends StateListener<NetworkListener, Network.NetworkState> {
-    private boolean isOwner;
-    private String mGroupName;
+    private final boolean isOwner;
+    private final String networkName;
+    private Map<String, Client> clients;
+
+    private Map<Integer, RequestTask> activeRequests;
+    private int requestIndex = 0;
 
     public enum NetworkState {
         CREATING,
@@ -16,22 +34,72 @@ public abstract class Network extends StateListener<NetworkListener, Network.Net
         DISCONNECTED
     }
 
-    public Network(String groupName) {
+    public Network(boolean isOwner, String groupName, Client[] clients) {
         super(null, DISCONNECTED);
+        this.isOwner = isOwner;
+        this.networkName = groupName;
+        this.activeRequests = new ConcurrentHashMap<>();
 
-        this.mGroupName = groupName;
+        this.clients = new HashMap<>(clients.length);
+        for(Client client : clients) {
+            this.clients.put(client.clientId, client);
+        }
     }
 
 
-    abstract public void create(String networkName);
+    abstract public void create();
     abstract public void connect();
     abstract public void disconnect();
 
-//    abstract public int sendRequest(String clientId, int requestType, Object requestData,
-//                                    ResponseListener listener);
-//    abstract public int rawConnection(String clientId, int requestType, Object requestData,
-//                               ResponseListener listener);
-//    abstract public void cancelRequest(int requestId);
+
+    public int requestJSON(String clientId, String requestType, Map<String, String> parameters,
+                           @Nullable ResponseListener<JSONObject> responseListener) {
+        int requestId = createRequestTask(clientId, requestType, parameters, responseListener);
+        activeRequests.get(requestId).executeJSONRequest();
+        return requestId;
+    }
+
+    public int requestFile(String clientId, String requestType, Map<String, String> parameters,
+                           String fileLocation, @Nullable ResponseListener<File> responseListener) {
+        int requestId = createRequestTask(clientId, requestType, parameters, responseListener);
+        activeRequests.get(requestId).executeFileRequest(fileLocation);
+        return requestId;
+    }
+
+    public void cancelRequest(int requestId, String reason) {
+        RequestTask request = activeRequests.remove(requestId);
+        request.cancelRequest(reason);
+    }
+
+
+    private <T> int createRequestTask(String clientId, String requestType, Map<String, String> parameters,
+                       @Nullable ResponseListener<T> responseListener) {
+
+        int index = requestIndex++;
+
+        ResponseListener<T> listener = new ResponseListener<T>() {
+            @Override
+            public void onResponse(T response) {
+                activeRequests.remove(index);
+                if (responseListener != null) {
+                    responseListener.onResponse(response);
+                }
+            }
+
+            @Override
+            public void onError(JSONObject error) {
+                activeRequests.remove(index);
+                if (responseListener != null) {
+                    responseListener.onError(error);
+                }
+            }
+        };
+
+        RequestTask request = new RequestTask(clients.get(clientId), requestType, parameters, listener);
+        activeRequests.put(requestIndex++, request);
+        return index;
+    }
+
 
     @Override
     protected void notifyListener(NetworkListener networkListener, NetworkState networkState) {
