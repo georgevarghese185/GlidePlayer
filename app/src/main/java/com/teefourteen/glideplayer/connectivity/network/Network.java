@@ -20,12 +20,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import static com.teefourteen.glideplayer.connectivity.network.Network.NetworkState.DISCONNECTED;
 
 public abstract class Network extends StateListener<NetworkListener, Network.NetworkState> {
-    private final boolean isOwner;
-    private final String networkName;
-    private Map<String, Client> clients;
+    protected final boolean isOwner;
+    protected final String networkName;
+    protected Map<String, Client> clients;
 
-    private Map<Integer, RequestTask> activeRequests;
-    private int requestIndex = 0;
+    protected Map<Integer, RequestTask> activeRequests;
+    protected int requestIndex = 0;
 
     public enum NetworkState {
         CREATING,
@@ -34,10 +34,10 @@ public abstract class Network extends StateListener<NetworkListener, Network.Net
         DISCONNECTED
     }
 
-    public Network(boolean isOwner, String groupName, Client[] clients) {
+    public Network(boolean isOwner, String networkName, Client[] clients) {
         super(null, DISCONNECTED);
         this.isOwner = isOwner;
-        this.networkName = groupName;
+        this.networkName = networkName;
         this.activeRequests = new ConcurrentHashMap<>();
 
         this.clients = new HashMap<>(clients.length);
@@ -47,7 +47,7 @@ public abstract class Network extends StateListener<NetworkListener, Network.Net
     }
 
 
-    abstract public void create();
+    abstract public void create(String ownerName);
     abstract public void connect();
     abstract public void disconnect();
 
@@ -72,7 +72,7 @@ public abstract class Network extends StateListener<NetworkListener, Network.Net
     }
 
 
-    private <T> int createRequestTask(String clientId, String requestType, Map<String, String> parameters,
+    protected <T> int createRequestTask(String clientId, String requestType, Map<String, String> parameters,
                        @Nullable ResponseListener<T> responseListener) {
 
         int index = requestIndex++;
