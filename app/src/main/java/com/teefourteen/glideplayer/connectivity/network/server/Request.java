@@ -12,10 +12,12 @@ import fi.iki.elonen.NanoHTTPD;
 public class Request {
     public final String requestType;
     public final Map<String, String> requestParams;
+    public final String ip;
 
     public Request(NanoHTTPD.IHTTPSession session) {
         this.requestType = Uri.parse(session.getUri()).getPath();
         this.requestParams = session.getParms();
+        this.ip = session.getHeaders().get("http-client-ip");
     }
 
     Response respond(JSONObject responseObject) {

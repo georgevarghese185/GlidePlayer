@@ -11,4 +11,10 @@ public class Client {
         this.ipAddress = ipAddress;
         this.serverPort = serverPort;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        return (obj instanceof Client)
+                && (((Client) obj).clientId.equals(this.clientId));
+    }
 }

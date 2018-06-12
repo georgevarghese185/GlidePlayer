@@ -43,7 +43,7 @@ public class Response {
         this.jsonResponse = null;
     }
 
-    private JSONObject makeErrorJSON(String errorMessage) {
+    public static JSONObject makeErrorJSON(String errorMessage) {
         JSONObject jsonObject = new JSONObject();
         try {
             jsonObject.put("errorMessage", errorMessage);
