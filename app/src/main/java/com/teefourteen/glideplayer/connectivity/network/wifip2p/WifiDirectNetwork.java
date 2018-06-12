@@ -42,7 +42,7 @@ import static com.teefourteen.glideplayer.connectivity.network.Network.NetworkSt
 public class WifiDirectNetwork extends Network implements WifiP2pManager.GroupInfoListener,
         WifiP2pManager.ConnectionInfoListener, P2pBroadcastReceiver.DeviceListener {
     private static final String LOG_TAG = "WifiDirectNetwork";
-    private static final String INSTANCE_NAME = "glideplayer";
+    private static final String INSTANCE_NAME = "GLIDEPLAYER";
     private static final String SERVICE_TYPE = "_presence._tcp";
 
     private static final String RECORD_GP_VERSION = "gp_version";
