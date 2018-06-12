@@ -2,6 +2,7 @@ package com.teefourteen.glideplayer.connectivity.network.wifip2p;
 
 import android.content.Context;
 import android.content.IntentFilter;
+import android.content.pm.PackageInfo;
 import android.net.wifi.WpsInfo;
 import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pDevice;
@@ -43,6 +44,8 @@ public class WifiDirectNetwork extends Network implements WifiP2pManager.GroupIn
     private static final String LOG_TAG = "WifiDirectNetwork";
     private static final String INSTANCE_NAME = "glideplayer";
     private static final String SERVICE_TYPE = "_presence._tcp";
+
+    private static final String RECORD_GP_VERSION = "gp_version";
     private static final String RECORD_LISTEN_PORT = "listen_port";
     private static final String RECORD_USER_NAME = "user_name";
     private static final String RECORD_GROUP_NAME = "group_name";
@@ -144,6 +147,7 @@ public class WifiDirectNetwork extends Network implements WifiP2pManager.GroupIn
             initializeP2p();
 
             localServiceTxtMap = new HashMap<>();
+            localServiceTxtMap.put(RECORD_GP_VERSION, String.valueOf(getVersion()));
             localServiceTxtMap.put(RECORD_LISTEN_PORT, String.valueOf(server.getListeningPort()));
             localServiceTxtMap.put(RECORD_USER_NAME, ownerName);
             localServiceTxtMap.put(RECORD_GROUP_NAME, networkName);
@@ -360,5 +364,15 @@ public class WifiDirectNetwork extends Network implements WifiP2pManager.GroupIn
     @Override
     public void onDeviceChange(WifiP2pDevice device) {
         myDevice = device;
+    }
+
+    private int getVersion() {
+        try {
+            PackageInfo packageInfo = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
+            return packageInfo.versionCode;
+        } catch (Exception e) {
+            Log.e(LOG_TAG, "Exception while getting version code", e);
+            return 0;
+        }
     }
 }
