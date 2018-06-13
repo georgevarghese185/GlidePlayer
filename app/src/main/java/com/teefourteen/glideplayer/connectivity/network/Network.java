@@ -89,6 +89,10 @@ public abstract class Network extends StateListener<NetworkListener, Network.Net
         return clients.toArray(new Client[clients.size()]);
     }
 
+    public Client getOwner() {
+        return this.owner;
+    }
+
     protected void groupCreateFailure(String e) {
         for(NetworkListener listener : listeners) {
             EasyHandler.executeOnMainThread(() -> listener.onCreateFailed(e));

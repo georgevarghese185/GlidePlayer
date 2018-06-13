@@ -42,18 +42,19 @@ import static com.teefourteen.glideplayer.connectivity.network.Network.NetworkSt
 public class WifiDirectNetwork extends Network implements WifiP2pManager.GroupInfoListener,
         WifiP2pManager.ConnectionInfoListener, P2pBroadcastReceiver.DeviceListener {
     private static final String LOG_TAG = "WifiDirectNetwork";
-    private static final String INSTANCE_NAME = "GLIDEPLAYER";
-    private static final String SERVICE_TYPE = "_presence._tcp";
 
-    private static final String RECORD_GP_VERSION = "gp_version";
-    private static final String RECORD_LISTEN_PORT = "listen_port";
-    private static final String RECORD_USER_NAME = "user_name";
-    private static final String RECORD_GROUP_NAME = "group_name";
-    private static final String RECORD_NUMBER_OF_MEMBERS = "number_of_members";
+    static final String INSTANCE_NAME = "GLIDEPLAYER_WIFIP2P";
+    static final String SERVICE_TYPE = "_presence._tcp";
+    static final String RECORD_GP_VERSION = "gp_version";
+    static final String RECORD_LISTEN_PORT = "listen_port";
+    static final String RECORD_USER_NAME = "user_name";
+    static final String RECORD_GROUP_NAME = "group_name";
+    static final String RECORD_NUMBER_OF_MEMBERS = "number_of_members";
 
     private Context context;
     private WifiP2pManager.Channel channel;
     private WifiP2pManager p2pManager;
+    private P2pBroadcastReceiver p2pBroadcastReceiver;
     private WifiP2pDevice myDevice;
     private WifiP2pDnsSdServiceInfo serviceInfo;
     private Map<String,String> localServiceTxtMap;
@@ -73,22 +74,31 @@ public class WifiDirectNetwork extends Network implements WifiP2pManager.GroupIn
     };
 
 
-    public WifiDirectNetwork(boolean isOwner, String networkName, String ownerName, Client[] clients,
-                             Context context) {
-        super(isOwner, networkName, ownerName, clients);
+    public WifiDirectNetwork(String networkName, String ownerName, Context context) {
+        super(true, networkName, ownerName, new Client[0]);
         this.context = context;
     }
 
+
+    WifiDirectNetwork(String networkName, String ownerName, Client owner,
+                      WifiP2pManager p2pManager, WifiP2pManager.Channel channel, Context context) {
+        super(false, networkName, ownerName, new Client[]{owner});
+        this.context = context;
+
+        this.p2pManager = p2pManager;
+        this.channel = channel;
+    }
+
+
     //Set up Android WifiP2p related objects
     private void initializeP2p() {
-        p2pManager = (WifiP2pManager) context.getSystemService(Context.WIFI_P2P_SERVICE);
-        channel = p2pManager.initialize(context, Looper.getMainLooper(), null);
-
-        P2pBroadcastReceiver p2pBroadcastReceiver = new P2pBroadcastReceiver(p2pManager, channel, this, this, this);
-        IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
-        intentFilter.addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION);
-        context.registerReceiver(p2pBroadcastReceiver, intentFilter);
+        if(p2pManager == null) {
+            this.p2pManager = (WifiP2pManager) context.getSystemService(Context.WIFI_P2P_SERVICE);
+            this.channel = p2pManager.initialize(context, Looper.getMainLooper(), null);
+        }
+        p2pBroadcastReceiver =
+                new P2pBroadcastReceiver(p2pManager, channel, this, this, null, this);
+        P2pBroadcastReceiver.registerReceiver(context, p2pBroadcastReceiver);
     }
 
 
@@ -143,7 +153,6 @@ public class WifiDirectNetwork extends Network implements WifiP2pManager.GroupIn
         server = new GPServer(0, requestListener);
         try {
             server.start();
-
             initializeP2p();
 
             localServiceTxtMap = new HashMap<>();
@@ -293,6 +302,7 @@ public class WifiDirectNetwork extends Network implements WifiP2pManager.GroupIn
     private void purgeAnyConnection() {
         try {
             p2pManager.removeGroup(channel, null);
+            P2pBroadcastReceiver.unregisterReceiver(context, p2pBroadcastReceiver);
         } catch (Exception e) {
             Log.w(LOG_TAG, e);
         }
@@ -315,6 +325,14 @@ public class WifiDirectNetwork extends Network implements WifiP2pManager.GroupIn
                 this.owner = me;
                 updateState(CONNECTED);
             } else {
+                //We didn't know owner's IP before this. Update it
+                String ownerIp = info.groupOwnerAddress.getHostAddress();
+                Client updatedOwner = new Client(this.owner.clientId, ownerIp, this.owner.serverPort);
+
+                removeClient(this.owner.clientId);
+                addClient(updatedOwner);
+                this.owner = updatedOwner;
+
                 connectSuccessful();
             }
         } else if(!info.groupFormed && (state == CONNECTING || state == CREATING)) {
