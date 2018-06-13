@@ -226,20 +226,26 @@ public abstract class Network extends StateListener<NetworkListener, Network.Net
     public int requestJSON(String clientId, String requestType, Map<String, String> parameters,
                            @Nullable ResponseListener<JSONObject> responseListener) {
         int requestId = createRequestTask(clientId, requestType, parameters, responseListener);
-        activeRequests.get(requestId).executeJSONRequest();
+        if(activeRequests.containsKey(requestId)) {
+            activeRequests.get(requestId).executeJSONRequest();
+        }
         return requestId;
     }
 
     public int requestFile(String clientId, String requestType, Map<String, String> parameters,
                            String fileLocation, @Nullable ResponseListener<File> responseListener) {
         int requestId = createRequestTask(clientId, requestType, parameters, responseListener);
-        activeRequests.get(requestId).executeFileRequest(fileLocation);
+        if(activeRequests.containsKey(requestId)) {
+            activeRequests.get(requestId).executeFileRequest(fileLocation);
+        }
         return requestId;
     }
 
     public void cancelRequest(int requestId, String reason) {
-        RequestTask request = activeRequests.remove(requestId);
-        request.cancelRequest(reason);
+        if(activeRequests.containsKey(requestId)) {
+            RequestTask request = activeRequests.remove(requestId);
+            request.cancelRequest(reason);
+        }
     }
 
     public void cancelPendingRequests(String reason) {
@@ -251,6 +257,15 @@ public abstract class Network extends StateListener<NetworkListener, Network.Net
 
     protected <T> int createRequestTask(String clientId, String requestType, Map<String, String> parameters,
                        @Nullable ResponseListener<T> responseListener) {
+
+        Client to = clients.get(clientId);
+
+        if(to == null) {
+            if(responseListener != null) {
+                responseListener.onError(Response.makeErrorJSON("Can't find client"));
+            }
+            return -1;
+        }
 
         int index = requestIndex++;
 
