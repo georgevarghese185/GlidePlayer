@@ -29,12 +29,12 @@ public abstract class Network extends StateListener<NetworkListener, Network.Net
     private static final String REQUEST_CLIENTS = "/network/clients";
     private static final String REQUEST_PEACE_OUT = "/network/peace_out";
 
-    protected final boolean isOwner;
-    protected final String networkName;
-    protected final String ownerName;
+    public final boolean isOwner;
+    public final String networkName;
+    public final String ownerName;
     protected Client owner;
     protected Client me;
-    protected Map<String, Client> clients;
+    protected ArrayList<Client> clients;
 
     protected Map<Integer, RequestTask> activeRequests;
     protected int requestIndex = 0;
@@ -53,10 +53,8 @@ public abstract class Network extends StateListener<NetworkListener, Network.Net
         this.ownerName = ownerName;
         this.activeRequests = new ConcurrentHashMap<>();
 
-        this.clients = new HashMap<>(clients.length);
-        for(Client client : clients) {
-            this.clients.put(client.clientId, client);
-        }
+        this.clients = new ArrayList<>(clients.length);
+        this.clients.addAll(Arrays.asList(clients));
     }
 
 
@@ -65,32 +63,44 @@ public abstract class Network extends StateListener<NetworkListener, Network.Net
     abstract public void disconnect();
 
     public void addClient(Client client) {
-        clients.put(client.clientId, client);
-        for(NetworkListener listener : listeners) {
-            EasyHandler.executeOnMainThread(() -> listener.onClientConnect(client.clientId));
+        clients.add(client);
+        if(client != me) {
+            for(NetworkListener listener : listeners) {
+                EasyHandler.executeOnMainThread(() -> listener.onClientConnect(client.clientId));
+            }
         }
     }
 
     public void removeClient(String clientId) {
-        Client client = clients.get(clientId);
-        clients.remove(clientId);
-        for(NetworkListener listener : listeners) {
-            EasyHandler.executeOnMainThread(() -> listener.onClientDisconnect(clientId));
+        Client client = getClient(clientId);
+        if(client != null) {
+            clients.remove(client);
+
+            for(NetworkListener listener : listeners) {
+                EasyHandler.executeOnMainThread(() -> listener.onClientDisconnect(clientId));
+            }
         }
     }
 
-    public Client[] getClients() {
-        ArrayList<Client> clients = new ArrayList<>();
-
-        for(String clientId : this.clients.keySet()) {
-            clients.add(this.clients.get(clientId));
+    public Client getClient(String clientId) {
+        for(Client client : clients) {
+            if(client.clientId.equals(clientId));
+                return client;
         }
 
+        return null;
+    }
+
+    public Client[] getClients() {
         return clients.toArray(new Client[clients.size()]);
     }
 
     public Client getOwner() {
         return this.owner;
+    }
+
+    public Client getMe() {
+        return this.me;
     }
 
     protected void groupCreateFailure(String e) {
@@ -262,7 +272,7 @@ public abstract class Network extends StateListener<NetworkListener, Network.Net
     protected <T> int createRequestTask(String clientId, String requestType, Map<String, String> parameters,
                        @Nullable ResponseListener<T> responseListener) {
 
-        Client to = clients.get(clientId);
+        Client to = getClient(clientId);
 
         if(to == null) {
             if(responseListener != null) {
@@ -291,7 +301,7 @@ public abstract class Network extends StateListener<NetworkListener, Network.Net
             }
         };
 
-        RequestTask request = new RequestTask(clients.get(clientId), requestType, parameters, listener);
+        RequestTask request = new RequestTask(getClient(clientId), requestType, parameters, listener);
         activeRequests.put(requestIndex++, request);
         return index;
     }
