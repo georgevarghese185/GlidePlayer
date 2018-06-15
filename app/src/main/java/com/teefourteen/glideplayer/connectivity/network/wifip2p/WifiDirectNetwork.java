@@ -318,7 +318,7 @@ public class WifiDirectNetwork extends Network implements WifiP2pManager.GroupIn
             //Add self to clients
             Client me = new Client(myDevice.deviceAddress, "127.0.0.1", server.getListeningPort());
             this.me = me;
-            clients.put(myDevice.deviceAddress, me);
+            addClient(me);
 
             //If owner of this group, we're done. Else, go to next steps
             if(isOwner) {
@@ -356,9 +356,7 @@ public class WifiDirectNetwork extends Network implements WifiP2pManager.GroupIn
 
     private void removeLostClients(WifiP2pDevice[] devices) {
         for(WifiP2pDevice device : devices) {
-            if(clients.containsKey(device.deviceAddress)) {
-                removeClient(device.deviceAddress);
-            }
+            removeClient(device.deviceAddress);
         }
 
         //Update Group size in WifiP2p local service
