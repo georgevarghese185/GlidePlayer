@@ -14,9 +14,8 @@ public interface GroupListener {
     void onJoin();
     void onJoinFailure();
 
-    void onMemberConnect();
-    void onMemberJoin();
-    void onMemberLeave();
+    void onMemberConnect(Member member);
+    void onMemberLeave(Member member);
 
     void onDisconnect();
 }
