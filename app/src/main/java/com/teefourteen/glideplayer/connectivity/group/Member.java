@@ -18,7 +18,13 @@ public class Member {
         this.network = network;
     }
 
-//    public void getSong(String memberId, String songId, ResponseListener responseListener) {
+    @Override
+    public boolean equals(Object obj) {
+        return (obj instanceof Member)
+                && ((Member) obj).memberId.equals(this.memberId);
+    }
+
+    //    public void getSong(String memberId, String songId, ResponseListener responseListener) {
 //        getFile(memberId, songId, TYPE_SONG, responseListener);
 //    }
 //
