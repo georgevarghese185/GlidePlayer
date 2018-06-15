@@ -129,7 +129,7 @@ public abstract class Network extends StateListener<NetworkListener, Network.Net
         } else if(request.requestType.equals(REQUEST_PEACE_OUT)){
             return handlePeaceOut(request);
         } else {
-            return null;
+            return new Response("Unknown Request");
         }
     }
 
