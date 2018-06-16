@@ -4,6 +4,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.provider.BaseColumns;
@@ -113,6 +114,10 @@ public class Library {
             readableDb = openHelper.getReadableDatabase();
             return readableDb;
         }
+    }
+
+    public static SQLiteDatabase getDb() {
+        return library.openHelper.getWritableDatabase();
     }
 
     public static Cursor getVideos(String userName) { return queryVideos(userName, null, null); }
@@ -331,6 +336,87 @@ public class Library {
         }
 
         return true;
+    }
+
+    public static Table[] getTables() {
+        return library.tables;
+    }
+
+    public static JSONObject getTableMeta(String tableName) throws Exception {
+        long count = DatabaseUtils.queryNumEntries(library.getReadableDb(), tableName);
+        JSONObject meta = new JSONObject();
+        meta.put("rowCount", count);
+
+        return meta;
+    }
+
+    public static JSONArray getTableRows(String tableName, int start, int end) throws Exception{
+        for(Table table : library.tables) {
+            if(table.TABLE_NAME.equals(tableName)) {
+                Cursor cursor;
+                if(table instanceof SongTable || table instanceof VideoTable) {
+                    cursor = table.getFullTable(library.getReadableDb(),
+                            library.generatePrivateFoldersClause(table.TABLE_NAME));
+                } else {
+                    cursor = table.getFullTable(library.getReadableDb());
+                }
+
+                JSONArray rows = new JSONArray();
+
+                //send each row
+                for(boolean res = cursor.move(start); res; res = cursor.moveToNext()) {
+                    JSONObject row = new JSONObject();
+
+                    for(int j = 0; j < cursor.getColumnCount(); j++) {
+                        String column = cursor.getColumnName(j);
+
+                        if(cursor.getType(j) == Cursor.FIELD_TYPE_INTEGER) {
+                            row.put(column, cursor.getLong(cursor.getColumnIndex(column)));
+                        } else if(cursor.getType(j) == Cursor.FIELD_TYPE_STRING) {
+                            row.put(column, cursor.getString(cursor.getColumnIndex(column)));
+                        }
+                    }
+
+                    rows.put(row);
+
+                    if(rows.length() >= (end - start + 1)) {
+                        break;
+                    }
+                }
+
+                cursor.close();
+
+                return rows;
+            }
+        }
+
+        throw new IllegalArgumentException("Unknown table");
+    }
+
+    public static void addRemoteRows(JSONArray rows, Table table, SQLiteDatabase db, String userName) throws Exception {
+        for(int i = 0; i < rows.length(); i++) {
+            JSONObject row = rows.getJSONObject(i);
+            ContentValues values =  new ContentValues();
+
+            Iterator<String> names = row.keys();
+            while(names.hasNext()) {
+                String column = names.next();
+                Object value = row.get(column);
+
+                if(column.equals(BaseColumns._ID) || column.equals(BaseColumns._COUNT)) {
+                    continue;
+                } else if(column.equals(Table.RemoteColumns.IS_REMOTE)) {
+                    values.put(Table.RemoteColumns.IS_REMOTE, 1);
+                } else if(value instanceof Long || value instanceof Integer) {
+                    values.put(column, Long.parseLong(row.getString(column)));
+                } else if(value instanceof String) {
+                    values.put(column, row.getString(column));
+                }
+            }
+            values.put(Table.RemoteColumns.REMOTE_USERNAME, userName);
+            //insert row
+            table.insertValues(values, db);
+        }
     }
 
 

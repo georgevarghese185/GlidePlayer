@@ -1,5 +1,7 @@
 package com.teefourteen.glideplayer.connectivity.group;
 
+import android.content.Intent;
+import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
 import com.teefourteen.glideplayer.EasyHandler;
@@ -10,7 +12,10 @@ import com.teefourteen.glideplayer.connectivity.network.NetworkListener;
 import com.teefourteen.glideplayer.connectivity.network.ResponseListener;
 import com.teefourteen.glideplayer.connectivity.network.server.Request;
 import com.teefourteen.glideplayer.connectivity.network.server.Response;
+import com.teefourteen.glideplayer.database.Library;
+import com.teefourteen.glideplayer.database.Table;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -24,6 +29,9 @@ import static com.teefourteen.glideplayer.connectivity.group.Group.GroupState.DI
 public class Group extends StateListener<GroupListener, Group.GroupState> {
     private static final String LOG_TAG = "Group";
     private static final String REQUEST_ACQUAINTANCE = "/group/username";
+    private static final String REQUEST_TABLE = "/library/table";
+    private static final String REQUEST_TABLE_META = "/library/table/meta";
+    private static final int ROW_BATCH = 100;
 
     private Member owner;
     private Member me;
@@ -49,9 +57,13 @@ public class Group extends StateListener<GroupListener, Group.GroupState> {
 
 
 
-    private Group(String groupName, GroupListener groupListener) {
+    private Group(String groupName, GroupListener groupListener, Network network) {
         super(null, DISCONNECTED);
         this.groupName = groupName;
+        this.network = network;
+
+        listeners = new ArrayList<>();
+        listeners.add(groupListener);
     }
 
 
@@ -105,14 +117,16 @@ public class Group extends StateListener<GroupListener, Group.GroupState> {
 
     public void create(String userName) {
         this.userName = userName;
+        network.create();
     }
 
     public void connect(String userName) {
         this.userName = userName;
+        network.connect();
     }
 
     public void disconnect() {
-
+        network.disconnect();
     }
 
 
@@ -143,7 +157,6 @@ public class Group extends StateListener<GroupListener, Group.GroupState> {
             @Override
             public void onError(JSONObject error) {
                 groupConnectFailure(error.toString());
-                updateState(DISCONNECTED);
             }
         };
 
@@ -151,11 +164,82 @@ public class Group extends StateListener<GroupListener, Group.GroupState> {
     }
 
     private void exchangeLibraries(Member member) {
-        //TODO lots of stuff here
 
-        addMember(member);
-        if(members.size() == network.getClients().length) {
-            updateState(CONNECTED);
+        Table[] tables = Library.getTables();
+        SQLiteDatabase libraryDb = Library.getDb();
+        libraryDb.beginTransaction();
+
+        try {
+            for (Table table : tables) {
+                String requestType = REQUEST_TABLE_META;
+                HashMap<String, String> params = new HashMap<>();
+                params.put("tableName", table.TABLE_NAME);
+
+                Response metaResponse = network.requestJSON(member.memberId, requestType, params);
+
+                assert metaResponse.jsonResponse != null;
+                int rowCount = metaResponse.jsonResponse.getInt("rowCount");
+
+                for(int i = 0; i < rowCount; i += ROW_BATCH) {
+                    requestType = REQUEST_TABLE;
+                    params = new HashMap<>();
+                    params.put("tableName", table.TABLE_NAME);
+                    params.put("row_start", String.valueOf(i));
+                    int rowEnd = ((i + ROW_BATCH) > rowCount) ? rowCount : i + ROW_BATCH;
+                    params.put("row_end", String.valueOf(rowEnd));
+
+                    Response rowsResponse = network.requestJSON(member.memberId, requestType, params);
+                    assert rowsResponse.jsonResponse != null;
+                    JSONArray rows = rowsResponse.jsonResponse.getJSONArray("rows");
+
+                    Library.addRemoteRows(rows, table, libraryDb, member.userName);
+                }
+            }
+
+            libraryDb.setTransactionSuccessful();
+
+            libraryDb.endTransaction();
+
+            addMember(member);
+            if(members.size() == network.getClients().length) {
+                updateState(CONNECTED);
+            }
+        } catch (Exception e) {
+            libraryDb.endTransaction();
+            groupConnectFailure("Failed to exchange libraries");
+            Log.e(LOG_TAG, "Exception while exchanging libraries", e);
+        }
+    }
+
+
+    private Response handleTableMetaRequest(Request request) {
+        try {
+            String tableName = request.requestParams.get("tableName");
+            JSONObject tableMeta = Library.getTableMeta(tableName);
+
+            return new Response(tableMeta);
+        } catch (Exception e) {
+            Log.e(LOG_TAG, "Exception while getting table meta", e);
+            return new Response(e.toString());
+        }
+    }
+
+
+    private Response handleTableRequest(Request request) {
+        try {
+            String tableName = request.requestParams.get("tableName");
+            int start = Integer.parseInt(request.requestParams.get("row_start"));
+            int end = Integer.parseInt(request.requestParams.get("row_end"));
+
+            JSONArray rows = Library.getTableRows(tableName, start, end);
+
+            JSONObject response = new JSONObject();
+            response.put("rows", rows);
+
+            return new Response(response);
+        } catch (Exception e) {
+            Log.e(LOG_TAG, "Exception while handling table request", e);
+            return new Response(e.toString());
         }
     }
 
@@ -164,6 +248,10 @@ public class Group extends StateListener<GroupListener, Group.GroupState> {
     private Response handleRequest(Request request) {
         if(request.requestType.equals(REQUEST_ACQUAINTANCE)) {
             return handleAcquaintanceRequest(request);
+        } else if(request.requestType.equals(REQUEST_TABLE_META)) {
+            return handleTableMetaRequest(request);
+        } else if(request.requestType.equals(REQUEST_TABLE)) {
+            return handleTableRequest(request);
         } else {
             return new Response("Unknown request");
         }
@@ -188,12 +276,14 @@ public class Group extends StateListener<GroupListener, Group.GroupState> {
         for(GroupListener listener : listeners) {
             EasyHandler.executeOnMainThread(() -> listener.onConnectFailure(reason));
         }
+        disconnect();
     }
 
     private void groupCreateFailure(String reason) {
         for(GroupListener listener : listeners) {
             EasyHandler.executeOnMainThread(() -> listener.onCreateFailure(reason));
         }
+        disconnect();
     }
 
 
@@ -212,7 +302,6 @@ public class Group extends StateListener<GroupListener, Group.GroupState> {
         @Override
         public void onCreateFailed(String reason) {
             groupCreateFailure(reason);
-            updateState(DISCONNECTED);
         }
 
         @Override
@@ -230,7 +319,6 @@ public class Group extends StateListener<GroupListener, Group.GroupState> {
         @Override
         public void onConnectFailed(String reason) {
             groupConnectFailure(reason);
-            updateState(DISCONNECTED);
         }
 
         @Override

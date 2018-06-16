@@ -28,9 +28,9 @@ import static com.teefourteen.glideplayer.connectivity.network.Helpers.safeClose
 
 public class RequestTask {
 
-    private Client to;
-    private String requestType;
-    private Map<String, String> params;
+    public final Client to;
+    public final String requestType;
+    public final Map<String, String> params;
     private ResponseType responseType;
     private String fileLocation;
     private AsyncRequestTask task;
