@@ -60,10 +60,21 @@ public class RequestTask {
         task.execute();
     }
 
+    public Response syncJSONRequest() throws Exception {
+        this.responseType = ResponseType.JSON;
+        return syncRequest();
+    }
+
     public void executeFileRequest(String fileLocation) {
         this.responseType = ResponseType.FILE;
         this.fileLocation = fileLocation;
         task.execute();
+    }
+
+    public Response syncFileRequest(String fileLocation) throws Exception {
+        this.responseType = ResponseType.FILE;
+        this.fileLocation = fileLocation;
+        return syncRequest();
     }
 
     public void cancelRequest(String reason) {
@@ -73,27 +84,29 @@ public class RequestTask {
 
     private Response doInBackground(Object[] objects) {
         try {
-
-            URL url = getURL(to.ipAddress, to.serverPort, requestType, params);
-            connection = openAndSend(url);
-
-            int responseCode = connection.getResponseCode();
-            if (responseCode < 200 || responseCode > 299) {
-
-                JSONObject errorJSON = getJSON(connection.getErrorStream());
-                return new com.teefourteen.glideplayer.connectivity.network.server.Response(errorJSON, true);
-
-            } else if (responseType == ResponseType.JSON) {
-                JSONObject responseJson = getJSON(connection.getInputStream());
-                return new com.teefourteen.glideplayer.connectivity.network.server.Response(responseJson);
-            } else {
-                File fileResponse = getFile(connection.getInputStream(), fileLocation);
-                return new com.teefourteen.glideplayer.connectivity.network.server.Response(fileResponse);
-            }
-
+            return syncRequest();
         } catch (Exception e) {
             String errorMessage = requestCanceled ? cancelReason : e.toString();
-            return new com.teefourteen.glideplayer.connectivity.network.server.Response(errorMessage);
+            return new Response(errorMessage);
+        }
+    }
+
+    public Response syncRequest() throws Exception {
+        URL url = getURL(to.ipAddress, to.serverPort, requestType, params);
+        connection = openAndSend(url);
+
+        int responseCode = connection.getResponseCode();
+        if (responseCode < 200 || responseCode > 299) {
+
+            JSONObject errorJSON = getJSON(connection.getErrorStream());
+            return new Response(errorJSON, true);
+
+        } else if (responseType == ResponseType.JSON) {
+            JSONObject responseJson = getJSON(connection.getInputStream());
+            return new Response(responseJson);
+        } else {
+            File fileResponse = getFile(connection.getInputStream(), fileLocation);
+            return new Response(fileResponse);
         }
     }
 

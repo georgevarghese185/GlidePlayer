@@ -246,6 +246,16 @@ public abstract class Network extends StateListener<NetworkListener, Network.Net
         return requestId;
     }
 
+    public Response requestJSON(String clientId, String requestType,
+                                Map<String, String> parameters) throws Exception {
+        int requestId = createRequestTask(clientId, requestType, parameters, null);
+        if(activeRequests.containsKey(requestId)) {
+            return activeRequests.get(requestId).syncJSONRequest();
+        } else {
+            throw new IllegalArgumentException("Client does not exist");
+        }
+    }
+
     public int requestFile(String clientId, String requestType, Map<String, String> parameters,
                            String fileLocation, @Nullable ResponseListener<File> responseListener) {
         int requestId = createRequestTask(clientId, requestType, parameters, responseListener);
@@ -253,6 +263,16 @@ public abstract class Network extends StateListener<NetworkListener, Network.Net
             activeRequests.get(requestId).executeFileRequest(fileLocation);
         }
         return requestId;
+    }
+
+    public Response requestFile(String clientId, String requestType, Map<String, String> parameters,
+                           String fileLocation) throws Exception {
+        int requestId = createRequestTask(clientId, requestType, parameters, null);
+        if(activeRequests.containsKey(requestId)) {
+            return activeRequests.get(requestId).syncFileRequest(fileLocation);
+        } else {
+            throw new IllegalArgumentException("Client does not exist");
+        }
     }
 
     public void cancelRequest(int requestId, String reason) {
