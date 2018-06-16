@@ -62,7 +62,7 @@ public abstract class Network extends StateListener<NetworkListener, Network.Net
     abstract public void connect();
     abstract public void disconnect();
 
-    public void addClient(Client client) {
+    synchronized public void addClient(Client client) {
         clients.add(client);
         if(client != me) {
             for(NetworkListener listener : listeners) {
@@ -71,10 +71,16 @@ public abstract class Network extends StateListener<NetworkListener, Network.Net
         }
     }
 
-    public void removeClient(String clientId) {
+    synchronized public void removeClient(String clientId) {
         Client client = getClient(clientId);
         if(client != null) {
             clients.remove(client);
+
+            for(RequestTask request : activeRequests.values()) {
+                if(request.to == client) {
+                    request.cancelRequest("Client disconnecting");
+                }
+            }
 
             for(NetworkListener listener : listeners) {
                 EasyHandler.executeOnMainThread(() -> listener.onClientDisconnect(clientId));
@@ -82,7 +88,7 @@ public abstract class Network extends StateListener<NetworkListener, Network.Net
         }
     }
 
-    public Client getClient(String clientId) {
+    synchronized public Client getClient(String clientId) {
         for(Client client : clients) {
             if(client.clientId.equals(clientId));
                 return client;
@@ -91,7 +97,7 @@ public abstract class Network extends StateListener<NetworkListener, Network.Net
         return null;
     }
 
-    public Client[] getClients() {
+    synchronized public Client[] getClients() {
         return clients.toArray(new Client[clients.size()]);
     }
 
